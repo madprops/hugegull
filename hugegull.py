@@ -13,7 +13,7 @@ def get_stream_duration(url):
         "-v", "quiet",
         "-print_format", "json",
         "-show_format",
-        url
+        url,
     ]
 
     result = subprocess.run(command, capture_output=True, text=True)
@@ -49,7 +49,7 @@ def generate_random_clips(url, total_duration, num_clips, clip_duration):
             "-c:v", "libx264",
             "-c:a", "aac",
             "-y",
-            output_name
+            output_name,
         ]
 
         print(f"Extracting clip {i + 1}/{num_clips} starting at {start_time:.2f}s...")
@@ -78,7 +78,7 @@ def concatenate_clips(clip_files, output_file):
         "-i", list_file,
         "-c", "copy",
         "-y",
-        output_file
+        output_file,
     ]
 
     print("Concatenating clips...")
