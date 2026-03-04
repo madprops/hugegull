@@ -92,7 +92,6 @@ def concatenate_clips(clip_files, output_file):
     print(f"Video saved as {output_file}")
 
 def main():
-
     if len(sys.argv) < 3:
         print("Usage: python script.py <m3u8_url> <output_name_without_ext>")
         sys.exit(1)
