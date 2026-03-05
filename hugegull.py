@@ -108,11 +108,10 @@ def get_random_name():
 def resolve_youtube(url):
     print("Resolving YouTube URL via yt-dlp...")
 
-    # Ask for the best video up to 1080p, plus the best audio
     command = [
         "yt-dlp",
         "-f",
-        "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best",
+        "bestvideo[height<=1080]+bestaudio/best",
         "--dump-json",
         url,
     ]
