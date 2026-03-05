@@ -125,7 +125,7 @@ def resolve_youtube(url):
         "-f",
         "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best",
         "--dump-json",
-        url
+        url,
     ]
 
     result = subprocess.run(command, capture_output=True, text=True)
@@ -164,35 +164,40 @@ def generate_random_clips(stream_data, total_duration):
         return []
 
     # Determine if we have a dictionary (split YouTube streams) or a plain string (standard m3u8)
-    is_split_stream = isinstance(stream_data, dict) and stream_data.get("audio") is not None
+    is_split_stream = (
+        isinstance(stream_data, dict) and stream_data.get("audio") is not None
+    )
+
     v_url = stream_data["video"] if isinstance(stream_data, dict) else stream_data
 
     for i in range(NUM_CLIPS):
         start_time = random.uniform(0, max_start)
         output_name = os.path.join(TEMP_DIR, f"temp_clip_{i}.mp4")
 
-        command = [
-            "ffmpeg",
-            "-ss", str(start_time),
-            "-i", v_url
-        ]
+        command = ["ffmpeg", "-ss", str(start_time), "-i", v_url]
 
         # If we have a separate audio stream, inject it into the ffmpeg command
         if is_split_stream:
-            command.extend([
-                "-ss", str(start_time),
-                "-i", stream_data["audio"]
-            ])
+            command.extend(["-ss", str(start_time), "-i", stream_data["audio"]])
 
-        command.extend([
-            "-t", str(CLIP_DURATION),
-            "-r", str(FPS),
-            "-vf", f"scale={get_scale()}",
-            "-c:v", "libx264",
-            "-crf", str(CRF),
-            "-c:a", "aac",
-            "-y", output_name
-        ])
+        command.extend(
+            [
+                "-t",
+                str(CLIP_DURATION),
+                "-r",
+                str(FPS),
+                "-vf",
+                f"scale={get_scale()}",
+                "-c:v",
+                "libx264",
+                "-crf",
+                str(CRF),
+                "-c:a",
+                "aac",
+                "-y",
+                output_name,
+            ]
+        )
 
         print(f"Extracting clip {i + 1}/{NUM_CLIPS} starting at {start_time:.2f}s...")
 
