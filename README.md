@@ -6,4 +6,31 @@ Each section is 6 seconds long.
 
 Then it joins them into a single video.
 
-Usage: `python hugegull.py someurl.m3u8 output_name`
+You can use the HUGE_URL env var.
+The output name can be ommitted to use a random name.
+
+## Installation
+
+git clone this somewhere.
+Make a shell alias to python /path/to/hugegull/hugegull.py
+alias hgg="python ~/code/hugegull/hugegull.py"
+
+Edit ~/.config/hugegull/hugegull.conf
+It is empty but you can make it look like this:
+
+```
+clip_duration = 6
+num_clips = 10
+path = "/home/memphis/toilet"
+```
+
+## Usage
+
+```hgg "https://something.m3u8"```
+
+Or:
+
+```
+export HUGE_URL="https://something.m3u8"
+hgg
+```
