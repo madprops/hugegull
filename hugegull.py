@@ -141,6 +141,7 @@ def generate_random_clips(url, total_duration, num_clips, clip_duration):
             url,
             "-t",
             str(clip_duration),
+            "-r", str(fps),
             "-c:v",
             "libx264",
             "-c:a",
