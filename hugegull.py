@@ -59,7 +59,7 @@ FPS = 30
 CRF = 30
 
 MAX_CLIP_DURATION = 8.0
-MIN_CLIP_DURATION = 1.5
+MIN_CLIP_DURATION = 2.0
 AVG_CLIP_DURATION = 6.0
 
 # Read configuration from TOML
@@ -160,7 +160,7 @@ def generate_clip_sections(target_duration, total_stream_duration):
         if current_sum + clip_length > target_duration:
             clip_length = target_duration - current_sum
 
-            if clip_length < 1.5:
+            if clip_length < 2.0:
                 break
 
         max_start = safe_duration - clip_length
