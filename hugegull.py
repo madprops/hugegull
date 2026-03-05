@@ -18,7 +18,7 @@
 # num_clips = 8
 # path = "/home/memphis/toilet"
 # fps = 30
-# crf = 28
+# crf = 30
 # width = 1920
 # height = 1080
 
@@ -60,7 +60,7 @@ CLIP_DURATION = 6
 NUM_CLIPS = 8
 PATH = os.path.dirname(os.path.abspath(__file__))
 FPS = 30
-CRF = 28
+CRF = 30
 WIDTH = 1920
 HEIGHT = 1080
 
