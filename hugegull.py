@@ -18,7 +18,9 @@
 # num_clips = 8
 # path = "/home/memphis/toilet"
 # fps = 30
-# crf = 30
+# crf = 28
+# width = 1920
+# height = 1080
 
 # Usage:
 
@@ -58,7 +60,7 @@ CLIP_DURATION = 6
 NUM_CLIPS = 8
 PATH = os.path.dirname(os.path.abspath(__file__))
 FPS = 30
-CRF = 30
+CRF = 28
 
 # Read configuration from TOML
 with open(CONFIG_PATH, "rb") as f:
@@ -75,6 +77,12 @@ if "fps" in config_data:
 
 if "crf" in config_data:
     CRF = int(config_data["crf"])
+
+if "width" in config_data:
+    WIDTH = int(config_data["width"])
+
+if "height" in config_data:
+    HEIGHT = int(config_data["height"])
 
 if "path" in config_data:
     PATH = config_data["path"]
@@ -131,6 +139,10 @@ def get_stream_duration(url):
     return 0.0
 
 
+def get_scale():
+    return f"{WIDTH}:{HEIGHT}"
+
+
 def generate_random_clips(url, total_duration):
     clip_files = []
     max_start = total_duration - CLIP_DURATION
@@ -153,6 +165,8 @@ def generate_random_clips(url, total_duration):
             str(CLIP_DURATION),
             "-r",
             str(FPS),
+            "-vf",
+            f"scale={get_scale()}",  # Force uniform resolution to prevent concat crashes
             "-c:v",
             "libx264",
             "-crf",
@@ -164,10 +178,22 @@ def generate_random_clips(url, total_duration):
         ]
 
         print(f"Extracting clip {i + 1}/{NUM_CLIPS} starting at {start_time:.2f}s...")
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        # Capture output instead of using DEVNULL to expose potential errors
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"Error extracting clip {i}:")
+            print(result.stderr)
+            continue
+
         clip_files.append(output_name)
 
     return clip_files
+
+
+def is_url(s):
+    return s.startswith(("http", "https"))
 
 
 def concatenate_clips(clip_files, output_file):
@@ -179,8 +205,9 @@ def concatenate_clips(clip_files, output_file):
 
     with open(list_file, "w") as f:
         for clip in clip_files:
-            clip_basename = os.path.basename(clip)
-            f.write(f"file '{clip_basename}'\n")
+            # Use absolute path to ensure ffmpeg finds the file regardless of cwd
+            abs_clip_path = os.path.abspath(clip)
+            f.write(f"file '{abs_clip_path}'\n")
 
     command = [
         "ffmpeg",
@@ -197,14 +224,19 @@ def concatenate_clips(clip_files, output_file):
     ]
 
     print("Concatenating clips...")
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    print("Cleaning up temporary files...")
+    result = subprocess.run(command, capture_output=True, text=True)
 
-    for clip in clip_files:
-        os.remove(clip)
+    if result.returncode != 0:
+        print("Error concatenating clips:")
+        print(result.stderr)
+    else:
+        print("Cleaning up temporary files...")
 
-    os.remove(list_file)
-    print(f"Video saved as {output_file}")
+        for clip in clip_files:
+            os.remove(clip)
+
+        os.remove(list_file)
+        print(f"Video saved as {output_file}")
 
 
 def main():
@@ -217,7 +249,8 @@ def main():
     elif len(sys.argv) == 2:
         arg = sys.argv[1]
 
-        if arg.startswith("http"):
+        # Check for both http URLs and local files
+        if is_url(arg) or os.path.exists(arg):
             stream_url = arg
             base_name = get_random_name()
         else:

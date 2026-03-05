@@ -27,6 +27,8 @@ num_clips = 8
 path = "/home/memphis/toilet"
 fps = 30
 crf = 30
+width = 1920
+height = 1080
 ```
 
 ## Usage
