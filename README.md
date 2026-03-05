@@ -29,7 +29,7 @@ path = "/home/memphis/toilet"
 
 ## Usage
 
-```hgg "https://something.m3u8"```
+```hgg https://something.m3u8```
 
 Or:
 
