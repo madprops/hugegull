@@ -19,8 +19,6 @@
 # path = "/home/memphis/toilet"
 # fps = 30
 # crf = 30
-# width = 1920
-# height = 1080
 
 # Usage:
 
@@ -63,8 +61,6 @@ MAX_CLIPS = 12
 PATH = os.path.dirname(os.path.abspath(__file__))
 FPS = 30
 CRF = 30
-WIDTH = 1920
-HEIGHT = 1080
 
 # Read configuration from TOML
 with open(CONFIG_PATH, "rb") as f:
@@ -87,12 +83,6 @@ if "fps" in config_data:
 
 if "crf" in config_data:
     CRF = int(config_data["crf"])
-
-if "width" in config_data:
-    WIDTH = int(config_data["width"])
-
-if "height" in config_data:
-    HEIGHT = int(config_data["height"])
 
 if "path" in config_data:
     PATH = config_data["path"]
@@ -170,13 +160,11 @@ def generate_random_clips(stream_data, total_duration):
     print(f"Targeting {actual_num_clips} random clips for this run...")
 
     is_split_stream = False
-
     if isinstance(stream_data, dict):
         if stream_data.get("audio") is not None:
             is_split_stream = True
 
     v_url = stream_data
-
     if isinstance(stream_data, dict):
         v_url = stream_data["video"]
 
@@ -193,7 +181,6 @@ def generate_random_clips(stream_data, total_duration):
 
         command = ["ffmpeg", "-ss", str(start_time), "-i", v_url]
 
-        # If we have a separate audio stream, inject it into the ffmpeg command
         if is_split_stream:
             command.extend(["-ss", str(start_time), "-i", stream_data["audio"]])
 
@@ -202,21 +189,21 @@ def generate_random_clips(stream_data, total_duration):
                 "-t",
                 str(current_clip_duration),
                 "-vf",
-                f"fps={FPS},scale={get_scale()}",
+                f"fps={FPS}",
                 "-c:v",
                 "libx264",
                 "-crf",
                 str(CRF),
                 "-c:a",
                 "aac",
+                "-video_track_timescale",
+                "90000",
                 "-y",
                 output_name,
             ]
         )
 
-        print(
-            f"Extracting clip {i + 1}/{actual_num_clips} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)..."
-        )
+        print(f"Extracting clip {i + 1}/{actual_num_clips} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)...")
 
         result = subprocess.run(command, capture_output=True, text=True)
 
@@ -228,6 +215,50 @@ def generate_random_clips(stream_data, total_duration):
         clip_files.append(output_name)
 
     return clip_files
+
+
+def concatenate_clips(clip_files, output_file):
+    if not clip_files:
+        print("No clips to concatenate.")
+        return
+
+    list_file = os.path.join(TEMP_DIR, "concat_list.txt")
+
+    with open(list_file, "w") as f:
+        for clip in clip_files:
+            abs_clip_path = os.path.abspath(clip)
+            f.write(f"file '{abs_clip_path}'\n")
+
+    command = [
+        "ffmpeg",
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        list_file,
+        "-c",
+        "copy",
+        "-video_track_timescale",
+        "90000",
+        "-y",
+        output_file,
+    ]
+
+    print("Concatenating clips...")
+    result = subprocess.run(command, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        print("Error concatenating clips:")
+        print(result.stderr)
+    else:
+        print("Cleaning up temporary files...")
+
+        for clip in clip_files:
+            os.remove(clip)
+
+        os.remove(list_file)
+        print(f"Video saved as {output_file}")
 
 
 def get_stream_duration(url):
@@ -255,10 +286,6 @@ def get_stream_duration(url):
     return 0.0
 
 
-def get_scale():
-    return f"{WIDTH}:{HEIGHT}"
-
-
 def is_url(s):
     return s.startswith(("http", "https"))
 
@@ -269,49 +296,6 @@ def is_youtube(s):
             return True
 
     return False
-
-
-def concatenate_clips(clip_files, output_file):
-    if not clip_files:
-        print("No clips to concatenate.")
-        return
-
-    list_file = os.path.join(TEMP_DIR, "concat_list.txt")
-
-    with open(list_file, "w") as f:
-        for clip in clip_files:
-            # Use absolute path to ensure ffmpeg finds the file regardless of cwd
-            abs_clip_path = os.path.abspath(clip)
-            f.write(f"file '{abs_clip_path}'\n")
-
-    command = [
-        "ffmpeg",
-        "-f",
-        "concat",
-        "-safe",
-        "0",
-        "-i",
-        list_file,
-        "-c",
-        "copy",
-        "-y",
-        output_file,
-    ]
-
-    print("Concatenating clips...")
-    result = subprocess.run(command, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        print("Error concatenating clips:")
-        print(result.stderr)
-    else:
-        print("Cleaning up temporary files...")
-
-        for clip in clip_files:
-            os.remove(clip)
-
-        os.remove(list_file)
-        print(f"Video saved as {output_file}")
 
 
 def main():
