@@ -17,6 +17,7 @@
 # clip_duration = 6
 # num_clips = 10
 # path = "/home/memphis/toilet"
+# fps = 30
 
 # Usage:
 
@@ -55,6 +56,7 @@ if not os.path.exists(CONFIG_PATH):
 CLIP_DURATION = 6
 NUM_CLIPS = 10
 PATH = os.path.dirname(os.path.abspath(__file__))
+FPS = 30
 
 # Read configuration from TOML
 with open(CONFIG_PATH, "rb") as f:
@@ -65,6 +67,9 @@ if "clip_duration" in config_data:
 
 if "num_clips" in config_data:
     NUM_CLIPS = int(config_data["num_clips"])
+
+if "fps" in config_data:
+    FPS = int(config_data["fps"])
 
 if "path" in config_data:
     PATH = config_data["path"]
@@ -121,15 +126,15 @@ def get_stream_duration(url):
     return 0.0
 
 
-def generate_random_clips(url, total_duration, num_clips, clip_duration):
+def generate_random_clips(url, total_duration):
     clip_files = []
-    max_start = total_duration - clip_duration
+    max_start = total_duration - CLIP_DURATION
 
     if max_start <= 0:
         print("Stream is too short.")
         return []
 
-    for i in range(num_clips):
+    for i in range(NUM_CLIPS):
         start_time = random.uniform(0, max_start)
         output_name = os.path.join(TEMP_DIR, f"temp_clip_{i}.mp4")
 
@@ -140,8 +145,8 @@ def generate_random_clips(url, total_duration, num_clips, clip_duration):
             "-i",
             url,
             "-t",
-            str(clip_duration),
-            "-r", str(fps),
+            str(CLIP_DURATION),
+            "-r", str(FPS),
             "-c:v",
             "libx264",
             "-c:a",
@@ -150,7 +155,7 @@ def generate_random_clips(url, total_duration, num_clips, clip_duration):
             output_name,
         ]
 
-        print(f"Extracting clip {i + 1}/{num_clips} starting at {start_time:.2f}s...")
+        print(f"Extracting clip {i + 1}/{NUM_CLIPS} starting at {start_time:.2f}s...")
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         clip_files.append(output_name)
 
@@ -237,7 +242,7 @@ def main():
         return
 
     print(f"Stream duration: {total_duration} seconds.")
-    clips = generate_random_clips(stream_url, total_duration, NUM_CLIPS, CLIP_DURATION)
+    clips = generate_random_clips(stream_url, total_duration)
     concatenate_clips(clips, output_file)
 
 

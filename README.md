@@ -25,6 +25,7 @@ It is empty but you can make it look like this:
 clip_duration = 6
 num_clips = 10
 path = "/home/memphis/toilet"
+fps = 30
 ```
 
 ## Usage
