@@ -153,7 +153,9 @@ def generate_clip_sections(target_duration, total_stream_duration):
 
     while current_sum < target_duration:
         # Bias the duration heavily towards 6.0 seconds
-        clip_length = random.triangular(MIN_CLIP_DURATION, MAX_CLIP_DURATION, AVG_CLIP_DURATION)
+        clip_length = random.triangular(
+            MIN_CLIP_DURATION, MAX_CLIP_DURATION, AVG_CLIP_DURATION
+        )
 
         if current_sum + clip_length > target_duration:
             clip_length = target_duration - current_sum
