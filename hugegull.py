@@ -116,6 +116,98 @@ def get_random_name():
     return str(int(time.time()))
 
 
+def resolve_youtube(url):
+    print("Resolving YouTube URL via yt-dlp...")
+
+    # Ask for the best video up to 1080p, plus the best audio
+    command = [
+        "yt-dlp",
+        "-f",
+        "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best",
+        "--dump-json",
+        url
+    ]
+
+    result = subprocess.run(command, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        print("Error resolving YouTube URL. yt-dlp output:")
+        print(result.stderr)
+        return url, 0.0
+
+    try:
+        metadata = json.loads(result.stdout)
+        duration = 0.0
+
+        if "duration" in metadata and metadata["duration"] is not None:
+            duration = float(metadata["duration"])
+
+        # Check if yt-dlp split the audio and video into two distinct streams
+        if "requested_formats" in metadata:
+            v_url = metadata["requested_formats"][0]["url"]
+            a_url = metadata["requested_formats"][1]["url"]
+            return {"video": v_url, "audio": a_url}, duration
+        else:
+            return {"video": metadata.get("url"), "audio": None}, duration
+
+    except Exception as e:
+        print(f"Error parsing yt-dlp output: {e}")
+        return url, 0.0
+
+
+def generate_random_clips(stream_data, total_duration):
+    clip_files = []
+    max_start = total_duration - CLIP_DURATION
+
+    if max_start <= 0:
+        print("Stream is too short.")
+        return []
+
+    # Determine if we have a dictionary (split YouTube streams) or a plain string (standard m3u8)
+    is_split_stream = isinstance(stream_data, dict) and stream_data.get("audio") is not None
+    v_url = stream_data["video"] if isinstance(stream_data, dict) else stream_data
+
+    for i in range(NUM_CLIPS):
+        start_time = random.uniform(0, max_start)
+        output_name = os.path.join(TEMP_DIR, f"temp_clip_{i}.mp4")
+
+        command = [
+            "ffmpeg",
+            "-ss", str(start_time),
+            "-i", v_url
+        ]
+
+        # If we have a separate audio stream, inject it into the ffmpeg command
+        if is_split_stream:
+            command.extend([
+                "-ss", str(start_time),
+                "-i", stream_data["audio"]
+            ])
+
+        command.extend([
+            "-t", str(CLIP_DURATION),
+            "-r", str(FPS),
+            "-vf", f"scale={get_scale()}",
+            "-c:v", "libx264",
+            "-crf", str(CRF),
+            "-c:a", "aac",
+            "-y", output_name
+        ])
+
+        print(f"Extracting clip {i + 1}/{NUM_CLIPS} starting at {start_time:.2f}s...")
+
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"Error extracting clip {i}:")
+            print(result.stderr)
+            continue
+
+        clip_files.append(output_name)
+
+    return clip_files
+
+
 def get_stream_duration(url):
     command = [
         "ffprobe",
@@ -145,57 +237,12 @@ def get_scale():
     return f"{WIDTH}:{HEIGHT}"
 
 
-def generate_random_clips(url, total_duration):
-    clip_files = []
-    max_start = total_duration - CLIP_DURATION
-
-    if max_start <= 0:
-        print("Stream is too short.")
-        return []
-
-    for i in range(NUM_CLIPS):
-        start_time = random.uniform(0, max_start)
-        output_name = os.path.join(TEMP_DIR, f"temp_clip_{i}.mp4")
-
-        command = [
-            "ffmpeg",
-            "-ss",
-            str(start_time),
-            "-i",
-            url,
-            "-t",
-            str(CLIP_DURATION),
-            "-r",
-            str(FPS),
-            "-vf",
-            f"scale={get_scale()}",  # Force uniform resolution to prevent concat crashes
-            "-c:v",
-            "libx264",
-            "-crf",
-            str(CRF),
-            "-c:a",
-            "aac",
-            "-y",
-            output_name,
-        ]
-
-        print(f"Extracting clip {i + 1}/{NUM_CLIPS} starting at {start_time:.2f}s...")
-
-        # Capture output instead of using DEVNULL to expose potential errors
-        result = subprocess.run(command, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            print(f"Error extracting clip {i}:")
-            print(result.stderr)
-            continue
-
-        clip_files.append(output_name)
-
-    return clip_files
-
-
 def is_url(s):
     return s.startswith(("http", "https"))
+
+
+def is_youtube(s):
+    return is_url(s) and ("youtube.com" in s or "youtu.be" in s)
 
 
 def concatenate_clips(clip_files, output_file):
@@ -278,7 +325,12 @@ def main():
         counter += 1
 
     print("Fetching stream duration...")
-    total_duration = get_stream_duration(stream_url)
+    total_duration = 0.0
+
+    if is_youtube(stream_url):
+        stream_url, total_duration = resolve_youtube(stream_url)
+    else:
+        total_duration = get_stream_duration(stream_url)
 
     if total_duration <= 0:
         print("Could not determine stream duration or stream is live/endless.")
