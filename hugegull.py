@@ -61,6 +61,8 @@ NUM_CLIPS = 8
 PATH = os.path.dirname(os.path.abspath(__file__))
 FPS = 30
 CRF = 28
+WIDTH = 1920
+HEIGHT = 1080
 
 # Read configuration from TOML
 with open(CONFIG_PATH, "rb") as f:
