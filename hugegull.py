@@ -203,7 +203,9 @@ def generate_random_clips(stream_data, total_duration):
             ]
         )
 
-        print(f"Extracting clip {i + 1}/{actual_num_clips} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)...")
+        print(
+            f"Extracting clip {i + 1}/{actual_num_clips} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)..."
+        )
 
         result = subprocess.run(command, capture_output=True, text=True)
 
