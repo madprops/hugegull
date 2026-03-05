@@ -20,12 +20,12 @@
 
 # Usage:
 
+# hgg "https://something.m3u8"
+
+# Or:
 # export HUGE_URL="https://something.m3u8"
 # hgg
 
-# Or:
-
-# hgg "https://something.m3u8"
 
 import subprocess
 import random
