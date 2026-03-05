@@ -56,8 +56,10 @@ if not os.path.exists(CONFIG_PATH):
         f.write("")
 
 # Default configuration values
-CLIP_DURATION = 6
-NUM_CLIPS = 8
+MIN_CLIP_DURATION = 2.0
+MAX_CLIP_DURATION = 8.0
+MIN_CLIPS = 5
+MAX_CLIPS = 12
 PATH = os.path.dirname(os.path.abspath(__file__))
 FPS = 30
 CRF = 30
@@ -68,11 +70,17 @@ HEIGHT = 1080
 with open(CONFIG_PATH, "rb") as f:
     config_data = tomllib.load(f)
 
-if "clip_duration" in config_data:
-    CLIP_DURATION = int(config_data["clip_duration"])
+if "min_clip_duration" in config_data:
+    MIN_CLIP_DURATION = float(config_data["min_clip_duration"])
 
-if "num_clips" in config_data:
-    NUM_CLIPS = int(config_data["num_clips"])
+if "max_clip_duration" in config_data:
+    MAX_CLIP_DURATION = float(config_data["max_clip_duration"])
+
+if "min_clips" in config_data:
+    MIN_CLIPS = int(config_data["min_clips"])
+
+if "max_clips" in config_data:
+    MAX_CLIPS = int(config_data["max_clips"])
 
 if "fps" in config_data:
     FPS = int(config_data["fps"])
@@ -139,10 +147,10 @@ def resolve_youtube(url):
         metadata = json.loads(result.stdout)
         duration = 0.0
 
-        if "duration" in metadata and metadata["duration"] is not None:
-            duration = float(metadata["duration"])
+        if "duration" in metadata:
+            if metadata["duration"] is not None:
+                duration = float(metadata["duration"])
 
-        # Check if yt-dlp split the audio and video into two distinct streams
         if "requested_formats" in metadata:
             v_url = metadata["requested_formats"][0]["url"]
             a_url = metadata["requested_formats"][1]["url"]
@@ -157,20 +165,29 @@ def resolve_youtube(url):
 
 def generate_random_clips(stream_data, total_duration):
     clip_files = []
-    max_start = total_duration - CLIP_DURATION
 
-    if max_start <= 0:
-        print("Stream is too short.")
-        return []
+    actual_num_clips = random.randint(MIN_CLIPS, MAX_CLIPS)
+    print(f"Targeting {actual_num_clips} random clips for this run...")
 
-    # Determine if we have a dictionary (split YouTube streams) or a plain string (standard m3u8)
-    is_split_stream = (
-        isinstance(stream_data, dict) and stream_data.get("audio") is not None
-    )
+    is_split_stream = False
 
-    v_url = stream_data["video"] if isinstance(stream_data, dict) else stream_data
+    if isinstance(stream_data, dict):
+        if stream_data.get("audio") is not None:
+            is_split_stream = True
 
-    for i in range(NUM_CLIPS):
+    v_url = stream_data
+
+    if isinstance(stream_data, dict):
+        v_url = stream_data["video"]
+
+    for i in range(actual_num_clips):
+        current_clip_duration = random.uniform(MIN_CLIP_DURATION, MAX_CLIP_DURATION)
+        max_start = total_duration - current_clip_duration
+
+        if max_start <= 0:
+            print("Stream is too short to extract more clips.")
+            break
+
         start_time = random.uniform(0, max_start)
         output_name = os.path.join(TEMP_DIR, f"temp_clip_{i}.mp4")
 
@@ -183,11 +200,9 @@ def generate_random_clips(stream_data, total_duration):
         command.extend(
             [
                 "-t",
-                str(CLIP_DURATION),
-                "-r",
-                str(FPS),
+                str(current_clip_duration),
                 "-vf",
-                f"scale={get_scale()}",
+                f"fps={FPS},scale={get_scale()}",
                 "-c:v",
                 "libx264",
                 "-crf",
@@ -199,8 +214,7 @@ def generate_random_clips(stream_data, total_duration):
             ]
         )
 
-        print(f"Extracting clip {i + 1}/{NUM_CLIPS} starting at {start_time:.2f}s...")
-
+        print(f"Extracting clip {i + 1}/{actual_num_clips} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)...")
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
@@ -247,7 +261,11 @@ def is_url(s):
 
 
 def is_youtube(s):
-    return is_url(s) and ("youtube.com" in s or "youtu.be" in s)
+    if is_url(s):
+        if ("youtube.com" in s) or ("youtu.be" in s):
+            return True
+
+    return False
 
 
 def concatenate_clips(clip_files, output_file):
