@@ -1,20 +1,51 @@
 # Note: You can use the HUGE_URL envar optionally
 # instead of sending a url in the command.
 
+# The config file resides in ~/.config/hugegull/config.toml
+# It is empty but you can make it look like this:
+
+# clip_duration = 6
+# num_clips = 10
+# path = "/home/memphis/toilet"
+
 import subprocess
 import random
 import os
 import json
 import sys
 import time
+import tomllib
 
-# Editable: Clip config
+# Configuration path setup
+CONFIG_PATH = os.path.expanduser("~/.config/hugegull/config.toml")
+CONFIG_DIR = os.path.dirname(CONFIG_PATH)
+
+if not os.path.exists(CONFIG_DIR):
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+
+if not os.path.exists(CONFIG_PATH):
+    with open(CONFIG_PATH, "w") as f:
+        f.write("")
+
+# Default configuration values
 CLIP_DURATION = 6
 NUM_CLIPS = 10
-
-# Editable: Point to a dir
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Read configuration from TOML
+with open(CONFIG_PATH, "rb") as f:
+    config_data = tomllib.load(f)
+
+if "clip_duration" in config_data:
+    CLIP_DURATION = int(config_data["clip_duration"])
+
+if "num_clips" in config_data:
+    NUM_CLIPS = int(config_data["num_clips"])
+
+if "path" in config_data:
+    SCRIPT_DIR = config_data["path"]
+
+# Resolve output and temp directories based on SCRIPT_DIR
 TEMP_DIR = os.path.join(SCRIPT_DIR, "temp")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 
@@ -101,9 +132,6 @@ def concatenate_clips(clip_files, output_file):
     os.remove(list_file)
     print(f"Video saved as {output_file}")
 
-def is_url(s):
-    return s.startswith(("http", "https"))
-
 def main():
     stream_url = None
     base_name = None
@@ -114,7 +142,7 @@ def main():
     elif len(sys.argv) == 2:
         arg = sys.argv[1]
 
-        if is_url(arg):
+        if arg.startswith("http"):
             stream_url = arg
             base_name = str(int(time.time()))
         else:
@@ -125,7 +153,7 @@ def main():
         base_name = str(int(time.time()))
 
     if not stream_url:
-        print("Usage: python script.py [<m3u8_url>] [<output_name_without_ext>]")
+        print("Usage: python hugegull.py [<m3u8_url>] [<output_name>]")
         print("Or set HUGE_URL environment variable.")
         sys.exit(1)
 
