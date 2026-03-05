@@ -15,7 +15,7 @@
 # It is empty but you can make it look like this:
 
 # clip_duration = 6
-# num_clips = 10
+# num_clips = 8
 # path = "/home/memphis/toilet"
 # fps = 30
 # crf = 30
@@ -55,7 +55,7 @@ if not os.path.exists(CONFIG_PATH):
 
 # Default configuration values
 CLIP_DURATION = 6
-NUM_CLIPS = 10
+NUM_CLIPS = 8
 PATH = os.path.dirname(os.path.abspath(__file__))
 FPS = 30
 CRF = 30

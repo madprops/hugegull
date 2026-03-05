@@ -1,6 +1,6 @@
 ![](seagulls.jpg)
 
-This gets 10 random sections from a stream video.
+This gets 8 random sections from a stream video.
 
 Each section is 6 seconds long.
 
@@ -23,7 +23,7 @@ It is empty but you can make it look like this:
 
 ```
 clip_duration = 6
-num_clips = 10
+num_clips = 8
 path = "/home/memphis/toilet"
 fps = 30
 crf = 30
