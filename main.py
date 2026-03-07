@@ -1,7 +1,5 @@
 import subprocess
-import os
 import sys
-import shutil
 
 from config import config
 from utils import utils
@@ -14,37 +12,12 @@ def main():
         utils.print("Or set HUGE_URL environment variable.")
         sys.exit(1)
 
-    os.makedirs(config.project_dir, exist_ok=True)
-    os.makedirs(config.output_dir, exist_ok=True)
-
-    output_file = os.path.join(config.output_dir, f"{config.name}.mp4")
-    counter = 1
-
-    while os.path.exists(output_file):
-        output_file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
-        counter += 1
-
-    utils.info("Starting...")
-    total_duration = 0.0
-
-    if utils.is_site(config.url):
-        config.url, total_duration = engine.resolve_with_ytdlp(config.url)
-    else:
-        total_duration = engine.get_stream_duration(config.url)
-
-    if total_duration <= 0:
-        utils.info("Could not determine stream duration or stream is live/endless.")
-        shutil.rmtree(config.project_dir, ignore_errors=True)
-        return
-
-    clips = engine.generate_random_clips(config.url, total_duration)
-    engine.concatenate_clips(clips, output_file)
-    notify_done()
+    engine.start()
+    notify_done("Video Complete")
 
 
-def notify_done():
+def notify_done(message):
     title = "🤯 hugegull"
-    message = "Video Complete"
 
     try:
         subprocess.run(["notify-send", title, message], check=True)

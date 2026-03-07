@@ -9,13 +9,46 @@ from utils import utils
 
 
 class Engine:
-    def resolve_with_ytdlp(self, url):
+    def __init__(self):
+        self.url = config.url
+        self.clips = []
+        self.duration = 0.0
+        self.prepare()
+
+    def prepare(self):
+        os.makedirs(config.project_dir, exist_ok=True)
+        os.makedirs(config.output_dir, exist_ok=True)
+
+        self.file = os.path.join(config.output_dir, f"{config.name}.mp4")
+        counter = 1
+
+        while os.path.exists(self.file):
+            self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
+            counter += 1
+
+    def start(self):
+        utils.info("Starting...")
+
+        if utils.is_site(self.url):
+            self.resolve_with_ytdlp()
+        else:
+            self.get_stream_duration()
+
+        if self.duration <= 0:
+            utils.info("Could not determine stream duration or stream is live/endless.")
+            shutil.rmtree(config.project_dir, ignore_errors=True)
+            return
+
+        self.generate_random_clips()
+        self.concatenate_clips()
+
+    def resolve_with_ytdlp(self):
         command = [
             "yt-dlp",
             "-f",
             "bestvideo[height<=1080]+bestaudio/best",
             "--dump-json",
-            url,
+            self.url,
         ]
 
         result = subprocess.run(command, capture_output=True, text=True)
@@ -23,7 +56,7 @@ class Engine:
         if result.returncode != 0:
             utils.error("Error resolving URL. yt-dlp output:")
             utils.error(result.stderr)
-            return url, 0.0
+            self.duration = 0.0
 
         try:
             metadata = json.loads(result.stdout)
@@ -37,18 +70,21 @@ class Engine:
                 if len(metadata["requested_formats"]) >= 2:
                     v_url = metadata["requested_formats"][0]["url"]
                     a_url = metadata["requested_formats"][1]["url"]
-                    return {"video": v_url, "audio": a_url}, duration
+                    self.url = {"video": v_url, "audio": a_url}
+                    self.duration = duration
                 else:
-                    return {
+                    self.url = {
                         "video": metadata["requested_formats"][0]["url"],
                         "audio": None,
-                    }, duration
+                    }
+
+                    self.duration = duration
             else:
-                return {"video": metadata.get("url"), "audio": None}, duration
+                self.url = {"video": metadata.get("url"), "audio": None}
+                self.duration = duration
 
         except Exception as e:
             utils.error(f"Error parsing yt-dlp output: {e}")
-            return url, 0.0
 
     def generate_clip_sections(self, target_duration, total_stream_duration):
         sections = []
@@ -75,42 +111,41 @@ class Engine:
             if max_start <= 0:
                 break
 
-            start_time = random.uniform(0, max_start)
-            sections.append({"start": start_time, "duration": clip_length})
+            start = random.uniform(0, max_start)
+            sections.append({"start": start, "duration": clip_length})
 
             current_sum += clip_length
 
         return sections
 
-    def generate_random_clips(self, stream_data, total_duration):
-        clip_files = []
-        sections = self.generate_clip_sections(config.duration, total_duration)
+    def generate_random_clips(self):
+        sections = self.generate_clip_sections(config.duration, self.duration)
         total_sections = len(sections)
         is_split_stream = False
 
-        if isinstance(stream_data, dict):
-            if stream_data.get("audio") is not None:
+        if isinstance(self.url, dict):
+            if self.url.get("audio") is not None:
                 is_split_stream = True
 
-        v_url = stream_data
+        v_url = self.url
 
-        if isinstance(stream_data, dict):
-            v_url = stream_data["video"]
+        if isinstance(self.url, dict):
+            v_url = self.url["video"]
 
         for i in range(total_sections):
             section = sections[i]
-            start_time = section["start"]
-            current_clip_duration = section["duration"]
-            output_name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
-            command = ["ffmpeg", "-ss", str(start_time), "-i", v_url]
+            start = section["start"]
+            duration = section["duration"]
+            name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
+            command = ["ffmpeg", "-ss", str(start), "-i", v_url]
 
             if is_split_stream:
-                command.extend(["-ss", str(start_time), "-i", stream_data["audio"]])
+                command.extend(["-ss", str(start), "-i", self.url["audio"]])
 
             command.extend(
                 [
                     "-t",
-                    str(current_clip_duration),
+                    str(duration),
                     "-vf",
                     f"fps={config.fps}",
                     "-c:v",
@@ -122,12 +157,12 @@ class Engine:
                     "-video_track_timescale",
                     "90000",
                     "-y",
-                    output_name,
+                    name,
                 ]
             )
 
             utils.action(
-                f"Clip {i + 1}/{total_sections} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)"
+                f"Clip {i + 1}/{total_sections} starting at {round(start)}s (Duration: {round(duration)}s)"
             )
 
             result = subprocess.run(command, capture_output=True, text=True)
@@ -137,19 +172,17 @@ class Engine:
                 utils.error(result.stderr)
                 continue
 
-            clip_files.append(output_name)
+            self.clips.append(name)
 
-        return clip_files
-
-    def concatenate_clips(self, clip_files, output_file):
-        if not clip_files:
+    def concatenate_clips(self):
+        if not self.clips:
             utils.error("No clips to concatenate.")
             return
 
         list_file = os.path.join(config.project_dir, "concat_list.txt")
 
         with open(list_file, "w") as f:
-            for clip in clip_files:
+            for clip in self.clips:
                 abs_clip_path = os.path.abspath(clip)
                 f.write(f"file '{abs_clip_path}'\n")
 
@@ -166,7 +199,7 @@ class Engine:
             "-video_track_timescale",
             "90000",
             "-y",
-            output_file,
+            self.file,
         ]
 
         result = subprocess.run(command, capture_output=True, text=True)
@@ -175,11 +208,10 @@ class Engine:
             utils.error("Error concatenating clips:")
             utils.error(result.stderr)
         else:
-            # Remove the unique run directory entirely
             shutil.rmtree(config.project_dir, ignore_errors=True)
-            utils.done(f"Saved as {output_file}")
+            utils.done(f"Saved as {self.file}")
 
-    def get_stream_duration(self, url):
+    def get_stream_duration(self):
         command = [
             "ffprobe",
             "-v",
@@ -187,21 +219,19 @@ class Engine:
             "-print_format",
             "json",
             "-show_format",
-            url,
+            self.url,
         ]
 
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
-            return 0.0
+            return
 
         metadata = json.loads(result.stdout)
 
         if "format" in metadata:
             if "duration" in metadata["format"]:
-                return float(metadata["format"]["duration"])
-
-        return 0.0
+                self.duration = float(metadata["format"]["duration"])
 
 
 engine = Engine()
