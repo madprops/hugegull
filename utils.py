@@ -7,7 +7,7 @@ import shutil
 
 
 class Utils:
-    def get_clipboard_text():
+    def get_clipboard_text(self):
         try:
             if shutil.which("xclip"):
                 result = subprocess.run(
@@ -30,7 +30,7 @@ class Utils:
 
         return ""
 
-    def get_random_name():
+    def get_random_name(self):
         dict_path = "/usr/share/dict/words"
 
         if os.path.exists(dict_path):
@@ -51,7 +51,7 @@ class Utils:
 
         return str(int(time.time()))
 
-    def is_url(s):
+    def is_url(self, s):
         return s.startswith(("http", "https"))
 
 
