@@ -7,6 +7,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import Button, TextArea, Frame
 from prompt_toolkit.styles import Style
 from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.utils import get_cwidth
 
 from config import config
 from utils import utils
@@ -152,7 +153,7 @@ class App:
             handler=handler,
             left_symbol="",
             right_symbol="",
-            width=len(text) + 2,
+            width=get_cwidth(text) + 2,
         )
 
 
