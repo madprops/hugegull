@@ -53,7 +53,6 @@ class App:
                     HSplit([self.url_input, self.button_container]),
                     title=f"HugeGull v{self.version}",
                 ),
-
                 Frame(self.output_window),
             ]
         )
