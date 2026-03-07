@@ -118,7 +118,6 @@ class App:
 
         if utils.is_url(clip_text):
             self.url_input.text = clip_text
-            self.start_clicked()
         else:
             self.log("Clipboard does not contain a valid URL.", "class:error")
 
