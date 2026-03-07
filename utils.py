@@ -79,7 +79,7 @@ class Utils:
         return os.environ.get(what, "")
 
     def notify(self, message):
-        title = "🤯 HugeGull"
+        title = "🤯 hugegull"
 
         try:
             subprocess.run(["notify-send", title, message], check=True)

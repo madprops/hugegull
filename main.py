@@ -1,14 +1,48 @@
+import re
 import sys
 
 from config import config
 from utils import utils
 from engine import engine
 
+def get_info():
+    name = ""
+    version = ""
+
+    try:
+        with open("setup.py", "r") as f:
+            content = f.read()
+            match = re.search(r'name="([^"]+)"', content)
+
+            if match:
+                name = match.group(1)
+
+            match = re.search(r'version="([^"]+)"', content)
+
+            if match:
+                version = match.group(1)
+    except FileNotFoundError:
+        pass
+
+    return name, version
+
+def show_usage():
+    utils.print("Usage: python /path/to/main.py <url> <name>")
+    utils.print("Or set HUGE_URL and HUGE_NAME env vars.")
+    utils.print("Suggested alias: hgg")
+
 
 def main():
+    args = sys.argv[1:]
+
+    if "--help" in args or "--version" in args:
+        name, version = get_info()
+        utils.print(f"{name} v{version}")
+        show_usage()
+        sys.exit(0)
+
     if not config.url:
-        utils.print("Usage: python main.py [<url>] [<name>]")
-        utils.print("Or set HUGE_URL and HUGE_NAME env vars.")
+        show_usage()
         sys.exit(1)
 
     engine.start()
