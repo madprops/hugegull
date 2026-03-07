@@ -5,6 +5,7 @@ from config import config
 from utils import utils
 from engine import engine
 
+
 def get_info():
     name = ""
     version = ""
@@ -25,6 +26,7 @@ def get_info():
         pass
 
     return name, version
+
 
 def show_usage():
     utils.print("Usage: python /path/to/main.py <url> <name>")
