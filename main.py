@@ -17,7 +17,7 @@ def main():
 
 
 def notify(message):
-    title = "🤯 hugegull"
+    title = "🤯 HugeGull"
 
     try:
         subprocess.run(["notify-send", title, message], check=True)
