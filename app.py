@@ -26,19 +26,19 @@ class App:
 
         self.output_window = Window(content=FormattedTextControl(self.get_log_text))
 
+        self.paste_button = Button("Paste", handler=self.paste_clicked)
         self.start_button = Button("Start", handler=self.start_clicked)
         self.abort_button = Button("Abort", handler=self.abort_clicked)
         self.clear_button = Button("Clear", handler=self.clear_clicked)
-        self.paste_button = Button("Paste", handler=self.paste_clicked)
         self.exit_button = Button("Exit", handler=self.exit_clicked)
 
         # Adding a dummy Window() at the end acts as a spacer to consume the rest of the empty space
         self.button_container = VSplit(
             [
+                self.paste_button,
                 self.start_button,
                 self.abort_button,
                 self.clear_button,
-                self.paste_button,
                 self.exit_button,
                 Window(),
             ],

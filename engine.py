@@ -204,7 +204,7 @@ class Engine:
 
     def run_pipeline(self, stream_url):
         self.abort_event.clear()
-        base_name = self.get_random_name()
+        base_name = utils.get_random_name()
         run_id = str(int(time.time() * 1000))
         run_temp_dir = os.path.join(config.temp_dir, f"project_{run_id}")
 
