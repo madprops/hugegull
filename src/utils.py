@@ -97,5 +97,19 @@ class Utils:
 
         return str(path)
 
+    def open_file(self, path: str) -> None:
+        if not os.path.exists(path):
+            self.error(f"Error: The path '{path}' does not exist.")
+            return
+
+        try:
+            subprocess.Popen(
+                ["xdg-open", path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        except Exception as e:
+            self.error(f"Failed to open file: {e}")
+
 
 utils = Utils()

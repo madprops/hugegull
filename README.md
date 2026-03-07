@@ -9,6 +9,8 @@ Then it joins them into a single video.
 You can use the HUGE_URL env var.
 The output name can be ommitted to use a random name.
 
+`--open` can be used to open the file when ready.
+
 ## Installation
 
 ### Automatic (Recommended)

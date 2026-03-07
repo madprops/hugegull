@@ -21,6 +21,7 @@ class Config:
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.info_name = "hugegull"
         self.info_version = "0.0.0"
+        self.open = False
 
         self.env_url = utils.get_env("HUGE_URL")
         self.env_name = utils.get_env("HUGE_NAME")
@@ -47,6 +48,10 @@ class Config:
                 f.write("")
 
     def read_args(self) -> None:
+        if "--open" in sys.argv:
+            self.open = True
+            sys.argv.remove("--open")
+
         if len(sys.argv) >= 3:
             self.url = sys.argv[1]
             self.name = sys.argv[2]

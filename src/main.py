@@ -37,6 +37,9 @@ def main() -> None:
     engine.start()
     utils.notify("Video Complete")
 
+    if config.open:
+        utils.open_file(engine.file)
+
 
 if __name__ == "__main__":
     main()
