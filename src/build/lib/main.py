@@ -12,6 +12,7 @@ import sys
 from config import config
 from utils import utils
 from engine import engine
+from info import info
 
 
 def show_usage() -> None:
@@ -24,7 +25,7 @@ def main() -> None:
     args = sys.argv[1:]
 
     if "--help" in args or "--version" in args:
-        msg = f"{config.info_name} v{config.info_version}"
+        msg = f"{info.name} v{info.version}"
         utils.print(msg)
         show_usage()
         sys.exit(0)

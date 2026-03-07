@@ -1,6 +1,8 @@
 import glob
 from setuptools import setup
 
+from info import info
+
 modules = []
 
 for file_name in glob.glob("*.py"):
@@ -8,8 +10,8 @@ for file_name in glob.glob("*.py"):
         modules.append(file_name[:-3])
 
 setup(
-    name="hugegull",
-    version="1.1.0",
+    name=info.name,
+    version=info.version,
     py_modules=modules,
     entry_points={
         "console_scripts": [

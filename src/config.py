@@ -3,13 +3,9 @@ from __future__ import annotations
 import os
 import sys
 import time
+import tomllib
 
 from utils import utils
-
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore
 
 
 class Config:
@@ -32,7 +28,6 @@ class Config:
         self.read_args()
         self.make_dirs()
         self.read_file()
-        self.read_info()
 
         self.temp_dir = os.path.join(self.path, "temp")
         self.output_dir = os.path.join(self.path, "output")
@@ -82,16 +77,6 @@ class Config:
 
         if "path" in config_data:
             self.path = config_data["path"]
-
-    def read_info(self) -> None:
-        with open("info.toml", "rb") as f:
-            info = tomllib.load(f)
-
-        if "name" in info:
-            self.info_name = info["name"]
-
-        if "version" in info:
-            self.info_version = info["version"]
 
 
 config = Config()
