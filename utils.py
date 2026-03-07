@@ -1,3 +1,11 @@
+import subprocess
+import random
+import os
+import time
+import re
+import shutil
+
+
 class Utils:
     def get_clipboard_text():
         try:
@@ -5,18 +13,14 @@ class Utils:
                 result = subprocess.run(
                     ["xclip", "-o", "-selection", "clipboard"],
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
 
                 if result.returncode == 0:
                     return result.stdout.strip()
 
             if shutil.which("wl-paste"):
-                result = subprocess.run(
-                    ["wl-paste"],
-                    capture_output=True,
-                    text=True
-                )
+                result = subprocess.run(["wl-paste"], capture_output=True, text=True)
 
                 if result.returncode == 0:
                     return result.stdout.strip()
@@ -27,9 +31,6 @@ class Utils:
         return ""
 
     def notify_done():
-        if abort_event.is_set():
-            return
-
         title = "🤯 hugegull"
         message = "Video Complete"
 
@@ -58,3 +59,6 @@ class Utils:
                 return f"{selected[0]}_{selected[1]}"
 
         return str(int(time.time()))
+
+    def is_url(s):
+        return s.startswith(("http", "https"))

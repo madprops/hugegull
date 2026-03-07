@@ -1,15 +1,44 @@
-log = Log()
+import subprocess
+import random
+import os
+import json
+import sys
+import time
+import re
+import shutil
+import threading
+
+from Log import log
+from Utils import utils
+
+
+class CommandResult:
+    def __init__(self, returncode, stdout, stderr):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
 
 class Engine:
-    def get_stream_duration(url):
+    def __init__():
+        self.abort_event = threading.Event()
+        self.active_process = None
+        self.process_lock = threading.Lock()
+
+    def get_stream_duration(self, url):
         command = [
-            "ffprobe", "-v", "quiet", "-print_format", "json",
-            "-show_format", url,
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_format",
+            url,
         ]
 
-        result = run_cancellable_command(command)
+        result = self.run_cancellable_command(command)
 
-        if abort_event.is_set():
+        if self.abort_event.is_set():
             return 0.0
 
         if result.returncode != 0:
@@ -23,7 +52,7 @@ class Engine:
 
         return 0.0
 
-    def generate_clip_sections(target_duration, total_stream_duration):
+    def generate_clip_sections(self, target_duration, total_stream_duration):
         sections = []
         current_sum = 0.0
 
@@ -53,13 +82,14 @@ class Engine:
 
         return sections
 
-
-    def generate_random_clips(stream_data, total_duration, run_temp_dir):
+    def generate_random_clips(self, stream_data, total_duration, run_temp_dir):
         clip_files = []
-        sections = generate_clip_sections(DURATION, total_duration)
+        sections = self.generate_clip_sections(DURATION, total_duration)
         total_sections = len(sections)
 
-        log.add(f"Targeting {total_sections} random clips for this run...", "class:info")
+        log.add(
+            f"Targeting {total_sections} random clips for this run...", "class:info"
+        )
 
         is_split_stream = False
 
@@ -73,7 +103,7 @@ class Engine:
             v_url = stream_data["video"]
 
         for i in range(total_sections):
-            if abort_event.is_set():
+            if self.abort_event.is_set():
                 log.add("Clip generation aborted.", "class:error")
                 break
 
@@ -89,21 +119,31 @@ class Engine:
 
             command.extend(
                 [
-                    "-t", str(current_clip_duration),
-                    "-vf", f"fps={FPS}",
-                    "-c:v", "libx264",
-                    "-crf", str(CRF),
-                    "-c:a", "aac",
-                    "-video_track_timescale", "90000",
-                    "-y", output_name,
+                    "-t",
+                    str(current_clip_duration),
+                    "-vf",
+                    f"fps={FPS}",
+                    "-c:v",
+                    "libx264",
+                    "-crf",
+                    str(CRF),
+                    "-c:a",
+                    "aac",
+                    "-video_track_timescale",
+                    "90000",
+                    "-y",
+                    output_name,
                 ]
             )
 
-            log.add(f"Extracting clip {i + 1}/{total_sections} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)...", "class:warning")
+            log.add(
+                f"Extracting clip {i + 1}/{total_sections} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)...",
+                "class:warning",
+            )
 
             result = run_cancellable_command(command)
 
-            if abort_event.is_set():
+            if self.abort_event.is_set():
                 break
 
             if result.returncode != 0:
@@ -115,9 +155,8 @@ class Engine:
 
         return clip_files
 
-
-    def concatenate_clips(clip_files, output_file, run_temp_dir):
-        if abort_event.is_set():
+    def concatenate_clips(self, clip_files, output_file, run_temp_dir):
+        if self.abort_event.is_set():
             return
 
         if not clip_files:
@@ -132,17 +171,25 @@ class Engine:
                 f.write(f"file '{abs_clip_path}'\n")
 
         command = [
-            "ffmpeg", "-f", "concat", "-safe", "0",
-            "-i", list_file,
-            "-c", "copy",
-            "-video_track_timescale", "90000",
-            "-y", output_file,
+            "ffmpeg",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            list_file,
+            "-c",
+            "copy",
+            "-video_track_timescale",
+            "90000",
+            "-y",
+            output_file,
         ]
 
         log.add("Concatenating clips...", "class:info")
         result = run_cancellable_command(command)
 
-        if abort_event.is_set():
+        if self.abort_event.is_set():
             log.add("Concatenation aborted.", "class:error")
             return
 
@@ -154,9 +201,8 @@ class Engine:
             shutil.rmtree(run_temp_dir, ignore_errors=True)
             log.add(f"Video saved as {output_file}", "class:success")
 
-
-    def run_pipeline(stream_url):
-        abort_event.clear()
+    def run_pipeline(self, stream_url):
+        self.abort_event.clear()
         base_name = get_random_name()
         run_id = str(int(time.time() * 1000))
         run_temp_dir = os.path.join(TEMP_DIR, f"project_{run_id}")
@@ -177,20 +223,103 @@ class Engine:
         if requires_ytdlp(stream_url):
             stream_url, total_duration = resolve_with_ytdlp(stream_url)
         else:
-            total_duration = get_stream_duration(stream_url)
+            total_duration = self.get_stream_duration(stream_url)
 
-        if abort_event.is_set():
+        if self.abort_event.is_set():
             log.add("Process aborted during duration fetch.", "class:error")
             shutil.rmtree(run_temp_dir, ignore_errors=True)
             return
 
         if total_duration <= 0:
-            log.add("Could not determine stream duration or stream is live/endless.", "class:error")
+            log.add(
+                "Could not determine stream duration or stream is live/endless.",
+                "class:error",
+            )
+
             shutil.rmtree(run_temp_dir, ignore_errors=True)
             return
 
         log.add(f"Stream duration: {total_duration} seconds.", "class:success")
 
-        clips = generate_random_clips(stream_url, total_duration, run_temp_dir)
-        concatenate_clips(clips, output_file, run_temp_dir)
+        clips = self.generate_random_clips(stream_url, total_duration, run_temp_dir)
+        self.concatenate_clips(clips, output_file, run_temp_dir)
         notify_done()
+
+    def requires_ytdlp(self, s):
+        if utils.is_url(s):
+            if "youtube.com" in s or "youtu.be" in s or "twitch.tv" in s:
+                return True
+
+        return False
+
+    def resolve_with_ytdlp(self, url):
+        log.add("Resolving URL via yt-dlp...", "class:info")
+
+        command = [
+            "yt-dlp",
+            "-f",
+            "bestvideo[height<=1080]+bestaudio/best",
+            "--dump-json",
+            url,
+        ]
+
+        result = run_cancellable_command(command)
+
+        if self.abort_event.is_set():
+            return url, 0.0
+
+        if result.returncode != 0:
+            log.add("Error resolving URL. yt-dlp output:", "class:error")
+            log.add(result.stderr, "class:error")
+            return url, 0.0
+
+        try:
+            metadata = json.loads(result.stdout)
+            duration = 0.0
+
+            if "duration" in metadata:
+                if metadata["duration"] is not None:
+                    duration = float(metadata["duration"])
+
+            if "requested_formats" in metadata:
+                if len(metadata["requested_formats"]) >= 2:
+                    v_url = metadata["requested_formats"][0]["url"]
+                    a_url = metadata["requested_formats"][1]["url"]
+                    return {"video": v_url, "audio": a_url}, duration
+                else:
+                    return {
+                        "video": metadata["requested_formats"][0]["url"],
+                        "audio": None,
+                    }, duration
+            else:
+                return {"video": metadata.get("url"), "audio": None}, duration
+
+        except Exception as e:
+            log.add(f"Error parsing yt-dlp output: {e}", "class:error")
+            return url, 0.0
+
+    def run_cancellable_command(self, command):
+        if abort_event.is_set():
+            return CommandResult(-1, "", "Aborted by user.")
+
+        with self.process_lock:
+            try:
+                self.active_process = subprocess.Popen(
+                    command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                )
+
+            except Exception as e:
+                return CommandResult(-1, "", str(e))
+
+        stdout, stderr = self.active_process.communicate()
+        returncode = self.active_process.returncode
+
+        with self.process_lock:
+            self.active_process = None
+
+        return CommandResult(returncode, stdout, stderr)
+
+    def start(self):
+        threading.Thread(target=self.run_pipeline, args=(url,), daemon=True).start()
+
+    engine = Engine()

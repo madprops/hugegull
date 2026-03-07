@@ -10,6 +10,9 @@ from prompt_toolkit.formatted_text import FormattedText
 
 from Config import config
 from Log import log
+from Utils import utils
+from Engine import engine
+
 
 class App:
     def __init__(self):
@@ -17,7 +20,7 @@ class App:
             text=DEFAULT_URL,
             prompt=" URL: ",
             multiline=False,
-            accept_handler=self.accept_url
+            accept_handler=self.accept_url,
         )
 
         self.output_window = Window(content=FormattedTextControl(get_log_text))
@@ -30,27 +33,37 @@ class App:
 
         # Adding a dummy Window() at the end acts as a spacer to consume the rest of the empty space
         self.button_container = VSplit(
-            [self.start_button, self.abort_button, self.clear_button, self.paste_button, self.exit_button, Window()],
-            padding=2
+            [
+                self.start_button,
+                self.abort_button,
+                self.clear_button,
+                self.paste_button,
+                self.exit_button,
+                Window(),
+            ],
+            padding=2,
         )
 
-        self.root_container = HSplit([
-            Frame(
-                HSplit([self.url_input, self.button_container]),
-                title="HugeGull"
-            ),
-            Frame(self.output_window),
-        ])
+        self.root_container = HSplit(
+            [
+                Frame(
+                    HSplit([self.url_input, self.button_container]), title="HugeGull"
+                ),
+                Frame(self.output_window),
+            ]
+        )
 
         self.layout = Layout(self.root_container)
 
-        self.style = Style.from_dict({
-            "info" : "cyan",
-            "success" : "green bold",
-            "error" : "red bold",
-            "warning" : "yellow",
-            "frame.label" : "bold",
-        })
+        self.style = Style.from_dict(
+            {
+                "info": "cyan",
+                "success": "green bold",
+                "error": "red bold",
+                "warning": "yellow",
+                "frame.label": "bold",
+            }
+        )
 
         self.kb = KeyBindings()
 
@@ -77,7 +90,7 @@ class App:
             return
 
         log.add(f"Starting job for: {url}", "class:success")
-        threading.Thread(target=run_pipeline, args=(url,), daemon=True).start()
+        engine.start()
 
     def abort_clicked(self):
         if not abort_event.is_set():
@@ -95,7 +108,7 @@ class App:
     def paste_clicked(self):
         clip_text = get_clipboard_text()
 
-        if is_url(clip_text):
+        if utils.is_url(clip_text):
             self.url_input.text = clip_text
             self.start_clicked()
         else:

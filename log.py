@@ -3,7 +3,6 @@ class Log:
         self.log_lines = []
         self.max_lines = 200
 
-
     def add(self, text, style="class:info"):
         self.log_lines.append((style, str(text) + "\n"))
 
@@ -14,9 +13,7 @@ class Log:
         if app:
             app.invalidate()
 
-
     def get_log_text():
         return FormattedText(log_lines)
-
 
     log = Log()
