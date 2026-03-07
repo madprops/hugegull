@@ -12,6 +12,8 @@ except ImportError:
 
 class Config:
     def __init__(self):
+        self.url = ""
+        self.name = ""
         self.fps = 30
         self.crf = 30
         self.duration = 45.0
@@ -19,7 +21,9 @@ class Config:
         self.avg_clip_duration = 6.0
         self.max_clip_duration = 9.0
         self.path = os.path.dirname(os.path.abspath(__file__))
-        self.env_url = os.environ.get("HUGE_URL", "")
+
+        self.env_url = utils.get_env("HUGE_URL")
+        self.env_name = utils.get_env("HUGE_NAME")
 
         self.read_args()
         self.make_dirs()
@@ -51,13 +55,12 @@ class Config:
 
             if utils.is_url(arg) or os.path.exists(arg):
                 self.url = arg
-                self.name = utils.get_random_name()
-            else:
-                self.url = self.env_url
-                self.name = arg
-        else:
+
+        if not self.url:
             self.url = self.env_url
-            self.name = utils.get_random_name()
+
+        if not self.name:
+            self.name = self.env_name or utils.get_random_name()
 
     def read_file(self):
         with open(self.config_path, "rb") as f:

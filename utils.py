@@ -74,5 +74,8 @@ class Utils:
     def done(self, text):
         self.print(text, "green")
 
+    def get_env(self, what):
+        return os.environ.get(what, "")
+
 
 utils = Utils()
