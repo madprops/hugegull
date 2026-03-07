@@ -82,7 +82,7 @@ class Engine:
 
         return sections
 
-    def generate_random_clips(self, stream_data, total_duration, run_temp_dir):
+    def generate_random_clips(self, stream_data, total_duration):
         clip_files = []
         sections = self.generate_clip_sections(config.duration, total_duration)
         total_sections = len(sections)
@@ -101,7 +101,7 @@ class Engine:
             section = sections[i]
             start_time = section["start"]
             current_clip_duration = section["duration"]
-            output_name = os.path.join(run_temp_dir, f"temp_clip_{i + 1}.mp4")
+            output_name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
             command = ["ffmpeg", "-ss", str(start_time), "-i", v_url]
 
             if is_split_stream:
@@ -141,12 +141,12 @@ class Engine:
 
         return clip_files
 
-    def concatenate_clips(self, clip_files, output_file, run_temp_dir):
+    def concatenate_clips(self, clip_files, output_file):
         if not clip_files:
             utils.error("No clips to concatenate.")
             return
 
-        list_file = os.path.join(run_temp_dir, "concat_list.txt")
+        list_file = os.path.join(config.project_dir, "concat_list.txt")
 
         with open(list_file, "w") as f:
             for clip in clip_files:
@@ -176,8 +176,8 @@ class Engine:
             utils.error(result.stderr)
         else:
             # Remove the unique run directory entirely
-            shutil.rmtree(run_temp_dir, ignore_errors=True)
-            utils.done(f"Video saved as {output_file}")
+            shutil.rmtree(config.project_dir, ignore_errors=True)
+            utils.done(f"Saved as {output_file}")
 
     def get_stream_duration(self, url):
         command = [

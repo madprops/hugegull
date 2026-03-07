@@ -1,7 +1,6 @@
 import subprocess
 import os
 import sys
-import time
 import shutil
 
 from config import config
@@ -15,10 +14,7 @@ def main():
         utils.print("Or set HUGE_URL environment variable.")
         sys.exit(1)
 
-    run_id = str(int(time.time() * 1000))
-    run_temp_dir = os.path.join(config.temp_dir, f"project_{run_id}")
-
-    os.makedirs(run_temp_dir, exist_ok=True)
+    os.makedirs(config.project_dir, exist_ok=True)
     os.makedirs(config.output_dir, exist_ok=True)
 
     output_file = os.path.join(config.output_dir, f"{config.name}.mp4")
@@ -38,11 +34,11 @@ def main():
 
     if total_duration <= 0:
         utils.info("Could not determine stream duration or stream is live/endless.")
-        shutil.rmtree(run_temp_dir, ignore_errors=True)
+        shutil.rmtree(config.project_dir, ignore_errors=True)
         return
 
-    clips = engine.generate_random_clips(config.url, total_duration, run_temp_dir)
-    engine.concatenate_clips(clips, output_file, run_temp_dir)
+    clips = engine.generate_random_clips(config.url, total_duration)
+    engine.concatenate_clips(clips, output_file)
     notify_done()
 
 

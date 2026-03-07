@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from utils import utils
 
@@ -26,6 +27,9 @@ class Config:
 
         self.temp_dir = os.path.join(self.path, "temp")
         self.output_dir = os.path.join(self.path, "output")
+
+        run_id = str(int(time.time() * 1000))
+        self.project_dir = os.path.join(config.temp_dir, f"project_{run_id}")
 
     def make_dirs(self):
         self.config_path = os.path.expanduser("~/.config/hugegull/config.toml")
