@@ -242,4 +242,5 @@ class Engine:
             if "duration" in metadata["format"]:
                 self.duration = float(metadata["format"]["duration"])
 
+
 engine = Engine()
