@@ -33,10 +33,13 @@ class Engine:
     def start(self) -> None:
         utils.info("Starting...")
 
-        if utils.is_site(self.url):
-            self.resolve_with_ytdlp()
-        else:
+        if os.path.isfile(self.url):
             self.get_stream_duration()
+        else:
+            if utils.is_site(self.url):
+                self.resolve_with_ytdlp()
+            else:
+                self.get_stream_duration()
 
         if self.duration <= 0:
             utils.info("Could not determine stream duration or stream is live/endless.")
@@ -108,8 +111,8 @@ class Engine:
             if current_sum + clip_length > duration:
                 clip_length = duration - current_sum
 
-                if clip_length < config.min_clip_duration:
-                    clip_length = config.min_clip_duration
+            if clip_length < config.min_clip_duration:
+                clip_length = config.min_clip_duration
 
             max_start = safe_duration - clip_length
 
@@ -141,6 +144,8 @@ class Engine:
             start = section["start"]
             duration = section["duration"]
             name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
+
+            # The fast-seek syntax (-ss before -i) works perfectly for local files too
             command = ["ffmpeg", "-ss", str(start), "-i", v_data]
 
             if is_split_stream:
@@ -213,7 +218,7 @@ class Engine:
             utils.error(result.stderr)
         else:
             shutil.rmtree(config.project_dir, ignore_errors=True)
-            utils.info(f"Saved: {self.file})")
+            utils.info(f"Saved: {self.file}")
 
     def get_stream_duration(self) -> None:
         command = [
@@ -236,6 +241,5 @@ class Engine:
         if "format" in metadata:
             if "duration" in metadata["format"]:
                 self.duration = float(metadata["format"]["duration"])
-
 
 engine = Engine()
