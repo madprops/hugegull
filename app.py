@@ -50,8 +50,10 @@ class App:
         self.root_container = HSplit(
             [
                 Frame(
-                    HSplit([self.url_input, self.button_container]), title=f"HugeGull v{self.version}"
+                    HSplit([self.url_input, self.button_container]),
+                    title=f"HugeGull v{self.version}",
                 ),
+
                 Frame(self.output_window),
             ]
         )
