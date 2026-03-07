@@ -46,4 +46,5 @@ class Config:
         if "path" in config_data:
             self.path = config_data["path"]
 
-    config = Config()
+
+config = Config()

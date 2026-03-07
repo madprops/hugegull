@@ -53,3 +53,6 @@ class Utils:
 
     def is_url(s):
         return s.startswith(("http", "https"))
+
+
+utils = Utils()

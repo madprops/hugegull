@@ -141,3 +141,6 @@ class App:
 
     def get_log_text(self):
         return FormattedText(log_lines)
+
+
+app = App()

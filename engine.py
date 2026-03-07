@@ -332,4 +332,5 @@ class Engine:
         except subprocess.CalledProcessError as e:
             print(f"Error sending notification: {e}", "class:error")
 
-    engine = Engine()
+
+engine = Engine()
