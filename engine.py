@@ -23,6 +23,9 @@ class Engine:
         self.abort_event = threading.Event()
         self.active_process = None
         self.process_lock = threading.Lock()
+        self.is_running = False
+        self.state_lock = threading.Lock()
+        self.done_emoji = "🤯"
 
     def get_stream_duration(self, url):
         command = [
@@ -200,7 +203,7 @@ class Engine:
         else:
             app.log("Cleaning up temporary files...", "class:info")
             shutil.rmtree(run_temp_dir, ignore_errors=True)
-            app.log(f"Video saved as {output_file}", "class:success")
+            app.log(f"{self.done_emoji} Video saved as {output_file}", "class:success")
 
     def run_pipeline(self, stream_url):
         self.abort_event.clear()
@@ -321,10 +324,26 @@ class Engine:
         return CommandResult(returncode, stdout, stderr)
 
     def start(self, url):
-        threading.Thread(target=self.run_pipeline, args=(url,), daemon=True).start()
+        with self.state_lock:
+            if self.is_running:
+                app.log("A job is already running.", "class:warning")
+                return False
+
+            self.is_running = True
+
+        app.log(f"Starting job for: {url}", "class:success")
+        threading.Thread(target=self.run_wrapper, args=(url,), daemon=True).start()
+        return True
+
+    def run_wrapper(self, url):
+        try:
+            self.run_pipeline(url)
+        finally:
+            with self.state_lock:
+                self.is_running = False
 
     def notify_done(self):
-        title = "🤯 hugegull"
+        title = f"{self.done_emoji} hugegull"
         message = "Video Complete"
 
         try:

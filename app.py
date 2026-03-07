@@ -26,12 +26,12 @@ class App:
 
         self.output_window = Window(content=FormattedTextControl(self.get_log_text))
 
-        self.paste_button = self.make_button("Paste", self.paste_clicked)
-        self.start_button = self.make_button("Start", self.start_clicked)
-        self.abort_button = self.make_button("Abort", self.abort_clicked)
-        self.clear_button = self.make_button("Clear", self.clear_clicked)
-        self.clear_button = self.make_button("Open", self.open_clicked)
-        self.exit_button = self.make_button("Exit", self.exit_clicked)
+        self.paste_button = self.make_button("📋 Paste", self.paste_clicked)
+        self.start_button = self.make_button("⚙️ Start", self.start_clicked)
+        self.abort_button = self.make_button("💀 Abort", self.abort_clicked)
+        self.clear_button = self.make_button("🧽 Clear", self.clear_clicked)
+        self.clear_button = self.make_button("📁 Open", self.open_clicked)
+        self.exit_button = self.make_button("🥾 Exit", self.exit_clicked)
 
         # Adding a dummy Window() at the end acts as a spacer to consume the rest of the empty space
         self.button_container = VSplit(
@@ -94,7 +94,6 @@ class App:
             self.log("Please enter a URL first.", "class:error")
             return
 
-        self.log(f"Starting job for: {url}", "class:success")
         engine.start(url)
 
     def abort_clicked(self):
@@ -148,8 +147,8 @@ class App:
         return Button(
             text=text,
             handler=handler,
-            left_symbol="<",
-            right_symbol=">",
+            left_symbol="",
+            right_symbol="",
             width=10,
         )
 
