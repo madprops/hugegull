@@ -10,7 +10,7 @@ from utils import utils
 
 class Engine:
     def resolve_with_ytdlp(self, url):
-        utils.print("Resolving URL via yt-dlp...")
+        utils.info("Resolving URL via yt-dlp...")
 
         command = [
             "yt-dlp",
@@ -23,8 +23,8 @@ class Engine:
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
-            utils.print("Error resolving URL. yt-dlp output:")
-            utils.print(result.stderr)
+            utils.error("Error resolving URL. yt-dlp output:")
+            utils.error(result.stderr)
             return url, 0.0
 
         try:
@@ -49,7 +49,7 @@ class Engine:
                 return {"video": metadata.get("url"), "audio": None}, duration
 
         except Exception as e:
-            utils.print(f"Error parsing yt-dlp output: {e}")
+            utils.error(f"Error parsing yt-dlp output: {e}")
             return url, 0.0
 
     def generate_clip_sections(self, target_duration, total_stream_duration):
@@ -86,12 +86,9 @@ class Engine:
 
     def generate_random_clips(self, stream_data, total_duration, run_temp_dir):
         clip_files = []
-
         sections = self.generate_clip_sections(config.duration, total_duration)
         total_sections = len(sections)
-
-        utils.print(f"Targeting {total_sections} random clips for this run...")
-
+        utils.info(f"Targeting {total_sections} random clips for this run...")
         is_split_stream = False
 
         if isinstance(stream_data, dict):
@@ -132,15 +129,15 @@ class Engine:
                 ]
             )
 
-            utils.print(
+            utils.action(
                 f"Extracting clip {i + 1}/{total_sections} starting at {start_time:.2f}s (Duration: {current_clip_duration:.2f}s)..."
             )
 
             result = subprocess.run(command, capture_output=True, text=True)
 
             if result.returncode != 0:
-                utils.print(f"Error extracting clip {i}:")
-                utils.print(result.stderr)
+                utils.error(f"Error extracting clip {i}:")
+                utils.error(result.stderr)
                 continue
 
             clip_files.append(output_name)
@@ -149,7 +146,7 @@ class Engine:
 
     def concatenate_clips(self, clip_files, output_file, run_temp_dir):
         if not clip_files:
-            utils.print("No clips to concatenate.")
+            utils.error("No clips to concatenate.")
             return
 
         list_file = os.path.join(run_temp_dir, "concat_list.txt")
@@ -175,18 +172,18 @@ class Engine:
             output_file,
         ]
 
-        utils.print("Concatenating clips...")
+        utils.info("Concatenating clips...")
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
-            utils.print("Error concatenating clips:")
-            utils.print(result.stderr)
+            utils.error("Error concatenating clips:")
+            utils.error(result.stderr)
         else:
-            utils.print("Cleaning up temporary files...")
+            utils.info("Cleaning up temporary files...")
 
             # Remove the unique run directory entirely
             shutil.rmtree(run_temp_dir, ignore_errors=True)
-            utils.print(f"Video saved as {output_file}")
+            utils.info(f"Video saved as {output_file}")
 
     def get_stream_duration(self, url):
         command = [
