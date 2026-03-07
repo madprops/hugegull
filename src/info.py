@@ -1,6 +1,7 @@
 import tomllib
 from pathlib import Path
 
+
 class Info:
     name: str
     version: str
@@ -13,5 +14,6 @@ class Info:
 
         for key, value in info_dict.items():
             setattr(self, key, value)
+
 
 info = Info()

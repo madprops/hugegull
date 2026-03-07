@@ -104,9 +104,7 @@ class Utils:
 
         try:
             subprocess.Popen(
-                ["xdg-open", path],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                ["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
         except Exception as e:
             self.error(f"Failed to open file: {e}")
