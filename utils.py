@@ -1,3 +1,9 @@
+import os
+import re
+import time
+import random
+
+
 class Utils:
     def get_random_name(self):
         dict_path = "/usr/share/dict/words"
@@ -24,7 +30,7 @@ class Utils:
         return s.startswith(("http", "https"))
 
     def is_site(self, s):
-        if is_url(s):
+        if self.is_url(s):
             if ("youtube.com" in s) or ("youtu.be") in s or ("twitch.tv" in s):
                 return True
 

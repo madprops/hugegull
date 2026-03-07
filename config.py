@@ -20,7 +20,6 @@ class Config:
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.env_url = os.environ.get("HUGE_URL", "")
 
-
         self.read_args()
         self.make_dirs()
         self.read_file()
@@ -48,13 +47,13 @@ class Config:
 
             if utils.is_url(arg) or os.path.exists(arg):
                 self.url = arg
-                self.name = get_random_name()
+                self.name = utils.get_random_name()
             else:
                 self.url = self.env_url
                 self.name = arg
         else:
             self.url = self.env_url
-            self.name = get_random_name()
+            self.name = utils.get_random_name()
 
     def read_file(self):
         with open(self.config_path, "rb") as f:

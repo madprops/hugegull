@@ -1,14 +1,12 @@
 import subprocess
-import random
 import os
-import json
 import sys
 import time
-import re
 import shutil
 
 from config import config
 from utils import utils
+from engine import engine
 
 
 def main():
@@ -21,13 +19,13 @@ def main():
     run_temp_dir = os.path.join(config.temp_dir, f"project_{run_id}")
 
     os.makedirs(run_temp_dir, exist_ok=True)
-    os.makedirs(self.output_dir, exist_ok=True)
+    os.makedirs(config.output_dir, exist_ok=True)
 
-    output_file = os.path.join(self.output_dir, f"{base_name}.mp4")
+    output_file = os.path.join(config.output_dir, f"{config.name}.mp4")
     counter = 1
 
     while os.path.exists(output_file):
-        output_file = os.path.join(self.output_dir, f"{base_name}_{counter}.mp4")
+        output_file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
         counter += 1
 
     print("Fetching stream duration...")

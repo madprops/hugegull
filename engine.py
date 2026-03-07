@@ -1,3 +1,12 @@
+import os
+import random
+import subprocess
+import json
+import shutil
+
+from config import config
+
+
 class Engine:
     def resolve_with_ytdlp(self, url):
         print("Resolving URL via yt-dlp...")
@@ -42,7 +51,6 @@ class Engine:
             print(f"Error parsing yt-dlp output: {e}")
             return url, 0.0
 
-
     def generate_clip_sections(self, target_duration, total_stream_duration):
         sections = []
         current_sum = 0.0
@@ -52,14 +60,16 @@ class Engine:
 
         while current_sum < target_duration:
             clip_length = random.triangular(
-                MIN_CLIP_DURATION, MAX_CLIP_DURATION, AVG_CLIP_DURATION
+                config.min_clip_duration,
+                config.max_clip_duration,
+                config.avg_clip_duration,
             )
 
             if current_sum + clip_length > target_duration:
                 clip_length = target_duration - current_sum
 
-                if clip_length < MIN_CLIP_DURATION:
-                    clip_length = MIN_CLIP_DURATION
+                if clip_length < config.min_clip_duration:
+                    clip_length = config.min_clip_duration
 
             max_start = safe_duration - clip_length
 
@@ -73,11 +83,10 @@ class Engine:
 
         return sections
 
-
     def generate_random_clips(self, stream_data, total_duration, run_temp_dir):
         clip_files = []
 
-        sections = self.generate_clip_sections(DURATION, total_duration)
+        sections = self.generate_clip_sections(config.duration, total_duration)
         total_sections = len(sections)
 
         print(f"Targeting {total_sections} random clips for this run...")
@@ -108,11 +117,11 @@ class Engine:
                     "-t",
                     str(current_clip_duration),
                     "-vf",
-                    f"fps={FPS}",
+                    f"fps={config.fps}",
                     "-c:v",
                     "libx264",
                     "-crf",
-                    str(CRF),
+                    str(config.crf),
                     "-c:a",
                     "aac",
                     "-video_track_timescale",
@@ -136,7 +145,6 @@ class Engine:
             clip_files.append(output_name)
 
         return clip_files
-
 
     def concatenate_clips(self, clip_files, output_file, run_temp_dir):
         if not clip_files:
@@ -178,7 +186,6 @@ class Engine:
             # Remove the unique run directory entirely
             shutil.rmtree(run_temp_dir, ignore_errors=True)
             print(f"Video saved as {output_file}")
-
 
     def get_stream_duration(self, url):
         command = [
