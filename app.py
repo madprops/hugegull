@@ -11,7 +11,6 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.data_structures import Point
-from prompt_toolkit.mouse_events import MouseEventType
 
 from config import config
 from utils import utils
@@ -40,9 +39,6 @@ class App:
             always_hide_cursor=True,
             wrap_lines=True,
         )
-
-        # Attach mouse handler for the wheel
-        self.output_window.mouse_handler = self.handle_mouse
 
         self.paste_button = self.make_button("Paste", self.paste_clicked)
         self.start_button = self.make_button("Start", self.start_clicked)
@@ -83,7 +79,7 @@ class App:
                 "error": "red bold",
                 "warning": "yellow",
                 "frame.label": "bold",
-                "button": "fg: white",
+                "button": "fg: orange",
             }
         )
 
@@ -125,17 +121,6 @@ class App:
         )
 
         self.log("Ready. Paste a URL and press Enter or click Start.", "class:info")
-
-    def handle_mouse(self, mouse_event):
-        if mouse_event.event_type == MouseEventType.SCROLL_UP:
-            self.scroll_cursor(-3)
-            return None
-
-        if mouse_event.event_type == MouseEventType.SCROLL_DOWN:
-            self.scroll_cursor(3)
-            return None
-
-        return NotImplemented
 
     def scroll_cursor(self, delta):
         info = self.output_window.render_info
