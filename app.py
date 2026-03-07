@@ -10,6 +10,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.utils import get_cwidth
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.data_structures import Point
 
 from config import config
 from utils import utils
@@ -20,6 +21,7 @@ class App:
         self.version = "1.2"
         self.log_lines = []
         self.max_lines = 200
+        self.log_cursor_row = 0
 
         self.url_input = TextArea(
             text=config.default_url,
@@ -31,7 +33,7 @@ class App:
         self.output_window = Window(
             content=FormattedTextControl(
                 self.get_log_text,
-                focusable=True
+                get_cursor_position=lambda: Point(0, self.log_cursor_row)
             ),
             right_margins=[ScrollbarMargin(display_arrows=True)],
             always_hide_cursor=True,
@@ -89,44 +91,47 @@ class App:
             self.abort_clicked()
             event.app.exit()
 
-        @self.kb.add(Keys.ScrollUp)
+        @self.kb.add(Keys.ScrollUp, eager=True)
         def _(event):
-            self.output_window.vertical_scroll -= 3
+            self.log_cursor_row -= 3
 
-            if self.output_window.vertical_scroll < 0:
-                self.output_window.vertical_scroll = 0
+            if self.log_cursor_row < 0:
+                self.log_cursor_row = 0
 
-        @self.kb.add(Keys.ScrollDown)
+            event.app.invalidate()
+
+        @self.kb.add(Keys.ScrollDown, eager=True)
         def _(event):
-            info = self.output_window.render_info
+            self.log_cursor_row += 3
+            max_row = max(0, len(self.log_lines) - 1)
 
-            if info:
-                max_scroll = max(0, info.content_height - info.window_height)
-                self.output_window.vertical_scroll += 3
+            if self.log_cursor_row > max_row:
+                self.log_cursor_row = max_row
 
-                if self.output_window.vertical_scroll > max_scroll:
-                    self.output_window.vertical_scroll = max_scroll
+            event.app.invalidate()
 
-        @self.kb.add(Keys.PageUp)
-        def _(event):
-            info = self.output_window.render_info
-
-            if info:
-                self.output_window.vertical_scroll -= info.window_height
-
-                if self.output_window.vertical_scroll < 0:
-                    self.output_window.vertical_scroll = 0
-
-        @self.kb.add(Keys.PageDown)
+        @self.kb.add(Keys.PageUp, eager=True)
         def _(event):
             info = self.output_window.render_info
+            step = info.window_height if info else 10
+            self.log_cursor_row -= step
 
-            if info:
-                max_scroll = max(0, info.content_height - info.window_height)
-                self.output_window.vertical_scroll += info.window_height
+            if self.log_cursor_row < 0:
+                self.log_cursor_row = 0
 
-                if self.output_window.vertical_scroll > max_scroll:
-                    self.output_window.vertical_scroll = max_scroll
+            event.app.invalidate()
+
+        @self.kb.add(Keys.PageDown, eager=True)
+        def _(event):
+            info = self.output_window.render_info
+            step = info.window_height if info else 10
+            self.log_cursor_row += step
+            max_row = max(0, len(self.log_lines) - 1)
+
+            if self.log_cursor_row > max_row:
+                self.log_cursor_row = max_row
+
+            event.app.invalidate()
 
         self.app = Application(
             layout=self.layout,
@@ -157,7 +162,7 @@ class App:
 
     def clear_clicked(self):
         self.log_lines.clear()
-        self.output_window.vertical_scroll = 0
+        self.log_cursor_row = 0
         get_app().invalidate()
 
     def open_clicked(self):
@@ -183,23 +188,21 @@ class App:
         return self.app.run()
 
     def log(self, text, style="class:info"):
-        info = self.output_window.render_info
         do_scroll = True
 
-        if info:
-            max_scroll = max(0, info.content_height - info.window_height)
-            if max_scroll - info.vertical_scroll > 10:
-                do_scroll = False
+        if self.log_lines and self.log_cursor_row < len(self.log_lines) - 1:
+            do_scroll = False
 
         self.log_lines.append((style, str(text) + "\n"))
 
         if len(self.log_lines) > self.max_lines:
             self.log_lines.pop(0)
 
+            if not do_scroll and self.log_cursor_row > 0:
+                self.log_cursor_row -= 1
+
         if do_scroll:
-            # Setting it to a massive integer forces the Window to clamp
-            # it perfectly to the maximum possible bottom scroll position.
-            self.output_window.vertical_scroll = 9999999
+            self.log_cursor_row = max(0, len(self.log_lines) - 1)
 
         app = get_app()
 
