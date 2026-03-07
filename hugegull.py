@@ -1,33 +1,3 @@
-# HUGEGULL
-# video maker
-
-# Notes:
-# You can use the HUGE_URL env var.
-# The output name can be ommitted to use a random name.
-
-# Installation:
-
-# git clone this somewhere.
-# Make a shell alias to python /path/to/hugegull/hugegull.py
-# alias hgg="python ~/code/hugegull/hugegull.py"
-
-# Edit ~/.config/hugegull/hugegull.conf
-# It is empty but you can make it look like this:
-
-# path = "/home/memphis/toilet"
-# duration = 45
-# fps = 30
-# crf = 30
-
-# Usage:
-
-# hgg "https://something.m3u8"
-
-# Or:
-# export HUGE_URL="https://something.m3u8"
-# hgg
-
-
 import subprocess
 import random
 import os
@@ -35,6 +5,7 @@ import json
 import sys
 import time
 import re
+import shutil
 
 try:
     import tomllib
@@ -58,9 +29,9 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 FPS = 30
 CRF = 30
 
-MAX_CLIP_DURATION = 8.0
-MIN_CLIP_DURATION = 2.0
+MIN_CLIP_DURATION = 3.0
 AVG_CLIP_DURATION = 6.0
+MAX_CLIP_DURATION = 9.0
 
 # Read configuration from TOML
 with open(CONFIG_PATH, "rb") as f:
@@ -78,7 +49,7 @@ if "crf" in config_data:
 if "path" in config_data:
     PATH = config_data["path"]
 
-# Resolve output and temp directories based on PATH
+# Resolve output and base temp directories based on PATH
 TEMP_DIR = os.path.join(PATH, "temp")
 OUTPUT_DIR = os.path.join(PATH, "output")
 
@@ -175,7 +146,7 @@ def generate_clip_sections(target_duration, total_stream_duration):
     return sections
 
 
-def generate_random_clips(stream_data, total_duration):
+def generate_random_clips(stream_data, total_duration, run_temp_dir):
     clip_files = []
 
     sections = generate_clip_sections(DURATION, total_duration)
@@ -199,7 +170,7 @@ def generate_random_clips(stream_data, total_duration):
         start_time = section["start"]
         current_clip_duration = section["duration"]
 
-        output_name = os.path.join(TEMP_DIR, f"temp_clip_{i}.mp4")
+        output_name = os.path.join(run_temp_dir, f"temp_clip_{i}.mp4")
 
         command = ["ffmpeg", "-ss", str(start_time), "-i", v_url]
 
@@ -241,12 +212,12 @@ def generate_random_clips(stream_data, total_duration):
     return clip_files
 
 
-def concatenate_clips(clip_files, output_file):
+def concatenate_clips(clip_files, output_file, run_temp_dir):
     if not clip_files:
         print("No clips to concatenate.")
         return
 
-    list_file = os.path.join(TEMP_DIR, "concat_list.txt")
+    list_file = os.path.join(run_temp_dir, "concat_list.txt")
 
     with open(list_file, "w") as f:
         for clip in clip_files:
@@ -278,10 +249,8 @@ def concatenate_clips(clip_files, output_file):
     else:
         print("Cleaning up temporary files...")
 
-        for clip in clip_files:
-            os.remove(clip)
-
-        os.remove(list_file)
+        # Remove the unique run directory entirely
+        shutil.rmtree(run_temp_dir, ignore_errors=True)
         print(f"Video saved as {output_file}")
 
 
@@ -348,7 +317,11 @@ def main():
         print("Or set HUGE_URL environment variable.")
         sys.exit(1)
 
-    os.makedirs(TEMP_DIR, exist_ok=True)
+    # Generate a unique temp directory for this specific run
+    run_id = str(int(time.time() * 1000))
+    run_temp_dir = os.path.join(TEMP_DIR, f"project_{run_id}")
+
+    os.makedirs(run_temp_dir, exist_ok=True)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     output_file = os.path.join(OUTPUT_DIR, f"{base_name}.mp4")
@@ -368,11 +341,15 @@ def main():
 
     if total_duration <= 0:
         print("Could not determine stream duration or stream is live/endless.")
+        # Clean up the unused temp folder before exiting
+        shutil.rmtree(run_temp_dir, ignore_errors=True)
         return
 
     print(f"Stream duration: {total_duration} seconds.")
-    clips = generate_random_clips(stream_url, total_duration)
-    concatenate_clips(clips, output_file)
+
+    # Pass the unique temp directory downward
+    clips = generate_random_clips(stream_url, total_duration, run_temp_dir)
+    concatenate_clips(clips, output_file, run_temp_dir)
     notify_done()
 
 
