@@ -25,7 +25,6 @@ class Engine:
         self.process_lock = threading.Lock()
         self.is_running = False
         self.state_lock = threading.Lock()
-        self.done_emoji = "🤯"
 
     def get_stream_duration(self, url):
         command = [
@@ -203,7 +202,7 @@ class Engine:
         else:
             app.log("Cleaning up temporary files...", "class:info")
             shutil.rmtree(run_temp_dir, ignore_errors=True)
-            app.log(f"{self.done_emoji} Video saved as {output_file}", "class:success")
+            app.log(f"Video saved as {output_file}", "class:success")
 
     def run_pipeline(self, stream_url):
         self.abort_event.clear()
@@ -343,7 +342,7 @@ class Engine:
                 self.is_running = False
 
     def notify_done(self):
-        title = f"{self.done_emoji} hugegull"
+        title = f"🤯 hugegull"
         message = "Video Complete"
 
         try:

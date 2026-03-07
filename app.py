@@ -15,7 +15,7 @@ from utils import utils
 
 class App:
     def __init__(self):
-        self.version = "1.0"
+        self.version = "1.1"
         self.log_lines = []
         self.max_lines = 200
 
@@ -28,12 +28,12 @@ class App:
 
         self.output_window = Window(content=FormattedTextControl(self.get_log_text))
 
-        self.paste_button = self.make_button("📋 Paste", self.paste_clicked)
-        self.start_button = self.make_button("⚙️ Start", self.start_clicked)
-        self.abort_button = self.make_button("💀 Abort", self.abort_clicked)
-        self.clear_button = self.make_button("🧽 Clear", self.clear_clicked)
-        self.open_button = self.make_button("📁 Open", self.open_clicked)
-        self.exit_button = self.make_button("🥾 Exit", self.exit_clicked)
+        self.paste_button = self.make_button("Paste", self.paste_clicked)
+        self.start_button = self.make_button("Start", self.start_clicked)
+        self.abort_button = self.make_button("Abort", self.abort_clicked)
+        self.clear_button = self.make_button("Clear", self.clear_clicked)
+        self.open_button = self.make_button("Open", self.open_clicked)
+        self.exit_button = self.make_button("Exit", self.exit_clicked)
 
         # Adding a dummy Window() at the end acts as a spacer to consume the rest of the empty space
         self.button_container = VSplit(
