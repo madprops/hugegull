@@ -31,8 +31,6 @@ def main() -> None:
         show_info()
         sys.exit(0)
 
-    config.prepare()
-
     if not config.url:
         show_info()
         sys.exit(1)
