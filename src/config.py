@@ -29,7 +29,6 @@ class Config:
         self.env_name = utils.get_env("HUGE_NAME")
 
         self.read_args()
-        self.make_dirs()
         self.read_file()
 
         self.temp_dir = os.path.join(self.path, "temp")
