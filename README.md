@@ -41,11 +41,12 @@ path = "/home/memphis/toilet"
 duration = 45
 fps = 30
 crf = 30
+gpu = "amd"
 ```
 
 ## Usage
 
-`hgg https://something.m3u8`
+`hugegull https://something.m3u8 --open`
 
 Local, YouTube, and Twitch video urls work as well.
 
@@ -53,5 +54,5 @@ Or:
 
 ```
 export HUGE_URL="https://something.m3u8"
-hgg
+hugegull
 ```
