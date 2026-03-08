@@ -116,35 +116,55 @@ class Engine:
         return self.concatenate_clips()
 
     def resolve_with_ytdlp(self, url: str) -> dict[str, Any] | None:
-        browsers_to_try = [None, "firefox", "chrome", "edge", "brave"]
-        result = None
+        cookie_args = [
+            [],
+        ]
 
-        for browser in browsers_to_try:
+        if os.path.isfile("cookies.txt"):
+            cookie_args.append(["--cookies", "cookies.txt"])
+
+        cookie_args.extend([
+            ["--cookies-from-browser", "firefox"],
+            ["--cookies-from-browser", "chrome"]
+        ])
+
+        result = None
+        errors = []
+
+        for args in cookie_args:
             command = [
                 "yt-dlp",
                 "--no-playlist",
-                "--no-warnings",
-                "-f",
-                "bestvideo[height<=1080]+bestaudio/best",
-                "--dump-json",
-                url,
+                "--no-warnings"
             ]
 
-            if browser is not None:
-                command.insert(3, "--cookies-from-browser")
-                command.insert(4, browser)
+            command.extend(args)
+
+            command.extend([
+                "-f",
+                "bv*[height<=1080]+ba/b[height<=1080]/bv+ba/b",
+                "--dump-json",
+                url,
+            ])
 
             result = subprocess.run(command, capture_output=True, text=True)
 
             if result.returncode == 0:
                 break
 
-        if result is None:
-            return None
+            method_name = "default"
 
-        if result.returncode != 0:
-            utils.error(f"Error resolving URL {url}. yt-dlp output:")
-            utils.error(result.stderr)
+            if len(args) > 0:
+                method_name = " ".join(args)
+
+            errors.append(f"[{method_name}] -> {result.stderr.strip()}")
+
+        if result is None or result.returncode != 0:
+            utils.error(f"Error resolving URL {url}. All attempts failed:")
+
+            for err in errors:
+                utils.error(err)
+
             return None
 
         try:
@@ -162,17 +182,9 @@ class Engine:
 
                     return {"v_data": v_data, "a_url": a_url, "duration": duration}
                 else:
-                    return {
-                        "v_data": metadata["requested_formats"][0]["url"],
-                        "a_url": None,
-                        "duration": duration,
-                    }
+                    return {"v_data": metadata["requested_formats"][0]["url"], "a_url": None, "duration": duration}
             else:
-                return {
-                    "v_data": metadata.get("url"),
-                    "a_url": None,
-                    "duration": duration,
-                }
+                return {"v_data": metadata.get("url"), "a_url": None, "duration": duration}
 
         except Exception as e:
             utils.error(f"Error parsing yt-dlp output: {e}")
