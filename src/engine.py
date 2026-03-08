@@ -32,7 +32,7 @@ class Engine:
             counter += 1
 
     def start(self) -> bool:
-        utils.info("Starting...")
+        utils.info(f"Starting: {config.name} | {int(config.duration)}s")
         self.prepare()
 
         if os.path.isfile(self.url):
