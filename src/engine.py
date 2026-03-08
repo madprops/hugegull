@@ -33,13 +33,13 @@ class Engine:
 
     def prepare_sources(self) -> None:
         for url in config.urls:
-            source = {
+            source: dict[str, Any] = {
                 "url": url,
                 "v_data": url,
                 "a_url": None,
                 "duration": 0.0,
                 "width": 0,
-                "height": 0
+                "height": 0,
             }
 
             if os.path.isfile(url):
@@ -52,7 +52,12 @@ class Engine:
                     if yt_data is not None:
                         source.update(yt_data)
 
-                        info = self.get_stream_info(source["v_data"])
+                        v_data = source.get("v_data")
+
+                        if v_data is None:
+                            v_data = ""
+
+                        info = self.get_stream_info(str(v_data))
                         source["width"] = info["width"]
                         source["height"] = info["height"]
 
@@ -62,7 +67,7 @@ class Engine:
                     info = self.get_stream_info(url)
                     source.update(info)
 
-            raw_duration = source["duration"]
+            raw_duration = source.get("duration")
             duration = 0.0
 
             if raw_duration is not None:
@@ -71,8 +76,17 @@ class Engine:
                 except ValueError:
                     duration = 0.0
 
-            width = source.get("width", 0)
-            height = source.get("height", 0)
+            raw_width = source.get("width")
+            width = 0
+
+            if raw_width is not None:
+                width = int(raw_width)
+
+            raw_height = source.get("height")
+            height = 0
+
+            if raw_height is not None:
+                height = int(raw_height)
 
             if duration > 0 and width > 0 and height > 0:
                 self.sources.append(source)
