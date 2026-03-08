@@ -12,134 +12,6 @@ from utils import utils
 
 
 class Engine:
-    @staticmethod
-    def resolve_with_ytdlp(url: str) -> tuple[dict[str, Any], float]:
-        command = [
-            "yt-dlp",
-            "-f",
-            "bestvideo[height<=1080]+bestaudio/best",
-            "--dump-json",
-            url,
-        ]
-
-        result = subprocess.run(command, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            utils.error("Error resolving URL. yt-dlp output:")
-            utils.error(result.stderr)
-            return {}, 0.0
-
-        try:
-            metadata = json.loads(result.stdout)
-            duration = 0.0
-
-            if "duration" in metadata:
-                if metadata["duration"] is not None:
-                    duration = float(metadata["duration"])
-
-            data = {}
-
-            if "requested_formats" in metadata:
-                if len(metadata["requested_formats"]) >= 2:
-                    v_data = metadata["requested_formats"][0]["url"]
-                    a_url = metadata["requested_formats"][1]["url"]
-                    data = {"video": v_data, "audio": a_url}
-                else:
-                    data = {
-                        "video": metadata["requested_formats"][0]["url"],
-                        "audio": None,
-                    }
-            else:
-                data = {"video": metadata.get("url"), "audio": None}
-
-            return data, duration
-
-        except Exception as e:
-            utils.error(f"Error parsing yt-dlp output: {e}")
-            return {}, 0.0
-
-    @staticmethod
-    def extract_clip(
-        start: float,
-        duration: float,
-        video_url: str,
-        audio_url: str | None,
-        output_path: str,
-        output_format: str = "mpegts"
-    ) -> bool:
-        command = [
-            "ffmpeg",
-            "-y",
-            "-hide_banner",
-            "-loglevel", "error"
-        ]
-
-        command.extend(["-ss", str(start), "-i", video_url])
-
-        if audio_url:
-            if audio_url != video_url:
-                command.extend(["-ss", str(start), "-i", audio_url])
-
-        command.extend(["-t", str(duration)])
-
-        if audio_url:
-            if audio_url != video_url:
-                command.extend(["-map", "0:v:0", "-map", "1:a:0"])
-            else:
-                command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
-        else:
-            command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
-
-        # strictly force framerate, regenerate timestamps, and sync audio clock
-        command.extend([
-            "-c:v", "libx264",
-            "-preset", "ultrafast",
-            "-fps_mode", "cfr",
-            "-c:a", "aac",
-            "-af", "aresample=async=1",
-            "-fflags", "+genpts",
-            "-avoid_negative_ts", "make_zero",
-            "-muxdelay", "0",
-            "-f", output_format,
-            output_path
-        ])
-
-        try:
-            subprocess.run(command, check=True)
-            return True
-        except subprocess.CalledProcessError as e:
-            utils.info(f"FFmpeg extraction failed: {e}")
-            return False
-
-    @staticmethod
-    def get_stream_duration(url: str) -> float:
-        command = [
-            "ffprobe",
-            "-v",
-            "quiet",
-            "-print_format",
-            "json",
-            "-show_format",
-            url,
-        ]
-
-        result = subprocess.run(command, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            return 0.0
-
-        try:
-            metadata = json.loads(result.stdout)
-
-            if "format" in metadata:
-                if "duration" in metadata["format"]:
-                    return float(metadata["format"]["duration"])
-
-        except Exception as e:
-            utils.error(f"Error parsing ffprobe output: {e}")
-
-        return 0.0
-
     def __init__(self) -> None:
         self.url = config.url
         self.data: dict[str, Any] = {}
@@ -159,13 +31,15 @@ class Engine:
             counter += 1
 
     def start(self) -> None:
+        utils.info("Starting...")
+
         if os.path.isfile(self.url):
-            self.get_stream_duration(self.url)
+            self.get_stream_duration()
         else:
             if utils.is_site(self.url):
-                self.data, self.duration = self.resolve_with_ytdlp(self.url)
+                self.resolve_with_ytdlp()
             else:
-                self.get_stream_duration(self.url)
+                self.get_stream_duration()
 
         if self.duration <= 0:
             utils.info("Could not determine stream duration or stream is live/endless.")
@@ -174,6 +48,50 @@ class Engine:
 
         self.generate_random_clips()
         self.concatenate_clips()
+
+    def resolve_with_ytdlp(self) -> None:
+        command = [
+            "yt-dlp",
+            "-f",
+            "bestvideo[height<=1080]+bestaudio/best",
+            "--dump-json",
+            self.url,
+        ]
+
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            utils.error("Error resolving URL. yt-dlp output:")
+            utils.error(result.stderr)
+            self.duration = 0.0
+
+        try:
+            metadata = json.loads(result.stdout)
+            duration = 0.0
+
+            if "duration" in metadata:
+                if metadata["duration"] is not None:
+                    duration = float(metadata["duration"])
+
+            if "requested_formats" in metadata:
+                if len(metadata["requested_formats"]) >= 2:
+                    v_data = metadata["requested_formats"][0]["url"]
+                    a_url = metadata["requested_formats"][1]["url"]
+                    self.data = {"video": v_data, "audio": a_url}
+                    self.duration = duration
+                else:
+                    self.data = {
+                        "video": metadata["requested_formats"][0]["url"],
+                        "audio": None,
+                    }
+
+                    self.duration = duration
+            else:
+                self.data = {"video": metadata.get("url"), "audio": None}
+                self.duration = duration
+
+        except Exception as e:
+            utils.error(f"Error parsing yt-dlp output: {e}")
 
     def generate_clip_sections(self) -> list[dict[str, Any]]:
         duration = config.duration
@@ -210,8 +128,16 @@ class Engine:
     def generate_random_clips(self) -> None:
         sections = self.generate_clip_sections()
         total_sections = len(sections)
-        video_url = self.data.get("video", self.url)
-        audio_url = self.data.get("audio")
+        is_split_stream = False
+
+        if self.data:
+            if self.data.get("audio") is not None:
+                is_split_stream = True
+
+        if self.data:
+            v_data = self.data["video"]
+        else:
+            v_data = self.url
 
         for i in range(total_sections):
             section = sections[i]
@@ -219,20 +145,53 @@ class Engine:
             duration = section["duration"]
             name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
 
+            command = ["ffmpeg", "-ss", str(start), "-i", v_data]
+
+            if is_split_stream:
+                command.extend(["-ss", str(start), "-i", self.data["audio"]])
+
+            # Calculate when the fade out should start
+            fade_out_start = duration - config.fade
+
+            # Revert the video filter back to just the framerate
+            vf_filter = f"fps={config.fps}"
+
+            # Keep the audio fade in and out
+            af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
+
+            command.extend(
+                [
+                    "-t",
+                    str(duration),
+                    "-vf",
+                    vf_filter,
+                    "-af",
+                    af_filter,
+                    "-c:v",
+                    "libx264",
+                    "-crf",
+                    str(config.crf),
+                    "-c:a",
+                    "aac",
+                    "-video_track_timescale",
+                    "90000",
+                    "-y",
+                    name,
+                ]
+            )
+
             utils.action(
                 f"Clip {i + 1}/{total_sections} starting at {round(start)}s (Duration: {round(duration)}s)"
             )
 
-            success = self.extract_clip(
-                start=start,
-                duration=duration,
-                video_url=video_url,
-                audio_url=audio_url,
-                output_path=name,
-            )
+            result = subprocess.run(command, capture_output=True, text=True)
 
-            if success:
-                self.clips.append(name)
+            if result.returncode != 0:
+                utils.error(f"Error extracting clip {i}:")
+                utils.error(result.stderr)
+                continue
+
+            self.clips.append(name)
 
     def concatenate_clips(self) -> None:
         if not self.clips:
@@ -270,6 +229,28 @@ class Engine:
         else:
             shutil.rmtree(config.project_dir, ignore_errors=True)
             utils.info(f"Saved: {self.file}")
+
+    def get_stream_duration(self) -> None:
+        command = [
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_format",
+            self.url,
+        ]
+
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            return
+
+        metadata = json.loads(result.stdout)
+
+        if "format" in metadata:
+            if "duration" in metadata["format"]:
+                self.duration = float(metadata["format"]["duration"])
 
 
 engine = Engine()

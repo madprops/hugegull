@@ -12,7 +12,6 @@ import sys
 from config import config
 from utils import utils
 from engine import engine
-from stream import stream
 from info import info
 
 
@@ -35,24 +34,13 @@ def main() -> None:
         show_info()
         sys.exit(1)
 
-    utils.info("Starting...")
+    engine.start()
 
-    if config.stream:
-        stream.start()
+    if config.open:
+        utils.open_file(engine.file)
     else:
-        engine.start()
-
-        if config.open:
-            utils.open_file(engine.file)
-        else:
-            utils.notify("Video Complete")
+        utils.notify("Video Complete")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit(0)
-    except Exception as e:
-        utils.print(f"\nAn error occurred while exiting: {e}")
-        sys.exit(1)
+    main()
