@@ -130,57 +130,86 @@ class Engine:
         start = section["start"]
         duration = section["duration"]
         name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
+        modes_to_try = [config.gpu]
 
-        # Define the VAAPI hardware device early in the command
-        command = [
-            "ffmpeg",
-            "-vaapi_device", "/dev/dri/renderD128",
-            "-ss", str(start),
-            "-i", v_data
-        ]
+        if config.gpu in ("amd", "nvidia"):
+            modes_to_try = [config.gpu, "cpu"]
+        else:
+            modes_to_try = ["cpu"]
 
-        if is_split_stream:
-            command.extend(["-ss", str(start), "-i", self.data["audio"]])
+        for mode in modes_to_try:
+            command = ["ffmpeg"]
 
-        fade_out_start = duration - config.fade
+            if mode == "amd":
+                command.extend(["-vaapi_device", "/dev/dri/renderD128"])
+            elif mode == "nvidia":
+                command.extend(["-hwaccel", "cuda"])
 
-        # format=nv12 and hwupload are strictly required to move the frames to the GPU
-        vf_filter = f"fps={config.fps},format=nv12,hwupload"
-        af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
+            command.extend(["-ss", str(start), "-i", v_data])
 
-        command.extend(
-            [
-                "-t",
-                str(duration),
-                "-vf",
-                vf_filter,
-                "-af",
-                af_filter,
-                "-c:v",
-                "h264_vaapi",         # Hardware encoder
-                "-global_quality",    # VAAPI equivalent for CRF-style quality control
-                str(config.crf),
-                "-c:a",
-                "aac",
-                "-video_track_timescale",
-                "90000",
-                "-y",
-                name,
-            ]
-        )
+            if is_split_stream:
+                command.extend(["-ss", str(start), "-i", self.data["audio"]])
 
-        utils.action(
-            f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s)"
-        )
+            fade_out_start = duration - config.fade
+            vf_filter = f"fps={config.fps}"
 
-        result = subprocess.run(command, capture_output=True, text=True)
+            if mode == "amd":
+                vf_filter = f"{vf_filter},format=nv12,hwupload"
 
-        if result.returncode != 0:
-            utils.error(f"Error extracting clip {i + 1}:")
-            utils.error(result.stderr)
-            return None
+            af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
 
-        return name
+            command.extend(
+                [
+                    "-t",
+                    str(duration),
+                    "-vf",
+                    vf_filter,
+                    "-af",
+                    af_filter,
+                ]
+            )
+
+            if mode == "amd":
+                command.extend(["-c:v", "h264_vaapi", "-global_quality", str(config.crf)])
+            elif mode == "nvidia":
+                command.extend(["-c:v", "h264_nvenc", "-cq", str(config.crf), "-preset", "p4"])
+            else:
+                command.extend(["-c:v", "libx264", "-preset", "veryfast", "-crf", str(config.crf)])
+
+            command.extend(
+                [
+                    "-c:a",
+                    "aac",
+                    "-video_track_timescale",
+                    "90000",
+                    "-y",
+                    name,
+                ]
+            )
+
+            utils.action(
+                f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s) [Mode: {mode}]"
+            )
+
+            try:
+                result = subprocess.run(command, capture_output=True, text=True)
+
+                if result.returncode == 0:
+                    return name
+
+                utils.error(f"Error extracting clip {i + 1} using {mode}:")
+                utils.error(result.stderr)
+
+                if mode != modes_to_try[-1]:
+                    utils.info(f"Retrying clip {i + 1} with CPU fallback...")
+
+            except Exception as e:
+                utils.error(f"Exception extracting clip {i + 1} using {mode}: {e}")
+
+                if mode != modes_to_try[-1]:
+                    utils.info(f"Retrying clip {i + 1} with CPU fallback...")
+
+        return None
 
     def generate_random_clips(self) -> None:
         sections = self.generate_clip_sections()

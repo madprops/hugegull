@@ -23,6 +23,7 @@ class Config:
         self.info_version = "0.0.0"
         self.open = False
         self.fade = 0.03
+        self.gpu = ""
 
         self.env_url = utils.get_env("HUGE_URL")
         self.env_name = utils.get_env("HUGE_NAME")
@@ -72,20 +73,30 @@ class Config:
         with open(self.config_path, "rb") as f:
             config_data = tomllib.load(f)
 
+        # How long should the video aim to be
         if "duration" in config_data:
             self.duration = float(config_data["duration"])
 
+        # Frames per second
         if "fps" in config_data:
             self.fps = int(config_data["fps"])
 
+        # A bigger crf means lower quality
+        # 28 is considered good enough
         if "crf" in config_data:
             self.crf = int(config_data["crf"])
 
+        # Path where files are saved
         if "path" in config_data:
             self.path = config_data["path"]
 
+        # Little gap between clips like 0.03 (seconds)
         if "fade" in config_data:
             self.fade = config_data["fade"]
+
+        # Either "amd" or "nvidia"
+        if "gpu" in config_data:
+            self.gpu = config_data["gpu"]
 
 
 config = Config()
