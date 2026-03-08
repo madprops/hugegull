@@ -18,6 +18,7 @@ class Stream:
         self.duration = 0.0
         self.active_clips: list[dict[str, Any]] = []
         self.sequence = 0
+        self.opened = False
         self.stream_file = os.path.join(config.output_dir, "stream.m3u8")
         self.prepare()
 
@@ -46,7 +47,7 @@ class Stream:
         self.stream_loop()
 
     def stream_loop(self) -> None:
-        utils.info(f"Starting continuous generation. Playlist at: {self.stream_file}")
+        utils.info(f"Stream at: {self.stream_file}")
 
         while len(self.active_clips) < config.buffer:
             self.generate_and_append_clip()
@@ -148,6 +149,10 @@ class Stream:
             for clip in self.active_clips:
                 f.write(f"#EXTINF:{clip['duration']:.6f},\n")
                 f.write(f"{clip['filename']}\n")
+
+            if config.open and (not self.opened):
+                utils.open_file(self.stream_file)
+                self.opened = True
 
 
 stream = Stream()
