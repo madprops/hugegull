@@ -32,7 +32,7 @@ Make a shell alias:
 
 ## Configuration
 
-Edit `~/.config/hugegull/hugegull.conf`
+Edit `~/.config/hugegull/hugegull.toml`
 
 It is empty but you can make it look like this:
 
