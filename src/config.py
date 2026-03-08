@@ -30,9 +30,9 @@ class Config:
         self.config_path = os.path.expanduser("~/.config/hugegull/config.toml")
         self.config_dir = os.path.dirname(self.config_path)
 
+        self.make_dirs()
         self.read_args()
         self.read_file()
-        self.make_dirs()
 
         self.temp_dir = os.path.join(self.path, "temp")
         self.output_dir = os.path.join(self.path, "output")
