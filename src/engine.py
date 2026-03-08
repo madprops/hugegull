@@ -126,20 +126,26 @@ class Engine:
 
         return sections
 
-    def extract_single_clip(
-        self, i: int, section: dict[str, Any], is_split_stream: bool, v_data: str
-    ) -> str | None:
+    def extract_single_clip(self, i: int, section: dict[str, Any], is_split_stream: bool, v_data: str) -> str | None:
         start = section["start"]
         duration = section["duration"]
         name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
 
-        command = ["ffmpeg", "-ss", str(start), "-i", v_data]
+        # Define the VAAPI hardware device early in the command
+        command = [
+            "ffmpeg",
+            "-vaapi_device", "/dev/dri/renderD128",
+            "-ss", str(start),
+            "-i", v_data
+        ]
 
         if is_split_stream:
             command.extend(["-ss", str(start), "-i", self.data["audio"]])
 
         fade_out_start = duration - config.fade
-        vf_filter = f"fps={config.fps}"
+
+        # format=nv12 and hwupload are strictly required to move the frames to the GPU
+        vf_filter = f"fps={config.fps},format=nv12,hwupload"
         af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
 
         command.extend(
@@ -151,10 +157,8 @@ class Engine:
                 "-af",
                 af_filter,
                 "-c:v",
-                "libx264",
-                "-preset",
-                "veryfast",  # Speed optimization
-                "-crf",
+                "h264_vaapi",         # Hardware encoder
+                "-global_quality",    # VAAPI equivalent for CRF-style quality control
                 str(config.crf),
                 "-c:a",
                 "aac",
