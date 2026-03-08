@@ -5,6 +5,7 @@ import random
 import subprocess
 import json
 import shutil
+import concurrent.futures
 from typing import Any
 
 from config import config
@@ -125,9 +126,58 @@ class Engine:
 
         return sections
 
+    def extract_single_clip(self, i: int, section: dict[str, Any], is_split_stream: bool, v_data: str) -> str | None:
+        start = section["start"]
+        duration = section["duration"]
+        name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
+
+        command = ["ffmpeg", "-ss", str(start), "-i", v_data]
+
+        if is_split_stream:
+            command.extend(["-ss", str(start), "-i", self.data["audio"]])
+
+        fade_out_start = duration - config.fade
+        vf_filter = f"fps={config.fps}"
+        af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
+
+        command.extend(
+            [
+                "-t",
+                str(duration),
+                "-vf",
+                vf_filter,
+                "-af",
+                af_filter,
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",  # Speed optimization
+                "-crf",
+                str(config.crf),
+                "-c:a",
+                "aac",
+                "-video_track_timescale",
+                "90000",
+                "-y",
+                name,
+            ]
+        )
+
+        utils.action(
+            f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s)"
+        )
+
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            utils.error(f"Error extracting clip {i + 1}:")
+            utils.error(result.stderr)
+            return None
+
+        return name
+
     def generate_random_clips(self) -> None:
         sections = self.generate_clip_sections()
-        total_sections = len(sections)
         is_split_stream = False
 
         if self.data:
@@ -139,59 +189,32 @@ class Engine:
         else:
             v_data = self.url
 
-        for i in range(total_sections):
-            section = sections[i]
-            start = section["start"]
-            duration = section["duration"]
-            name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
+        # Determine optimal number of workers (typically number of CPU cores)
+        max_workers = min(len(sections), os.cpu_count() or 4)
 
-            command = ["ffmpeg", "-ss", str(start), "-i", v_data]
+        # Run FFmpeg extractions in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
 
-            if is_split_stream:
-                command.extend(["-ss", str(start), "-i", self.data["audio"]])
+            for i in range(len(sections)):
+                future = executor.submit(
+                    self.extract_single_clip,
+                    i,
+                    sections[i],
+                    is_split_stream,
+                    v_data
+                )
+                futures.append(future)
 
-            # Calculate when the fade out should start
-            fade_out_start = duration - config.fade
+            for future in concurrent.futures.as_completed(futures):
+                clip_path = future.result()
 
-            # Revert the video filter back to just the framerate
-            vf_filter = f"fps={config.fps}"
+                if clip_path is not None:
+                    self.clips.append(clip_path)
 
-            # Keep the audio fade in and out
-            af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
-
-            command.extend(
-                [
-                    "-t",
-                    str(duration),
-                    "-vf",
-                    vf_filter,
-                    "-af",
-                    af_filter,
-                    "-c:v",
-                    "libx264",
-                    "-crf",
-                    str(config.crf),
-                    "-c:a",
-                    "aac",
-                    "-video_track_timescale",
-                    "90000",
-                    "-y",
-                    name,
-                ]
-            )
-
-            utils.action(
-                f"Clip {i + 1}/{total_sections} starting at {round(start)}s (Duration: {round(duration)}s)"
-            )
-
-            result = subprocess.run(command, capture_output=True, text=True)
-
-            if result.returncode != 0:
-                utils.error(f"Error extracting clip {i}:")
-                utils.error(result.stderr)
-                continue
-
-            self.clips.append(name)
+        # Sort clips to ensure they concatenate in the original generated order
+        # since multithreading completes them out of order
+        self.clips.sort(key=lambda x: int(os.path.basename(x).split('_')[2].split('.')[0]))
 
     def concatenate_clips(self) -> None:
         if not self.clips:
