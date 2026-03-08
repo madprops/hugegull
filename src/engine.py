@@ -31,7 +31,7 @@ class Engine:
             self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
             counter += 1
 
-    def start(self) -> None:
+    def start(self) -> bool:
         utils.info("Starting...")
         self.prepare()
 
@@ -49,8 +49,7 @@ class Engine:
             return False
 
         self.generate_random_clips()
-        self.concatenate_clips()
-        return True
+        return self.concatenate_clips()
 
     def resolve_with_ytdlp(self) -> None:
         command = [
@@ -262,7 +261,7 @@ class Engine:
     def concatenate_clips(self) -> None:
         if not self.clips:
             utils.error("No clips to concatenate.")
-            sys.exit(1)
+            return False
 
         list_file = os.path.join(config.project_dir, "concat_list.txt")
 
@@ -295,6 +294,8 @@ class Engine:
         else:
             shutil.rmtree(config.project_dir, ignore_errors=True)
             utils.info(f"Saved: {self.file}")
+
+        return True
 
     def get_stream_duration(self) -> None:
         command = [
