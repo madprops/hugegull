@@ -18,6 +18,7 @@ class Engine:
         self.data: dict[str, Any] = {}
         self.clips: list[str] = []
         self.duration = 0.0
+        self.workers = 4
         self.prepare()
 
     def prepare(self) -> None:
@@ -232,18 +233,7 @@ class Engine:
         else:
             v_data = self.url
 
-        # Check if the source is a local file
-        is_local_file = os.path.isfile(self.url)
-
-        if is_local_file:
-            # Local files can be read extremely fast, so max out the CPU/GPU
-            max_workers = min(len(sections), os.cpu_count() or 4)
-        else:
-            # Remote streams will choke a bad network if we use too many workers
-            # Throttling to 1 or 2 prevents bandwidth fighting
-            max_workers = 2
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.workers) as executor:
             futures = []
 
             for i in range(len(sections)):
