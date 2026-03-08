@@ -23,6 +23,8 @@ class Config:
         self.info_version = "0.0.0"
         self.open = False
         self.fade = 0.03
+        self.buffer = 5
+        self.stream = False
 
         self.env_url = utils.get_env("HUGE_URL")
         self.env_name = utils.get_env("HUGE_NAME")
@@ -52,6 +54,10 @@ class Config:
         if "--open" in sys.argv:
             self.open = True
             sys.argv.remove("--open")
+
+        if "--stream" in sys.argv:
+            self.stream = True
+            sys.argv.remove("--stream")
 
         if len(sys.argv) >= 3:
             self.url = sys.argv[1]
@@ -86,6 +92,9 @@ class Config:
 
         if "fade" in config_data:
             self.fade = config_data["fade"]
+
+        if "buffer" in config_data:
+            self.buffer = config_data["buffer"]
 
 
 config = Config()

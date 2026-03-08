@@ -34,7 +34,12 @@ def main() -> None:
         show_info()
         sys.exit(1)
 
-    engine.start()
+    utils.info("Starting...")
+
+    if config.stream:
+        stream.start()
+    else:
+        engine.start()
 
     if config.open:
         utils.open_file(engine.file)
