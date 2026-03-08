@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import os
 import random
-import subprocess
-import json
 import shutil
 import time
 from typing import Any
 
+from engine import engine
 from config import config
 from utils import utils
 
 
-class StreamEngine:
+class Stream:
     def __init__(self) -> None:
         self.url = config.url
         self.data: dict[str, Any] = {}
@@ -32,12 +31,12 @@ class StreamEngine:
 
     def start(self) -> None:
         if os.path.isfile(self.url):
-            self.duration = Engine.get_stream_duration(self.url)
+            self.duration = engine.get_stream_duration(self.url)
         else:
             if utils.is_site(self.url):
-                self.data, self.duration = Engine.resolve_with_ytdlp(self.url)
+                self.data, self.duration = engine.resolve_with_ytdlp(self.url)
             else:
-                self.duration = Engine.get_stream_duration(self.url)
+                self.duration = engine.get_stream_duration(self.url)
 
         if self.duration <= 0:
             utils.info("Could not determine stream duration or stream is live/endless.")
@@ -92,9 +91,11 @@ class StreamEngine:
         video_url = self.data.get("video", self.url)
         audio_url = self.data.get("audio")
 
-        utils.action(f"Extracting segment {self.sequence} at {round(start)}s (Duration: {round(clip_length)}s)")
+        utils.action(
+            f"Extracting segment {self.sequence} at {round(start)}s (Duration: {round(clip_length)}s)"
+        )
 
-        success = Engine.extract_clip(
+        success = engine.extract_clip(
             start=start,
             duration=clip_length,
             video_url=video_url,
@@ -107,11 +108,7 @@ class StreamEngine:
             return
 
         self.active_clips.append(
-            {
-                "filename": clip_filename,
-                "path": clip_path,
-                "duration": clip_length
-            }
+            {"filename": clip_filename, "path": clip_path, "duration": clip_length}
         )
 
     def update_playlist(self) -> None:
@@ -131,6 +128,5 @@ class StreamEngine:
                 f.write(f"#EXTINF:{clip['duration']:.6f},\n")
                 f.write(f"{clip['filename']}\n")
 
-if __name__ == "__main__":
-    engine = StreamEngine()
-    engine.start()
+
+stream = Stream()

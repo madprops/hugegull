@@ -12,6 +12,7 @@ import sys
 from config import config
 from utils import utils
 from engine import engine
+from stream import stream
 from info import info
 
 
@@ -41,10 +42,10 @@ def main() -> None:
     else:
         engine.start()
 
-    if config.open:
-        utils.open_file(engine.file)
-    else:
-        utils.notify("Video Complete")
+        if config.open:
+            utils.open_file(engine.file)
+        else:
+            utils.notify("Video Complete")
 
 
 if __name__ == "__main__":

@@ -65,7 +65,7 @@ class Engine:
         video_url: str,
         audio_url: str | None,
         output_path: str,
-        output_format: str | None = None
+        output_format: str | None = None,
     ) -> bool:
         command = ["ffmpeg", "-ss", str(start), "-i", video_url]
 
@@ -91,7 +91,7 @@ class Engine:
                 "-c:a",
                 "aac",
                 "-video_track_timescale",
-                "90000"
+                "90000",
             ]
         )
 
@@ -158,12 +158,12 @@ class Engine:
 
     def start(self) -> None:
         if os.path.isfile(self.url):
-            self.get_stream_duration()
+            self.get_stream_duration(self.url)
         else:
             if utils.is_site(self.url):
                 self.data, self.duration = self.resolve_with_ytdlp(self.url)
             else:
-                self.get_stream_duration()
+                self.get_stream_duration(self.url)
 
         if self.duration <= 0:
             utils.info("Could not determine stream duration or stream is live/endless.")
