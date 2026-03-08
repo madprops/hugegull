@@ -232,16 +232,31 @@ class Engine:
         else:
             v_data = self.url
 
-        # Determine optimal number of workers (typically number of CPU cores)
-        max_workers = min(len(sections), os.cpu_count() or 4)
+        # Check if the source is a local file
+        is_local_file = os.path.isfile(self.url)
 
-        # Run FFmpeg extractions in parallel
+        if is_local_file:
+            # Local files can be read extremely fast, so max out the CPU/GPU
+            max_workers = min(len(sections), os.cpu_count() or 4)
+
+            utils.info(
+                f"Local file detected. Extracting clips with {max_workers} parallel workers..."
+            )
+        else:
+            # Remote streams will choke a bad network if we use too many workers
+            # Throttling to 1 or 2 prevents bandwidth fighting
+            max_workers = 2
+
+            utils.info(
+                f"Remote stream detected. Throttling to {max_workers} parallel workers to save bandwidth..."
+            )
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = []
 
             for i in range(len(sections)):
                 future = executor.submit(
-                    self.extract_single_clip, i, sections[i], is_split_stream, v_data
+                    self._extract_single_clip, i, sections[i], is_split_stream, v_data
                 )
 
                 futures.append(future)
@@ -252,8 +267,6 @@ class Engine:
                 if clip_path is not None:
                     self.clips.append(clip_path)
 
-        # Sort clips to ensure they concatenate in the original generated order
-        # since multithreading completes them out of order
         self.clips.sort(
             key=lambda x: int(os.path.basename(x).split("_")[2].split(".")[0])
         )
