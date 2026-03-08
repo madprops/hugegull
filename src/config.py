@@ -25,9 +25,7 @@ class Config:
         self.fade = 0.03
         self.gpu = ""
 
-        prepare()
-
-    def prepare() -> None:
+    def prepare(self) -> None:
         self.env_url = utils.get_env("HUGE_URL")
         self.env_name = utils.get_env("HUGE_NAME")
 
