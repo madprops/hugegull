@@ -54,7 +54,10 @@ class Stream:
         self.update_playlist()
 
         while True:
-            self.generate_and_append_clip()
+            start_time = time.time()
+
+            # Get the duration of the newly generated clip
+            clip_duration = self.generate_and_append_clip()
 
             if len(self.active_clips) > config.buffer:
                 oldest_clip = self.active_clips.pop(0)
@@ -65,9 +68,21 @@ class Stream:
 
             self.update_playlist()
 
-            time.sleep(1)
+            # Pace the loop to match real-time playback
+            if clip_duration:
+                elapsed_time = time.time() - start_time
+                sleep_time = clip_duration - elapsed_time
 
-    def generate_and_append_clip(self) -> None:
+                # Leave a tiny bit of breathing room so generation stays slightly ahead
+                sleep_time = sleep_time - 1.0
+
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+            else:
+                # If extraction failed, just wait a moment before retrying
+                time.sleep(1)
+
+    def generate_and_append_clip(self) -> float | None:
         clip_length = random.triangular(
             config.min_clip_duration,
             config.max_clip_duration,
@@ -84,15 +99,16 @@ class Stream:
         else:
             start = random.uniform(0, max_start)
 
-        self.sequence += 1
-        clip_filename = f"segment_{self.sequence}.ts"
+        # Predict the next sequence and filename, but don't save it to self.sequence yet
+        next_sequence = self.sequence + 1
+        clip_filename = f"segment_{next_sequence}.ts"
         clip_path = os.path.join(config.output_dir, clip_filename)
 
         video_url = self.data.get("video", self.url)
         audio_url = self.data.get("audio")
 
         utils.action(
-            f"Extracting segment {self.sequence} at {round(start)}s (Duration: {round(clip_length)}s)"
+            f"Extracting segment {next_sequence} at {round(start)}s (Duration: {round(clip_length)}s)"
         )
 
         success = engine.extract_clip(
@@ -105,11 +121,16 @@ class Stream:
         )
 
         if not success:
-            return
+            return None
+
+        # Only increment sequence if extraction succeeded
+        self.sequence = next_sequence
 
         self.active_clips.append(
             {"filename": clip_filename, "path": clip_path, "duration": clip_length}
         )
+
+        return clip_length
 
     def update_playlist(self) -> None:
         if not self.active_clips:
