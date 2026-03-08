@@ -14,10 +14,8 @@ from utils import utils
 
 class Engine:
     def __init__(self) -> None:
-        self.url = config.url
-        self.data: dict[str, Any] = {}
+        self.sources: list[dict[str, Any]] = []
         self.clips: list[str] = []
-        self.duration = 0.0
         self.workers = 8
 
     def prepare(self) -> None:
@@ -31,27 +29,45 @@ class Engine:
             self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
             counter += 1
 
+    def prepare_sources(self) -> None:
+        for url in config.urls:
+            source = {
+                "url": url,
+                "v_data": url,
+                "a_url": None,
+                "duration": 0.0
+            }
+
+            if os.path.isfile(url):
+                source["duration"] = self.get_stream_duration(url)
+            else:
+                if utils.is_site(url):
+                    yt_data = self.resolve_with_ytdlp(url)
+
+                    if yt_data is not None:
+                        source.update(yt_data)
+                else:
+                    source["duration"] = self.get_stream_duration(url)
+
+            if source["duration"] > 0:
+                self.sources.append(source)
+            else:
+                utils.info(f"Could not determine duration for {url}, skipping.")
+
     def start(self) -> bool:
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
         self.prepare()
+        self.prepare_sources()
 
-        if os.path.isfile(self.url):
-            self.get_stream_duration()
-        else:
-            if utils.is_site(self.url):
-                self.resolve_with_ytdlp()
-            else:
-                self.get_stream_duration()
-
-        if self.duration <= 0:
-            utils.info("Could not determine stream duration or stream is live/endless.")
+        if len(self.sources) == 0:
+            utils.info("No valid sources found in the pool. Stream is live/endless or invalid.")
             shutil.rmtree(config.project_dir, ignore_errors=True)
             return False
 
         self.generate_random_clips()
         return self.concatenate_clips()
 
-    def resolve_with_ytdlp(self) -> None:
+    def resolve_with_ytdlp(self, url: str) -> dict[str, Any] | None:
         command = [
             "yt-dlp",
             "--no-playlist",
@@ -59,15 +75,15 @@ class Engine:
             "-f",
             "bestvideo[height<=1080]+bestaudio/best",
             "--dump-json",
-            self.url,
+            url,
         ]
 
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
-            utils.error("Error resolving URL. yt-dlp output:")
+            utils.error(f"Error resolving URL {url}. yt-dlp output:")
             utils.error(result.stderr)
-            self.duration = 0.0
+            return None
 
         try:
             metadata = json.loads(result.stdout)
@@ -81,30 +97,39 @@ class Engine:
                 if len(metadata["requested_formats"]) >= 2:
                     v_data = metadata["requested_formats"][0]["url"]
                     a_url = metadata["requested_formats"][1]["url"]
-                    self.data = {"video": v_data, "audio": a_url}
-                    self.duration = duration
-                else:
-                    self.data = {
-                        "video": metadata["requested_formats"][0]["url"],
-                        "audio": None,
-                    }
 
-                    self.duration = duration
+                    return {
+                        "v_data": v_data,
+                        "a_url": a_url,
+                        "duration": duration
+                    }
+                else:
+                    return {
+                        "v_data": metadata["requested_formats"][0]["url"],
+                        "a_url": None,
+                        "duration": duration
+                    }
             else:
-                self.data = {"video": metadata.get("url"), "audio": None}
-                self.duration = duration
+                return {
+                    "v_data": metadata.get("url"),
+                    "a_url": None,
+                    "duration": duration
+                }
 
         except Exception as e:
             utils.error(f"Error parsing yt-dlp output: {e}")
+            return None
 
     def generate_clip_sections(self) -> list[dict[str, Any]]:
         duration = config.duration
         sections: list[dict[str, Any]] = []
         current_sum = 0.0
         end_buffer = 2.0
-        safe_duration = self.duration - end_buffer
 
         while current_sum < duration:
+            source = random.choice(self.sources)
+            safe_duration = source["duration"] - end_buffer
+
             clip_length = random.triangular(
                 config.min_clip_duration,
                 config.max_clip_duration,
@@ -120,19 +145,34 @@ class Engine:
             max_start = safe_duration - clip_length
 
             if max_start <= 0:
-                break
+                continue
 
             start = random.uniform(0, max_start)
-            sections.append({"start": start, "duration": clip_length})
+
+            sections.append({
+                "start": start,
+                "duration": clip_length,
+                "source": source
+            })
+
             current_sum += clip_length
 
         return sections
 
     def extract_single_clip(
-        self, i: int, section: dict[str, Any], is_split_stream: bool, v_data: str
+        self, i: int, section: dict[str, Any]
     ) -> str | None:
+        source = section["source"]
         start = section["start"]
         duration = section["duration"]
+        v_data = source["v_data"]
+        a_url = source["a_url"]
+
+        is_split_stream = False
+
+        if a_url is not None:
+            is_split_stream = True
+
         name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
         modes_to_try = [config.gpu]
 
@@ -152,7 +192,7 @@ class Engine:
             command.extend(["-ss", str(start), "-i", v_data])
 
             if is_split_stream:
-                command.extend(["-ss", str(start), "-i", self.data["audio"]])
+                command.extend(["-ss", str(start), "-i", a_url])
 
             fade_out_start = duration - config.fade
             vf_filter = f"fps={config.fps}"
@@ -223,16 +263,6 @@ class Engine:
 
     def generate_random_clips(self) -> None:
         sections = self.generate_clip_sections()
-        is_split_stream = False
-
-        if self.data:
-            if self.data.get("audio") is not None:
-                is_split_stream = True
-
-        if self.data:
-            v_data = self.data["video"]
-        else:
-            v_data = self.url
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.workers
@@ -241,7 +271,7 @@ class Engine:
 
             for i in range(len(sections)):
                 future = executor.submit(
-                    self.extract_single_clip, i, sections[i], is_split_stream, v_data
+                    self.extract_single_clip, i, sections[i]
                 )
 
                 futures.append(future)
@@ -295,7 +325,7 @@ class Engine:
 
         return True
 
-    def get_stream_duration(self) -> None:
+    def get_stream_duration(self, url: str) -> float:
         command = [
             "ffprobe",
             "-v",
@@ -303,19 +333,20 @@ class Engine:
             "-print_format",
             "json",
             "-show_format",
-            self.url,
+            url,
         ]
 
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode != 0:
-            return
+            return 0.0
 
         metadata = json.loads(result.stdout)
 
         if "format" in metadata:
             if "duration" in metadata["format"]:
-                self.duration = float(metadata["format"]["duration"])
+                return float(metadata["format"]["duration"])
 
+        return 0.0
 
 engine = Engine()

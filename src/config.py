@@ -10,7 +10,7 @@ from utils import utils
 
 class Config:
     def __init__(self) -> None:
-        self.url = ""
+        self.urls: list[str] = []
         self.name = ""
         self.fps = 30
         self.crf = 30
@@ -52,6 +52,22 @@ class Config:
             with open(self.config_path, "w") as f:
                 f.write("")
 
+    def get_multiple_args(self, c: str, k: str) -> None:
+        values = []
+
+        while f"--{c}" in sys.argv:
+            arg_idx = sys.argv.index(f"--{c}")
+
+            if arg_idx + 1 < len(sys.argv):
+                values.append(sys.argv[arg_idx + 1])
+                sys.argv.pop(arg_idx + 1)
+                sys.argv.pop(arg_idx)
+            else:
+                print(f"Error: Missing argument value for --{c}")
+                sys.exit(1)
+
+        setattr(self, k, values)
+
     def get_arg(self, c: str, k: str) -> None:
         arg_idx = sys.argv.index(f"--{c}")
 
@@ -71,14 +87,11 @@ class Config:
         if "--config" in sys.argv:
             self.get_arg("config", "config")
 
-        if len(sys.argv) >= 3:
-            self.url = sys.argv[1]
-            self.name = sys.argv[2]
-        elif len(sys.argv) == 2:
-            arg = sys.argv[1]
+        if "--url" in sys.argv:
+            self.get_multiple_args("url", "urls")
 
-            if utils.is_url(arg) or os.path.exists(arg):
-                self.url = arg
+        if "--name" in sys.argv:
+            self.get_arg("name", "name")
 
         if not self.url:
             self.url = self.env_url
