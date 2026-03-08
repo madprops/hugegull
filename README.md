@@ -6,16 +6,6 @@ Each section is of variable duration.
 
 Then it joins them into a single video.
 
-Argument 1 is url.
-
-Argument 2 is name.
-
-You can use the `HUGE_URL` env var.
-
-You can use the `HUGE_NAME` env var.
-
-The name can be ommitted to use a random one.
-
 `--open` can be used to open the file when ready.
 
 ## Installation
@@ -50,13 +40,16 @@ gpu = "amd"
 
 ## Usage
 
-`hugegull https://something.m3u8 --open`
+`hugegull --url https://something.m3u8 --name "nice video" --open`
 
 Local, YouTube, and Twitch video urls work as well.
+
+The name can be ommitted to use a random one.
 
 Or:
 
 ```
 export HUGE_URL="https://something.m3u8"
+export HUGE_NAME="nice video"
 hugegull
 ```
