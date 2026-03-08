@@ -49,4 +49,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except Exception as e:
+        utils.print(f"\nAn error occurred while exiting: {e}")
+        sys.exit(1)
