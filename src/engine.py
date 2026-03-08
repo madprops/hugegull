@@ -46,10 +46,11 @@ class Engine:
         if self.duration <= 0:
             utils.info("Could not determine stream duration or stream is live/endless.")
             shutil.rmtree(config.project_dir, ignore_errors=True)
-            return
+            return False
 
         self.generate_random_clips()
         self.concatenate_clips()
+        return True
 
     def resolve_with_ytdlp(self) -> None:
         command = [
@@ -261,7 +262,7 @@ class Engine:
     def concatenate_clips(self) -> None:
         if not self.clips:
             utils.error("No clips to concatenate.")
-            return
+            sys.exit(1)
 
         list_file = os.path.join(config.project_dir, "concat_list.txt")
 

@@ -36,15 +36,16 @@ def main() -> None:
         sys.exit(1)
 
     start_time = time.perf_counter()
-    engine.start()
-    end_time = time.perf_counter()
-    duration = end_time - start_time
-    utils.info(f"Done in {int(duration)} seconds")
 
-    if config.open:
-        utils.open_file(engine.file)
-    else:
-        utils.notify("Video Complete")
+    if engine.start():
+        end_time = time.perf_counter()
+        duration = end_time - start_time
+        utils.info(f"Done in {int(duration)} seconds")
+
+        if config.open:
+            utils.open_file(engine.file)
+        else:
+            utils.notify("Video Complete")
 
 
 if __name__ == "__main__":
