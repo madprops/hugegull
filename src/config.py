@@ -84,6 +84,7 @@ class Config:
         self.parser.add_argument(
             "--version", "-v", action="version", version=info.version
         )
+
         self.parser.add_argument("positional_urls", nargs="*", type=str)
         self.parser.add_argument("--url", action="append", dest="urls")
         self.parser.add_argument("--open", action="store_true")
@@ -108,11 +109,18 @@ class Config:
 
         args = self.parser.parse_args()
 
-        if args.urls is None:
-            args.urls = []
+        cli_urls = []
 
         if args.positional_urls:
-            args.urls = args.positional_urls + args.urls
+            cli_urls.extend(args.positional_urls)
+
+        if args.urls:
+            cli_urls.extend(args.urls)
+
+        if cli_urls:
+            args.urls = cli_urls
+        else:
+            args.urls = None
 
         return args
 
