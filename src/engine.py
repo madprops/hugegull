@@ -25,7 +25,7 @@ class Engine:
         os.makedirs(config.output_dir, exist_ok=True)
 
         self.file = os.path.join(config.output_dir, f"{config.name}.mp4")
-        counter = 1
+        counter = 2
 
         while os.path.exists(self.file):
             self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
