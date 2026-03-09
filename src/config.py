@@ -79,11 +79,11 @@ class Config:
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
 
     def parse_arguments(self) -> argparse.Namespace:
-        self.parser = argparse.ArgumentParser(
-            description="Hugegull Config Parser"
-        )
+        self.parser = argparse.ArgumentParser(description="Hugegull Config Parser")
 
-        self.parser.add_argument("--version", "-v", action="version", version=info.version)
+        self.parser.add_argument(
+            "--version", "-v", action="version", version=info.version
+        )
         self.parser.add_argument("positional_urls", nargs="*", type=str)
         self.parser.add_argument("--url", action="append", dest="urls")
         self.parser.add_argument("--open", action="store_true")
@@ -96,9 +96,15 @@ class Config:
         self.parser.add_argument("--crf", type=int)
         self.parser.add_argument("--duration", type=float)
         self.parser.add_argument("--fade", type=float)
-        self.parser.add_argument("--min-clip-duration", type=float, dest="min_clip_duration")
-        self.parser.add_argument("--avg-clip-duration", type=float, dest="avg_clip_duration")
-        self.parser.add_argument("--max-clip-duration", type=float, dest="max_clip_duration")
+        self.parser.add_argument(
+            "--min-clip-duration", type=float, dest="min_clip_duration"
+        )
+        self.parser.add_argument(
+            "--avg-clip-duration", type=float, dest="avg_clip_duration"
+        )
+        self.parser.add_argument(
+            "--max-clip-duration", type=float, dest="max_clip_duration"
+        )
 
         args = self.parser.parse_args()
 

@@ -13,7 +13,6 @@ import time
 from config import config
 from utils import utils
 from engine import engine
-from info import info
 
 
 def main() -> None:
