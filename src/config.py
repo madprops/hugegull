@@ -7,6 +7,7 @@ import tomllib
 from typing import Any
 
 from utils import utils
+from info import info
 
 
 class Config:
@@ -17,8 +18,6 @@ class Config:
 
         # 2. Setup standard attributes
         self.path = os.path.dirname(os.path.abspath(__file__))
-        self.info_name = "hugegull"
-        self.info_version = "0.0.0"
 
         # 3. Parse CLI Arguments
         self.args = self.parse_arguments()
@@ -56,8 +55,6 @@ class Config:
         self.fps = self.resolve("fps", "fps", 30)
         self.crf = self.resolve("crf", "crf", 30)
         self.fade = self.resolve("fade", "fade", 0.03)
-        self.help = False
-        self.version = False
 
         self.min_clip_duration = self.resolve(
             "min_clip_duration", "min_clip_duration", 3.0
@@ -82,49 +79,40 @@ class Config:
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
 
     def parse_arguments(self) -> argparse.Namespace:
-        parser = argparse.ArgumentParser(description="Hugegull Config Parser")
-
-        # Info
-        parser.add_argument(
-            "--version", "-v", action="version", version=self.info_version
+        self.parser = argparse.ArgumentParser(
+            description="Hugegull Config Parser"
         )
 
-        # Urls
-        parser.add_argument("positional_urls", nargs="*", type=str)
-        parser.add_argument("--url", action="append", dest="urls")
+        self.parser.add_argument("--version", "-v", action="version", version=info.version)
+        self.parser.add_argument("positional_urls", nargs="*", type=str)
+        self.parser.add_argument("--url", action="append", dest="urls")
+        self.parser.add_argument("--open", action="store_true")
+        self.parser.add_argument("--config", type=str)
+        self.parser.add_argument("--name", type=str)
+        self.parser.add_argument("--gpu", type=str)
+        self.parser.add_argument("--path", type=str)
+        self.parser.add_argument("--amount", type=int)
+        self.parser.add_argument("--fps", type=int)
+        self.parser.add_argument("--crf", type=int)
+        self.parser.add_argument("--duration", type=float)
+        self.parser.add_argument("--fade", type=float)
+        self.parser.add_argument("--min-clip-duration", type=float, dest="min_clip_duration")
+        self.parser.add_argument("--avg-clip-duration", type=float, dest="avg_clip_duration")
+        self.parser.add_argument("--max-clip-duration", type=float, dest="max_clip_duration")
 
-        # Flags (Booleans)
-        parser.add_argument("--open", action="store_true")
-
-        # Strings
-        parser.add_argument("--config", type=str)
-        parser.add_argument("--name", type=str)
-        parser.add_argument("--gpu", type=str)
-        parser.add_argument("--path", type=str)
-
-        # Integers
-        parser.add_argument("--amount", type=int)
-        parser.add_argument("--fps", type=int)
-        parser.add_argument("--crf", type=int)
-
-        # Floats
-        parser.add_argument("--duration", type=float)
-        parser.add_argument("--fade", type=float)
-        parser.add_argument("--min-clip-duration", type=float, dest="min_clip_duration")
-        parser.add_argument("--avg-clip-duration", type=float, dest="avg_clip_duration")
-        parser.add_argument("--max-clip-duration", type=float, dest="max_clip_duration")
-
-        # Call parse_args() only once after ALL arguments are defined
-        args = parser.parse_args()
+        args = self.parser.parse_args()
 
         if args.urls is None:
             args.urls = []
 
-        # Combine the positional URLs with any --url flag URLs
         if args.positional_urls:
             args.urls = args.positional_urls + args.urls
 
         return args
+
+    # Add a new method to call help programmatically
+    def show_help(self) -> None:
+        self.parser.print_help()
 
     def read_toml(self) -> dict[str, Any]:
         if not os.path.exists(self.config_path):

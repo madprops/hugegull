@@ -16,21 +16,9 @@ from engine import engine
 from info import info
 
 
-def show_info() -> None:
-    msg = f"{info.name} v{info.version}"
-    utils.print(msg)
-    utils.print("Usage: python /path/to/main.py <url> <name>")
-    utils.print("Or set HUGE_URL and HUGE_NAME env vars.")
-    utils.print("Suggested alias: hgg")
-
-
 def main() -> None:
-    if config.help or config.version:
-        show_info()
-        sys.exit(0)
-
     if not config.urls:
-        show_info()
+        config.show_help()
         sys.exit(1)
 
     start_time = time.perf_counter()
