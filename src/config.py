@@ -149,12 +149,12 @@ class Config:
             curr = getattr(self, k)
 
             if t == "float":
-                if curr == self.default_float:
+                if curr != self.default_float:
                     return
 
                 v = float(data[k])
             elif t == "int":
-                if curr == self.default_int:
+                if curr != self.default_int:
                     return
 
                 v = int(data[k])
