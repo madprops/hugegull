@@ -19,6 +19,10 @@ class Engine:
         self.workers = 8
         self.max_width = 0
         self.max_height = 0
+        self.clip_timeout = 120
+        self.resolve_timeout = 60
+        self.concat_timeout = 120
+        self.probe_timeout = 15
 
     def prepare(self) -> None:
         os.makedirs(config.project_dir, exist_ok=True)
@@ -174,15 +178,19 @@ class Engine:
                 ]
             )
 
-            result = subprocess.run(command, capture_output=True, text=True)
-
-            if result.returncode == 0:
-                break
-
             method_name = "default"
 
             if len(args) > 0:
                 method_name = " ".join(args)
+
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, timeout=self.resolve_timeout)
+            except subprocess.TimeoutExpired:
+                errors.append(f"[{method_name}] -> Process timed out.")
+                continue
+
+            if result.returncode == 0:
+                break
 
             errors.append(f"[{method_name}] -> {result.stderr.strip()}")
 
@@ -358,13 +366,19 @@ class Engine:
             )
 
             try:
-                result = subprocess.run(command, capture_output=True, text=True)
+                result = subprocess.run(command, capture_output=True, text=True, timeout=self.clip_timeout)
 
                 if result.returncode == 0:
                     return name
 
                 utils.error(f"Error extracting clip {i + 1} using {mode}:")
                 utils.error(result.stderr)
+
+                if mode != modes_to_try[-1]:
+                    utils.info(f"Retrying clip {i + 1} with CPU fallback...")
+
+            except subprocess.TimeoutExpired:
+                utils.error(f"Timeout expired. Extracting clip {i + 1} using {mode}.")
 
                 if mode != modes_to_try[-1]:
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
@@ -450,13 +464,18 @@ class Engine:
             self.file,
         ]
 
-        result = subprocess.run(command, capture_output=True, text=True)
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=self.concat_timeout)
 
-        if result.returncode != 0:
-            utils.error("Error concatenating clips:")
-            utils.error(result.stderr)
-        else:
-            utils.info(f"Saved: {self.file}")
+            if result.returncode != 0:
+                utils.error("Error concatenating clips:")
+                utils.error(result.stderr)
+            else:
+                utils.info(f"Saved: {self.file}")
+
+        except subprocess.TimeoutExpired:
+            utils.error("Timeout expired while concatenating clips.")
+            return False
 
         return True
 
@@ -472,8 +491,13 @@ class Engine:
             url,
         ]
 
-        result = subprocess.run(command, capture_output=True, text=True)
         info = {"duration": 0.0, "width": 0, "height": 0}
+
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=self.probe_timeout)
+        except subprocess.TimeoutExpired:
+            utils.error(f"Timeout expired probing stream info for {url}.")
+            return info
 
         if result.returncode != 0:
             return info
@@ -495,6 +519,5 @@ class Engine:
             pass
 
         return info
-
 
 engine = Engine()
