@@ -120,7 +120,7 @@ class Engine:
 
         # Calculate a master duration to pool enough clips for all videos, plus a 20% buffer
         total_needed_duration = config.duration * amount * 1.2
-        utils.info(f"Generating master clip pool for {amount} videos...")
+        utils.info(f"Generating clip pool for {amount} videos...")
 
         self.generate_random_clips(total_needed_duration)
 
