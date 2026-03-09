@@ -69,3 +69,45 @@ Or:
 `hugegull https://something.m3u8 https://otherthing.m3u8`
 
 It supports multiple source arguments.
+
+--
+
+Or:
+
+`hugegull --url https://something.m3u8 --url https://otherthing.m3u8`
+
+---
+
+Or:
+
+```
+export HUGE_URL="https://something.m3u8 https://otherthing.m3u8"
+hugegull
+```
+
+## More
+
+Suggested alias:
+
+`alias hgg="hugegull"`
+
+Or:
+
+`alias hgg="python ~/code/hugegull/main.py"`
+
+---
+
+Suggested `fish` function:
+
+```
+function egull
+  export HUGE_URL="$argv[1]"
+end
+```
+
+Then you can do:
+
+```
+egull "https://something.m3u8 https://otherthing.m3u8"
+hgg
+```
