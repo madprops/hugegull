@@ -70,7 +70,7 @@ Or:
 
 It supports multiple source arguments.
 
---
+---
 
 Or:
 
