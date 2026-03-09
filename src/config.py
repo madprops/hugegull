@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import argparse
 import os
-import sys
 import time
 import tomllib
 from typing import Any
@@ -11,55 +11,120 @@ from utils import utils
 
 class Config:
     def __init__(self) -> None:
-        self.default_int = -1
-        self.default_float = -1.0
-        self.urls: list[str] = []
-        self.name = ""
-        self.fps = -1
-        self.crf = -1
-        self.duration = -1.0
-        self.min_clip_duration = -1.0
-        self.avg_clip_duration = -1.0
-        self.max_clip_duration = -1.0
-        self.fade = -1.0
-        self.amount = -1
-        self.path = os.path.dirname(os.path.abspath(__file__))
-        self.info_name = "hugegull"
-        self.info_version = "0.0.0"
-        self.open = False
-        self.gpu = ""
-        self.config = ""
-
+        # 1. Load Environment Variables
         self.env_url = utils.get_env("HUGE_URL")
         self.env_name = utils.get_env("HUGE_NAME")
 
-        self.read_args()
+        # 2. Setup standard attributes
+        self.path = os.path.dirname(os.path.abspath(__file__))
+        self.info_name = "hugegull"
+        self.info_version = "0.0.0"
 
+        # 3. Parse CLI Arguments
+        self.args = self.parse_arguments()
+        self.open = self.args.open
+        self.config = self.args.config or ""
+
+        # 4. Setup Directories and Files
         self.config_file = self.config or "~/.config/hugegull/config.toml"
         self.config_path = os.path.expanduser(self.config_file)
         self.config_dir = os.path.dirname(self.config_path)
 
         self.make_dirs()
-        self.read_config_file()
 
-        self.fill_default("amount", 1)
-        self.fill_default("duration", 35.0)
-        self.fill_default("fps", 30)
-        self.fill_default("crf", 30)
-        self.fill_default("fade", 0.03)
-        self.fill_default("min_clip_duration", 3.0)
-        self.fill_default("avg_clip_duration", 6.0)
-        self.fill_default("max_clip_duration", 9.0)
+        # 5. Read TOML Configuration
+        self.toml_data = self.read_toml()
 
+        # 6. Resolve final values
+        env_urls = []
+
+        if self.env_url:
+            env_urls = self.env_url.split(" ")
+
+        raw_urls = self.resolve("urls", "urls", env_urls)
+        self.urls = []
+
+        for s in raw_urls:
+            if s != "":
+                self.urls.append(s)
+
+        default_name = self.env_name or utils.get_random_name()
+
+        self.name = self.resolve("name", "name", default_name)
+        self.amount = self.resolve("amount", "amount", 1)
+        self.duration = self.resolve("duration", "duration", 35.0)
+        self.fps = self.resolve("fps", "fps", 30)
+        self.crf = self.resolve("crf", "crf", 30)
+        self.fade = self.resolve("fade", "fade", 0.03)
+
+        self.min_clip_duration = self.resolve(
+            "min_clip_duration", "min_clip_duration", 3.0
+        )
+
+        self.avg_clip_duration = self.resolve(
+            "avg_clip_duration", "avg_clip_duration", 6.0
+        )
+
+        self.max_clip_duration = self.resolve(
+            "max_clip_duration", "max_clip_duration", 9.0
+        )
+
+        self.gpu = self.resolve("gpu", "gpu", "")
+        self.path = self.resolve("path", "path", self.path)
+
+        # 7. Finalize generated paths
         self.temp_dir = os.path.join(self.path, "temp")
         self.output_dir = os.path.join(self.path, "output")
 
         run_id = str(int(time.time() * 1000))
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
 
-    def fill_default(self, k: str, v: Any) -> None:
-        if getattr(self, k) == -1:
-            setattr(self, k, v)
+    def parse_arguments(self) -> argparse.Namespace:
+        parser = argparse.ArgumentParser(description="Hugegull Config Parser")
+
+        # Flags (Booleans)
+        parser.add_argument("--open", action="store_true")
+
+        # Strings
+        parser.add_argument("--config", type=str)
+        parser.add_argument("--name", type=str)
+        parser.add_argument("--gpu", type=str)
+        parser.add_argument("--path", type=str)
+
+        # Lists (action="append" allows multiple --url arguments)
+        parser.add_argument("--url", action="append", dest="urls")
+
+        # Integers
+        parser.add_argument("--amount", type=int)
+        parser.add_argument("--fps", type=int)
+        parser.add_argument("--crf", type=int)
+
+        # Floats
+        parser.add_argument("--duration", type=float)
+        parser.add_argument("--fade", type=float)
+        parser.add_argument("--min-clip-duration", type=float, dest="min_clip_duration")
+        parser.add_argument("--avg-clip-duration", type=float, dest="avg_clip_duration")
+        parser.add_argument("--max-clip-duration", type=float, dest="max_clip_duration")
+
+        return parser.parse_args()
+
+    def read_toml(self) -> dict[str, Any]:
+        if not os.path.exists(self.config_path):
+            return {}
+
+        with open(self.config_path, "rb") as f:
+            return tomllib.load(f)
+
+    def resolve(self, cli_key: str, toml_key: str, default_val: Any) -> Any:
+        cli_val = getattr(self.args, cli_key, None)
+
+        if cli_val is not None:
+            return cli_val
+
+        if toml_key in self.toml_data:
+            return self.toml_data[toml_key]
+
+        return default_val
 
     def make_dirs(self) -> None:
         if not os.path.exists(self.config_dir):
@@ -68,131 +133,6 @@ class Config:
         if not os.path.exists(self.config_path):
             with open(self.config_path, "w") as f:
                 f.write("")
-
-    def get_multiple_args(self, c: str, k: str) -> None:
-        values = []
-
-        while f"--{c}" in sys.argv:
-            arg_idx = sys.argv.index(f"--{c}")
-
-            if arg_idx + 1 < len(sys.argv):
-                values.append(sys.argv[arg_idx + 1])
-                sys.argv.pop(arg_idx + 1)
-                sys.argv.pop(arg_idx)
-            else:
-                print(f"Error: Missing argument value for --{c}")
-                sys.exit(1)
-
-        setattr(self, k, values)
-
-    def get_arg(self, c: str, k: str, t: str = "str") -> None:
-        arg_idx = sys.argv.index(f"--{c}")
-
-        if arg_idx + 1 < len(sys.argv):
-            value: Any = sys.argv[arg_idx + 1]
-
-            if t == "int":
-                value = int(value)
-
-            setattr(self, k, value)
-            sys.argv.pop(arg_idx + 1)
-            sys.argv.pop(arg_idx)
-        else:
-            print(f"Error: Missing argument value for --{c}")
-            sys.exit(1)
-
-    def read_args(self) -> None:
-        if "--open" in sys.argv:
-            self.open = True
-            sys.argv.remove("--open")
-
-        if "--config" in sys.argv:
-            self.get_arg("config", "config")
-
-        if "--url" in sys.argv:
-            self.get_multiple_args("url", "urls")
-
-        if "--name" in sys.argv:
-            self.get_arg("name", "name")
-
-        if "--amount" in sys.argv:
-            self.get_arg("amount", "amount", "int")
-
-        if "--duration" in sys.argv:
-            self.get_arg("duration", "duration", "int")
-
-        if "--fps" in sys.argv:
-            self.get_arg("fps", "fps", "int")
-
-        if "--crf" in sys.argv:
-            self.get_arg("crf", "crf", "int")
-
-        if "--min-clip-duration" in sys.argv:
-            self.get_arg("min-clip-duration", "min_clip_duration", "int")
-
-        if "--avg-clip-duration" in sys.argv:
-            self.get_arg("avg-clip-duration", "avg_clip_duration", "int")
-
-        if "--max-clip-duration" in sys.argv:
-            self.get_arg("max-clip-duration", "max_clip_duration", "int")
-
-        if not self.urls:
-            self.urls = self.env_url.split(" ")
-
-        self.urls = [s for s in self.urls if s != ""]
-
-        if not self.name:
-            self.name = self.env_name or utils.get_random_name()
-
-    def read_config_file_item(self, data: Any, k: str, t: str = "int") -> None:
-        if k in data:
-            curr = getattr(self, k)
-
-            if t == "float":
-                if curr != self.default_float:
-                    return
-
-                v = float(data[k])
-            elif t == "int":
-                if curr != self.default_int:
-                    return
-
-                v = int(data[k])
-            else:
-                v = data[k]
-
-            setattr(self, k, v)
-
-    def read_config_file(self) -> None:
-        with open(self.config_path, "rb") as f:
-            data = tomllib.load(f)
-
-        # How long should the video aim to be
-        self.read_config_file_item(data, "duration", "float")
-
-        # Frames per second
-        self.read_config_file_item(data, "fps", "int")
-
-        # 28 is considered good enough
-        self.read_config_file_item(data, "crf", "int")
-
-        # Path where files are saved
-        self.read_config_file_item(data, "path", "str")
-
-        # Little gap between clips like 0.03 (seconds)
-        self.read_config_file_item(data, "fade", "float")
-
-        # Either "amd" or "nvidia"
-        self.read_config_file_item(data, "gpu", "str")
-
-        # The smallest clip duration
-        self.read_config_file_item(data, "min_clip_duration", "float")
-
-        # How long can clips be
-        self.read_config_file_item(data, "max_clip_duration", "float")
-
-        # Clip duration is often close to this
-        self.read_config_file_item(data, "avg_clip_duration", "float")
 
 
 config = Config()
