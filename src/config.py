@@ -14,7 +14,7 @@ class Config:
         self.name = ""
         self.fps = 30
         self.crf = 30
-        self.duration = 45.0
+        self.duration = 35.0
         self.min_clip_duration = 3.0
         self.avg_clip_duration = 6.0
         self.max_clip_duration = 9.0

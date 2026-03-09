@@ -32,7 +32,7 @@ It is empty but you can make it look like this:
 
 ```
 path = "/home/memphis/toilet"
-duration = 45
+duration = 35
 fps = 30
 crf = 30
 gpu = "amd"
