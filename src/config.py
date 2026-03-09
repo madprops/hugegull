@@ -104,7 +104,7 @@ class Config:
             self.get_arg("amount", "amount", "int")
 
         if not self.urls:
-            self.urls.append(self.env_url)
+            self.urls = self.env_url.split(" ")
 
         self.urls = [s for s in self.urls if s != ""]
 
