@@ -15,11 +15,11 @@ class Config:
         self.name = ""
         self.fps = -1
         self.crf = -1
-        self.duration = -1
-        self.min_clip_duration = -1
-        self.avg_clip_duration = -1
-        self.max_clip_duration = -1
-        self.fade = -1
+        self.duration = -1.0
+        self.min_clip_duration = -1.0
+        self.avg_clip_duration = -1.0
+        self.max_clip_duration = -1.0
+        self.fade = -1.0
         self.amount = -1
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.info_name = "hugegull"
@@ -41,7 +41,7 @@ class Config:
         self.read_config_file()
 
         self.fill_default("amount", 1)
-        self.fill_default("duration", 35)
+        self.fill_default("duration", 35.0)
         self.fill_default("fps", 30)
         self.fill_default("crf", 30)
         self.fill_default("fade", 0.03)

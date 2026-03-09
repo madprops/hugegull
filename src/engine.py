@@ -185,7 +185,12 @@ class Engine:
                 method_name = " ".join(args)
 
             try:
-                result = subprocess.run(command, capture_output=True, text=True, timeout=self.resolve_timeout)
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    timeout=self.resolve_timeout,
+                )
             except subprocess.TimeoutExpired:
                 errors.append(f"[{method_name}] -> Process timed out.")
                 continue
@@ -367,7 +372,9 @@ class Engine:
             )
 
             try:
-                result = subprocess.run(command, capture_output=True, text=True, timeout=self.clip_timeout)
+                result = subprocess.run(
+                    command, capture_output=True, text=True, timeout=self.clip_timeout
+                )
 
                 if result.returncode == 0:
                     return name
@@ -466,7 +473,9 @@ class Engine:
         ]
 
         try:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=self.concat_timeout)
+            result = subprocess.run(
+                command, capture_output=True, text=True, timeout=self.concat_timeout
+            )
 
             if result.returncode != 0:
                 utils.error("Error concatenating clips:")
@@ -495,7 +504,9 @@ class Engine:
         info = {"duration": 0.0, "width": 0, "height": 0}
 
         try:
-            result = subprocess.run(command, capture_output=True, text=True, timeout=self.probe_timeout)
+            result = subprocess.run(
+                command, capture_output=True, text=True, timeout=self.probe_timeout
+            )
         except subprocess.TimeoutExpired:
             utils.error(f"Timeout expired probing stream info for {url}.")
             return info
@@ -520,5 +531,6 @@ class Engine:
             pass
 
         return info
+
 
 engine = Engine()
