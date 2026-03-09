@@ -11,6 +11,8 @@ from utils import utils
 
 class Config:
     def __init__(self) -> None:
+        self.default_int = -1
+        self.default_float = -1.0
         self.urls: list[str] = []
         self.name = ""
         self.fps = -1
@@ -144,9 +146,17 @@ class Config:
 
     def read_config_file_item(self, data: Any, k: str, t: str = "int") -> None:
         if k in data:
+            curr = getattr(self, k)
+
             if t == "float":
+                if curr == self.default_float:
+                    return
+
                 v = float(data[k])
             elif t == "int":
+                if curr == self.default_int:
+                    return
+
                 v = int(data[k])
             else:
                 v = data[k]
