@@ -82,7 +82,9 @@ class Config:
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
 
     def parse_arguments(self) -> argparse.Namespace:
-        parser = argparse.ArgumentParser(description="Hugegull Config Parser", add_help=False)
+        parser = argparse.ArgumentParser(
+            description="Hugegull Config Parser", add_help=False
+        )
 
         # Info
         parser.add_argument("--help", "-h", action="store_true")
