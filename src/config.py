@@ -56,6 +56,8 @@ class Config:
         self.fps = self.resolve("fps", "fps", 30)
         self.crf = self.resolve("crf", "crf", 30)
         self.fade = self.resolve("fade", "fade", 0.03)
+        self.help = False
+        self.version = False
 
         self.min_clip_duration = self.resolve(
             "min_clip_duration", "min_clip_duration", 3.0
@@ -80,7 +82,11 @@ class Config:
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
 
     def parse_arguments(self) -> argparse.Namespace:
-        parser = argparse.ArgumentParser(description="Hugegull Config Parser")
+        parser = argparse.ArgumentParser(description="Hugegull Config Parser", add_help=False)
+
+        # Info
+        parser.add_argument("--help", "-h", action="store_true")
+        parser.add_argument("--version", "-v", action="store_true")
 
         # Flags (Booleans)
         parser.add_argument("--open", action="store_true")

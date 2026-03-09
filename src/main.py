@@ -25,9 +25,7 @@ def show_info() -> None:
 
 
 def main() -> None:
-    args = sys.argv[1:]
-
-    if "--help" in args or "--version" in args:
+    if config.help or config.version:
         show_info()
         sys.exit(0)
 

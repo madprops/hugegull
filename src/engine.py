@@ -16,7 +16,7 @@ class Engine:
     def __init__(self) -> None:
         self.sources: list[dict[str, Any]] = []
         self.clips: list[str] = []
-        self.workers = 4
+        self.workers = 6
         self.max_width = 0
         self.max_height = 0
         self.clip_timeout = 120
