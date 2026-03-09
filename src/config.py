@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import tomllib
+from typing import Any
 
 from utils import utils
 
@@ -69,11 +70,11 @@ class Config:
 
         setattr(self, k, values)
 
-    def get_arg(self, c: str, k: str, t = "str") -> None:
+    def get_arg(self, c: str, k: str, t: str = "str") -> None:
         arg_idx = sys.argv.index(f"--{c}")
 
         if arg_idx + 1 < len(sys.argv):
-            value = sys.argv[arg_idx + 1]
+            value: Any = sys.argv[arg_idx + 1]
 
             if t == "int":
                 value = int(value)

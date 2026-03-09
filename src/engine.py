@@ -143,36 +143,36 @@ class Engine:
         return all_successful
 
     def resolve_with_ytdlp(self, url: str) -> dict[str, Any] | None:
-        cookie_args = [
+        cookie_args: list[Any] = [
             [],
         ]
 
         if os.path.isfile("cookies.txt"):
             cookie_args.append(["--cookies", "cookies.txt"])
 
-        cookie_args.extend([
-            ["--cookies-from-browser", "firefox"],
-            ["--cookies-from-browser", "chrome"]
-        ])
+        cookie_args.extend(
+            [
+                ["--cookies-from-browser", "firefox"],
+                ["--cookies-from-browser", "chrome"],
+            ]
+        )
 
         result = None
         errors = []
 
         for args in cookie_args:
-            command = [
-                "yt-dlp",
-                "--no-playlist",
-                "--no-warnings"
-            ]
+            command = ["yt-dlp", "--no-playlist", "--no-warnings"]
 
             command.extend(args)
 
-            command.extend([
-                "-f",
-                "bv*[height<=1080]+ba/b[height<=1080]/bv+ba/b",
-                "--dump-json",
-                url,
-            ])
+            command.extend(
+                [
+                    "-f",
+                    "bv*[height<=1080]+ba/b[height<=1080]/bv+ba/b",
+                    "--dump-json",
+                    url,
+                ]
+            )
 
             result = subprocess.run(command, capture_output=True, text=True)
 
@@ -209,9 +209,17 @@ class Engine:
 
                     return {"v_data": v_data, "a_url": a_url, "duration": duration}
                 else:
-                    return {"v_data": metadata["requested_formats"][0]["url"], "a_url": None, "duration": duration}
+                    return {
+                        "v_data": metadata["requested_formats"][0]["url"],
+                        "a_url": None,
+                        "duration": duration,
+                    }
             else:
-                return {"v_data": metadata.get("url"), "a_url": None, "duration": duration}
+                return {
+                    "v_data": metadata.get("url"),
+                    "a_url": None,
+                    "duration": duration,
+                }
 
         except Exception as e:
             utils.error(f"Error parsing yt-dlp output: {e}")
@@ -232,7 +240,7 @@ class Engine:
                 config.avg_clip_duration,
             )
 
-            if ((current_sum + clip_length) > target_duration):
+            if (current_sum + clip_length) > target_duration:
                 clip_length = target_duration - current_sum
 
             if clip_length < config.min_clip_duration:
@@ -417,7 +425,9 @@ class Engine:
             return False
 
         # Randomize list filename to avoid conflicts during loops
-        list_file = os.path.join(config.project_dir, f"concat_list_{random.randint(1000, 9999)}.txt")
+        list_file = os.path.join(
+            config.project_dir, f"concat_list_{random.randint(1000, 9999)}.txt"
+        )
 
         with open(list_file, "w") as f:
             for clip in selected_clips:
