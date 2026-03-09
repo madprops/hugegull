@@ -82,26 +82,16 @@ class Config:
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
 
     def parse_arguments(self) -> argparse.Namespace:
-        parser = argparse.ArgumentParser(
-            description="Hugegull Config Parser", add_help=False
-        )
+        parser = argparse.ArgumentParser(description="Hugegull Config Parser")
 
         # Info
-        parser.add_argument("--help", "-h", action="store_true")
-        parser.add_argument("--version", "-v", action="store_true")
+        parser.add_argument(
+            "--version", "-v", action="version", version=self.info_version
+        )
 
         # Urls
         parser.add_argument("positional_urls", nargs="*", type=str)
         parser.add_argument("--url", action="append", dest="urls")
-
-        args = parser.parse_args()
-
-        if args.urls is None:
-            args.urls = []
-
-        # 4. Combine the positional URLs with any --url flag URLs
-        if args.positional_urls:
-            args.urls = args.positional_urls + args.urls
 
         # Flags (Booleans)
         parser.add_argument("--open", action="store_true")
@@ -124,7 +114,17 @@ class Config:
         parser.add_argument("--avg-clip-duration", type=float, dest="avg_clip_duration")
         parser.add_argument("--max-clip-duration", type=float, dest="max_clip_duration")
 
-        return parser.parse_args()
+        # Call parse_args() only once after ALL arguments are defined
+        args = parser.parse_args()
+
+        if args.urls is None:
+            args.urls = []
+
+        # Combine the positional URLs with any --url flag URLs
+        if args.positional_urls:
+            args.urls = args.positional_urls + args.urls
+
+        return args
 
     def read_toml(self) -> dict[str, Any]:
         if not os.path.exists(self.config_path):
