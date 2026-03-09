@@ -45,7 +45,10 @@ def main() -> None:
         if config.open:
             utils.open_file(engine.file)
         else:
-            utils.notify("Video Complete")
+            if config.amount == 1:
+                utils.notify("Video Complete")
+            else:
+                utils.notify("Videos Complete")
 
 
 if __name__ == "__main__":

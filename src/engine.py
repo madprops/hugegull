@@ -112,7 +112,7 @@ class Engine:
             shutil.rmtree(config.project_dir, ignore_errors=True)
             return False
 
-        amount = config.amount
+        amount = config.amount or 1
 
         # Calculate a master duration to pool enough clips for all videos, plus a 20% buffer
         total_needed_duration = config.duration * amount * 1.2
