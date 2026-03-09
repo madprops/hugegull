@@ -101,7 +101,11 @@ class Engine:
 
     def start(self) -> bool:
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
-        self.prepare()
+
+        # Make sure the project directory exists early, just in case
+        os.makedirs(config.project_dir, exist_ok=True)
+
+        # Prepare sources only ONCE to save time
         self.prepare_sources()
 
         if len(self.sources) == 0:
@@ -112,8 +116,24 @@ class Engine:
             shutil.rmtree(config.project_dir, ignore_errors=True)
             return False
 
-        self.generate_random_clips()
-        return self.concatenate_clips()
+        all_successful = True
+
+        for i in range(config.amount):
+            if config.amount > 1:
+                utils.info(f"--- Generating video {i + 1} of {config.amount} ---")
+
+            # Reset per-video state
+            self.clips = []
+
+            # Prepare sets up the unique file name and temporary project directory
+            self.prepare()
+
+            self.generate_random_clips()
+
+            if not self.concatenate_clips():
+                all_successful = False
+
+        return all_successful
 
     def resolve_with_ytdlp(self, url: str) -> dict[str, Any] | None:
         cookie_args = [

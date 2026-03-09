@@ -25,6 +25,7 @@ class Config:
         self.fade = 0.03
         self.gpu = ""
         self.config = ""
+        self.amount = 1
 
         self.env_url = utils.get_env("HUGE_URL")
         self.env_name = utils.get_env("HUGE_NAME")
@@ -68,11 +69,17 @@ class Config:
 
         setattr(self, k, values)
 
-    def get_arg(self, c: str, k: str) -> None:
+    def get_arg(self, c: str, k: str, t = "str") -> None:
         arg_idx = sys.argv.index(f"--{c}")
 
         if arg_idx + 1 < len(sys.argv):
-            setattr(self, k, sys.argv[arg_idx + 1])
+            value = sys.argv[arg_idx + 1]
+
+            if t == "int":
+                value = int(value)
+                print(value)
+
+            setattr(self, k, value)
             sys.argv.pop(arg_idx + 1)
             sys.argv.pop(arg_idx)
         else:
@@ -93,8 +100,13 @@ class Config:
         if "--name" in sys.argv:
             self.get_arg("name", "name")
 
+        if "--amount" in sys.argv:
+            self.get_arg("amount", "amount", "int")
+
         if not self.urls:
             self.urls.append(self.env_url)
+
+        self.urls = [s for s in self.urls if s != ""]
 
         if not self.name:
             self.name = self.env_name or utils.get_random_name()
