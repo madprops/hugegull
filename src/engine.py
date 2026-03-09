@@ -102,36 +102,43 @@ class Engine:
     def start(self) -> bool:
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
 
-        # Make sure the project directory exists early, just in case
         os.makedirs(config.project_dir, exist_ok=True)
-
-        # Prepare sources only ONCE to save time
         self.prepare_sources()
 
         if len(self.sources) == 0:
             utils.info(
                 "No valid sources found in the pool. Stream is live/endless or invalid."
             )
-
             shutil.rmtree(config.project_dir, ignore_errors=True)
+            return False
+
+        amount = config.amount
+
+        # Calculate a master duration to pool enough clips for all videos, plus a 20% buffer
+        total_needed_duration = config.duration * amount * 1.2
+        utils.info(f"Generating master clip pool for {amount} videos...")
+
+        self.generate_random_clips(total_needed_duration)
+
+        if len(self.clips) == 0:
+            utils.error("Failed to generate any clips for the master pool.")
             return False
 
         all_successful = True
 
-        for i in range(config.amount):
-            if config.amount > 1:
-                utils.info(f"--- Generating video {i + 1} of {config.amount} ---")
+        for i in range(amount):
+            if amount > 1:
+                utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
-            # Reset per-video state
-            self.clips = []
-
-            # Prepare sets up the unique file name and temporary project directory
             self.prepare()
 
-            self.generate_random_clips()
+            selected_clips = self.select_clips_for_duration(config.duration)
 
-            if not self.concatenate_clips():
+            if not self.concatenate_clips(selected_clips):
                 all_successful = False
+
+        # Clean up the master pool and project directory ONLY after all videos are done
+        shutil.rmtree(config.project_dir, ignore_errors=True)
 
         return all_successful
 
@@ -210,13 +217,12 @@ class Engine:
             utils.error(f"Error parsing yt-dlp output: {e}")
             return None
 
-    def generate_clip_sections(self) -> list[dict[str, Any]]:
-        duration = config.duration
+    def generate_clip_sections(self, target_duration: float) -> list[dict[str, Any]]:
         sections: list[dict[str, Any]] = []
         current_sum = 0.0
         end_buffer = 2.0
 
-        while current_sum < duration:
+        while current_sum < target_duration:
             source = random.choice(self.sources)
             safe_duration = source["duration"] - end_buffer
 
@@ -226,8 +232,8 @@ class Engine:
                 config.avg_clip_duration,
             )
 
-            if current_sum + clip_length > duration:
-                clip_length = duration - current_sum
+            if ((current_sum + clip_length) > target_duration):
+                clip_length = target_duration - current_sum
 
             if clip_length < config.min_clip_duration:
                 clip_length = config.min_clip_duration
@@ -363,8 +369,8 @@ class Engine:
 
         return None
 
-    def generate_random_clips(self) -> None:
-        sections = self.generate_clip_sections()
+    def generate_random_clips(self, target_duration: float) -> None:
+        sections = self.generate_clip_sections(target_duration)
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.workers
@@ -373,7 +379,6 @@ class Engine:
 
             for i in range(len(sections)):
                 future = executor.submit(self.extract_single_clip, i, sections[i])
-
                 futures.append(future)
 
             for future in concurrent.futures.as_completed(futures):
@@ -386,15 +391,36 @@ class Engine:
             key=lambda x: int(os.path.basename(x).split("_")[2].split(".")[0])
         )
 
-    def concatenate_clips(self) -> bool:
-        if not self.clips:
+    def select_clips_for_duration(self, target_duration: float) -> list[str]:
+        selected = []
+        current_duration = 0.0
+
+        pool = list(self.clips)
+        random.shuffle(pool)
+
+        for clip in pool:
+            if current_duration >= target_duration:
+                break
+
+            info = self.get_stream_info(clip)
+            clip_duration = info.get("duration", 0.0)
+
+            if clip_duration > 0:
+                selected.append(clip)
+                current_duration += clip_duration
+
+        return selected
+
+    def concatenate_clips(self, selected_clips: list[str]) -> bool:
+        if len(selected_clips) == 0:
             utils.error("No clips to concatenate.")
             return False
 
-        list_file = os.path.join(config.project_dir, "concat_list.txt")
+        # Randomize list filename to avoid conflicts during loops
+        list_file = os.path.join(config.project_dir, f"concat_list_{random.randint(1000, 9999)}.txt")
 
         with open(list_file, "w") as f:
-            for clip in self.clips:
+            for clip in selected_clips:
                 abs_clip_path = os.path.abspath(clip)
                 f.write(f"file '{abs_clip_path}'\n")
 
@@ -420,7 +446,6 @@ class Engine:
             utils.error("Error concatenating clips:")
             utils.error(result.stderr)
         else:
-            shutil.rmtree(config.project_dir, ignore_errors=True)
             utils.info(f"Saved: {self.file}")
 
         return True
