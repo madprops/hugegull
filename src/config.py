@@ -90,6 +90,19 @@ class Config:
         parser.add_argument("--help", "-h", action="store_true")
         parser.add_argument("--version", "-v", action="store_true")
 
+        # Urls
+        parser.add_argument("positional_urls", nargs="*", type=str)
+        parser.add_argument("--url", action="append", dest="urls")
+
+        args = parser.parse_args()
+
+        if args.urls is None:
+            args.urls = []
+
+        # 4. Combine the positional URLs with any --url flag URLs
+        if args.positional_urls:
+            args.urls = args.positional_urls + args.urls
+
         # Flags (Booleans)
         parser.add_argument("--open", action="store_true")
 
@@ -98,9 +111,6 @@ class Config:
         parser.add_argument("--name", type=str)
         parser.add_argument("--gpu", type=str)
         parser.add_argument("--path", type=str)
-
-        # Lists (action="append" allows multiple --url arguments)
-        parser.add_argument("--url", action="append", dest="urls")
 
         # Integers
         parser.add_argument("--amount", type=int)

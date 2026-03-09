@@ -40,11 +40,19 @@ gpu = "amd"
 
 ## Usage
 
-`hugegull --url https://something.m3u8 --name "nice video" --open`
+`hugegull https://something.m3u8`
 
 Local, YouTube, and Twitch video urls work as well.
 
 The name can be ommitted to use a random one.
+
+---
+
+Or:
+
+`hugegull --url https://something.m3u8 --name "nice video" --open`
+
+---
 
 Or:
 
@@ -53,3 +61,11 @@ export HUGE_URL="https://something.m3u8"
 export HUGE_NAME="nice video"
 hugegull
 ```
+
+---
+
+Or:
+
+`hugegull https://something.m3u8 https://otherthing.m3u8`
+
+It supports multiple source arguments.
