@@ -16,7 +16,7 @@ class Engine:
     def __init__(self) -> None:
         self.sources: list[dict[str, Any]] = []
         self.clips: list[str] = []
-        self.workers = 8
+        self.workers = 2
         self.max_width = 0
         self.max_height = 0
         self.clip_timeout = 120
@@ -340,7 +340,7 @@ class Engine:
 
             if mode == "amd":
                 command.extend(
-                    ["-c:v", "h264_vaapi", "-global_quality", str(config.crf)]
+                    ["-c:v", "h264_vaapi", "-rc_mode", "CQP", "-qp", str(config.crf)]
                 )
             elif mode == "nvidia":
                 command.extend(
