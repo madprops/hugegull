@@ -77,7 +77,6 @@ class Config:
 
             if t == "int":
                 value = int(value)
-                print(value)
 
             setattr(self, k, value)
             sys.argv.pop(arg_idx + 1)
