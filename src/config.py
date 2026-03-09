@@ -13,20 +13,20 @@ class Config:
     def __init__(self) -> None:
         self.urls: list[str] = []
         self.name = ""
-        self.fps = 30
-        self.crf = 30
-        self.duration = 35.0
-        self.min_clip_duration = 3.0
-        self.avg_clip_duration = 6.0
-        self.max_clip_duration = 9.0
+        self.fps = -1
+        self.crf = -1
+        self.duration = -1
+        self.min_clip_duration = -1
+        self.avg_clip_duration = -1
+        self.max_clip_duration = -1
+        self.fade = -1
+        self.amount = -1
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.info_name = "hugegull"
         self.info_version = "0.0.0"
         self.open = False
-        self.fade = 0.03
         self.gpu = ""
         self.config = ""
-        self.amount = 1
 
         self.env_url = utils.get_env("HUGE_URL")
         self.env_name = utils.get_env("HUGE_NAME")
@@ -40,11 +40,24 @@ class Config:
         self.make_dirs()
         self.read_config_file()
 
+        self.fill_default("amount", 1)
+        self.fill_default("duration", 35)
+        self.fill_default("fps", 30)
+        self.fill_default("crf", 30)
+        self.fill_default("fade", 0.03)
+        self.fill_default("min_clip_duration", 3.0)
+        self.fill_default("avg_clip_duration", 6.0)
+        self.fill_default("max_clip_duration", 9.0)
+
         self.temp_dir = os.path.join(self.path, "temp")
         self.output_dir = os.path.join(self.path, "output")
 
         run_id = str(int(time.time() * 1000))
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
+
+    def fill_default(self, k: str, v: Any) -> None:
+        if getattr(self, k) == -1:
+            setattr(self, k, v)
 
     def make_dirs(self) -> None:
         if not os.path.exists(self.config_dir):
@@ -102,6 +115,24 @@ class Config:
 
         if "--amount" in sys.argv:
             self.get_arg("amount", "amount", "int")
+
+        if "--duration" in sys.argv:
+            self.get_arg("duration", "duration", "int")
+
+        if "--fps" in sys.argv:
+            self.get_arg("fps", "fps", "int")
+
+        if "--crf" in sys.argv:
+            self.get_arg("crf", "crf", "int")
+
+        if "--min-clip-duration" in sys.argv:
+            self.get_arg("min-clip-duration", "min_clip_duration", "int")
+
+        if "--avg-clip-duration" in sys.argv:
+            self.get_arg("avg-clip-duration", "avg_clip_duration", "int")
+
+        if "--max-clip-duration" in sys.argv:
+            self.get_arg("max-clip-duration", "max_clip_duration", "int")
 
         if not self.urls:
             self.urls = self.env_url.split(" ")
