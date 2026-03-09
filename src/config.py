@@ -142,46 +142,47 @@ class Config:
         if not self.name:
             self.name = self.env_name or utils.get_random_name()
 
+    def read_config_file_item(self, data: Any, k: str, t: str = "int") -> None:
+        if k in data:
+            if t == "float":
+                v = float(data[k])
+            elif t == "int":
+                v = int(data[k])
+            else:
+                v = data[k]
+
+            setattr(self, k, v)
+
     def read_config_file(self) -> None:
         with open(self.config_path, "rb") as f:
-            config_data = tomllib.load(f)
+            data = tomllib.load(f)
 
         # How long should the video aim to be
-        if "duration" in config_data:
-            self.duration = float(config_data["duration"])
+        self.read_config_file_item(data, "duration", "float")
 
         # Frames per second
-        if "fps" in config_data:
-            self.fps = int(config_data["fps"])
+        self.read_config_file_item(data, "fps", "int")
 
-        # A bigger crf means lower quality
         # 28 is considered good enough
-        if "crf" in config_data:
-            self.crf = int(config_data["crf"])
+        self.read_config_file_item(data, "crf", "int")
 
         # Path where files are saved
-        if "path" in config_data:
-            self.path = config_data["path"]
+        self.read_config_file_item(data, "path", "str")
 
         # Little gap between clips like 0.03 (seconds)
-        if "fade" in config_data:
-            self.fade = config_data["fade"]
+        self.read_config_file_item(data, "fade", "float")
 
         # Either "amd" or "nvidia"
-        if "gpu" in config_data:
-            self.gpu = config_data["gpu"]
-
-        # How long can clips be
-        if "max_clip_duration" in config_data:
-            self.max_clip_duration = config_data["max_clip_duration"]
-
-        # Clip duration is often close to this
-        if "avg_clip_duration" in config_data:
-            self.avg_clip_duration = config_data["avg_clip_duration"]
+        self.read_config_file_item(data, "gpu", "str")
 
         # The smallest clip duration
-        if "min_clip_duration" in config_data:
-            self.min_clip_duration = config_data["min_clip_duration"]
+        self.read_config_file_item(data, "min_clip_duration", "float")
+
+        # How long can clips be
+        self.read_config_file_item(data, "max_clip_duration", "float")
+
+        # Clip duration is often close to this
+        self.read_config_file_item(data, "avg_clip_duration", "float")
 
 
 config = Config()
