@@ -68,6 +68,20 @@ class Config:
             "max_clip_duration", "max_clip_duration", 9.0
         )
 
+        if self.avg_clip_duration > self.max_clip_duration:
+            self.avg_clip_duration = self.max_clip_duration
+
+        if self.avg_clip_duration < self.min_clip_duration:
+            self.avg_clip_duration = self.min_clip_duration
+
+        if self.max_clip_duration < self.min_clip_duration:
+            self.max_clip_duration = self.min_clip_duration
+            self.avg_clip_duration = self.min_clip_duration
+
+        if self.min_duration > self.max_duration:
+            self.min_duration = self.max_duration
+            self.avg_clip_duration = self.max_duration
+
         self.gpu = self.resolve("gpu", "gpu", "")
         self.path = self.resolve("path", "path", self.path)
 
