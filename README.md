@@ -31,7 +31,7 @@ You can pass URLs directly to the program. The output name will be randomly gene
 
 **Basic Usage:**
 ```bash
-hugegull https://something.m3u8
+hugegull "https://something.m3u8"
 ```
 
 **Multiple Sources:**
