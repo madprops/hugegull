@@ -38,14 +38,14 @@ class Config:
         env_urls = []
 
         if self.env_url:
-            env_urls = self.env_url.split(" ")
+            env_urls = self.env_url.split("|")
 
         raw_urls = self.resolve("urls", "urls", env_urls)
         self.urls = []
 
         for s in raw_urls:
             if s != "":
-                self.urls.append(s)
+                self.urls.append(s.strip())
 
         default_name = self.env_name or utils.get_random_name()
 
@@ -97,12 +97,15 @@ class Config:
         self.parser.add_argument("--crf", type=int)
         self.parser.add_argument("--duration", type=float)
         self.parser.add_argument("--fade", type=float)
+
         self.parser.add_argument(
             "--min-clip-duration", type=float, dest="min_clip_duration"
         )
+
         self.parser.add_argument(
             "--avg-clip-duration", type=float, dest="avg_clip_duration"
         )
+
         self.parser.add_argument(
             "--max-clip-duration", type=float, dest="max_clip_duration"
         )
