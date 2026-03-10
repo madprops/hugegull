@@ -36,19 +36,19 @@ hugegull https://something.m3u8
 
 **Multiple Sources:**
 ```bash
-hugegull https://something.m3u8 https://otherthing.m3u8
+hugegull "https://something.m3u8" "https://otherthing.m3u8"
 # OR
-hugegull --url https://something.m3u8 --url https://otherthing.m3u8
+hugegull --url "https://something.m3u8" --url "https://otherthing.m3u8"
 ```
 
 **With Options:**
 ```bash
-hugegull https://something.m3u8 --name "nice video" --open
+hugegull "https://something.m3u8" --name "nice video" --open
 ```
 
 **Using Environment Variables:**
 ```bash
-export HUGE_URL="https://something.m3u8 https://otherthing.m3u8"
+export HUGE_URL="https://something.m3u8" "https://otherthing.m3u8"
 export HUGE_NAME="nice video"
 hugegull
 ```
@@ -112,6 +112,6 @@ end
 
 Then you can do:
 ```fish
-egull "https://something.m3u8 https://otherthing.m3u8"
+egull "https://something.m3u8" "https://otherthing.m3u8"
 hgg
 ```
