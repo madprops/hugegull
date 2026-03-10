@@ -131,6 +131,7 @@ class Engine:
             utils.info(
                 "No valid sources found in the pool. Stream is live/endless or invalid."
             )
+
             shutil.rmtree(config.project_dir, ignore_errors=True)
             return False
 
