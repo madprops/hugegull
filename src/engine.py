@@ -91,7 +91,7 @@ class Engine:
         if raw_height is not None:
             height = int(raw_height)
 
-        if duration > 0 and width > 0 and height > 0:
+        if (duration > 0) and (width > 0) and (height > 0):
             source["duration"] = duration
             source["width"] = width
             source["height"] = height
@@ -502,7 +502,7 @@ class Engine:
             "-v",
             "quiet",
             "-print_format",
-            "json"
+            "json",
             "-show_format",
             "-show_streams",
             url,
