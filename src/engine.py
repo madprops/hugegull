@@ -15,7 +15,7 @@ from utils import utils
 class Engine:
     def __init__(self) -> None:
         self.sources: list[dict[str, Any]] = []
-        self.clips: list[str] = []
+        self.clips: dict[str, float] = {}
         self.workers = 6
         self.max_width = 0
         self.max_height = 0
@@ -27,7 +27,6 @@ class Engine:
     def prepare(self) -> None:
         os.makedirs(config.project_dir, exist_ok=True)
         os.makedirs(config.output_dir, exist_ok=True)
-
         self.file = os.path.join(config.output_dir, f"{config.name}.mp4")
         counter = 2
 
@@ -35,77 +34,95 @@ class Engine:
             self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
             counter += 1
 
-    def prepare_sources(self) -> None:
-        for url in config.urls:
-            source: dict[str, Any] = {
-                "url": url,
-                "v_data": url,
-                "a_url": None,
-                "duration": 0.0,
-                "width": 0,
-                "height": 0,
-            }
+    def process_url(self, url: str) -> dict[str, Any] | None:
+        source: dict[str, Any] = {
+            "url": url,
+            "v_data": url,
+            "a_url": None,
+            "duration": 0.0,
+            "width": 0,
+            "height": 0,
+        }
 
-            if os.path.isfile(url):
+        if os.path.isfile(url):
+            info = self.get_stream_info(url)
+            source.update(info)
+        else:
+            if utils.is_site(url):
+                yt_data = self.resolve_with_ytdlp(url)
+
+                if yt_data is not None:
+                    source.update(yt_data)
+
+                v_data = source.get("v_data")
+
+                if v_data is None:
+                    v_data = ""
+
+                info = self.get_stream_info(str(v_data))
+                source["width"] = info["width"]
+                source["height"] = info["height"]
+
+                if source["duration"] == 0.0:
+                    source["duration"] = info["duration"]
+            else:
                 info = self.get_stream_info(url)
                 source.update(info)
-            else:
-                if utils.is_site(url):
-                    yt_data = self.resolve_with_ytdlp(url)
 
-                    if yt_data is not None:
-                        source.update(yt_data)
+        raw_duration = source.get("duration")
+        duration = 0.0
 
-                        v_data = source.get("v_data")
+        if raw_duration is not None:
+            try:
+                duration = float(raw_duration)
+            except ValueError:
+                duration = 0.0
 
-                        if v_data is None:
-                            v_data = ""
+        raw_width = source.get("width")
+        width = 0
 
-                        info = self.get_stream_info(str(v_data))
-                        source["width"] = info["width"]
-                        source["height"] = info["height"]
+        if raw_width is not None:
+            width = int(raw_width)
 
-                        if source["duration"] == 0.0:
-                            source["duration"] = info["duration"]
-                else:
-                    info = self.get_stream_info(url)
-                    source.update(info)
+        raw_height = source.get("height")
+        height = 0
 
-            raw_duration = source.get("duration")
-            duration = 0.0
+        if raw_height is not None:
+            height = int(raw_height)
 
-            if raw_duration is not None:
-                try:
-                    duration = float(raw_duration)
-                except ValueError:
-                    duration = 0.0
+        if duration > 0 and width > 0 and height > 0:
+            source["duration"] = duration
+            source["width"] = width
+            source["height"] = height
+            return source
+        else:
+            utils.info(f"Could not determine valid data for {url}, skipping.")
+            return None
 
-            raw_width = source.get("width")
-            width = 0
+    def prepare_sources(self) -> None:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.workers
+        ) as executor:
+            futures = []
 
-            if raw_width is not None:
-                width = int(raw_width)
+            for url in config.urls:
+                future = executor.submit(self.process_url, url)
+                futures.append(future)
 
-            raw_height = source.get("height")
-            height = 0
+            for future in concurrent.futures.as_completed(futures):
+                source = future.result()
 
-            if raw_height is not None:
-                height = int(raw_height)
+                if source is not None:
+                    self.sources.append(source)
 
-            if duration > 0 and width > 0 and height > 0:
-                self.sources.append(source)
+                    if source["width"] > self.max_width:
+                        self.max_width = source["width"]
 
-                if width > self.max_width:
-                    self.max_width = width
-
-                if height > self.max_height:
-                    self.max_height = height
-            else:
-                utils.info(f"Could not determine valid data for {url}, skipping.")
+                    if source["height"] > self.max_height:
+                        self.max_height = source["height"]
 
     def start(self) -> bool:
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
-
         os.makedirs(config.project_dir, exist_ok=True)
         self.prepare_sources()
 
@@ -113,16 +130,12 @@ class Engine:
             utils.info(
                 "No valid sources found in the pool. Stream is live/endless or invalid."
             )
-
             shutil.rmtree(config.project_dir, ignore_errors=True)
             return False
 
         amount = config.amount or 1
-
-        # Calculate a master duration to pool enough clips for all videos, plus a 20% buffer
         total_needed_duration = config.duration * amount * 1.2
         utils.info(f"Generating clip pool for {amount} videos...")
-
         self.generate_random_clips(total_needed_duration)
 
         if len(self.clips) == 0:
@@ -136,21 +149,16 @@ class Engine:
                 utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
             self.prepare()
-
             selected_clips = self.select_clips_for_duration(config.duration)
 
             if not self.concatenate_clips(selected_clips):
                 all_successful = False
 
-        # Clean up the master pool and project directory ONLY after all videos are done
         shutil.rmtree(config.project_dir, ignore_errors=True)
-
         return all_successful
 
     def resolve_with_ytdlp(self, url: str) -> dict[str, Any] | None:
-        cookie_args: list[Any] = [
-            [],
-        ]
+        cookie_args: list[Any] = [[]]
 
         if os.path.isfile("cookies.txt"):
             cookie_args.append(["--cookies", "cookies.txt"])
@@ -161,13 +169,11 @@ class Engine:
                 ["--cookies-from-browser", "chrome"],
             ]
         )
-
         result = None
         errors = []
 
         for args in cookie_args:
             command = ["yt-dlp", "--no-playlist", "--no-warnings"]
-
             command.extend(args)
 
             command.extend(
@@ -220,7 +226,6 @@ class Engine:
                 if len(metadata["requested_formats"]) >= 2:
                     v_data = metadata["requested_formats"][0]["url"]
                     a_url = metadata["requested_formats"][1]["url"]
-
                     return {"v_data": v_data, "a_url": a_url, "duration": duration}
                 else:
                     return {
@@ -271,13 +276,14 @@ class Engine:
 
         return sections
 
-    def extract_single_clip(self, i: int, section: dict[str, Any]) -> str | None:
+    def extract_single_clip(
+        self, i: int, section: dict[str, Any]
+    ) -> tuple[str, float] | None:
         source = section["source"]
         start = section["start"]
         duration = section["duration"]
         v_data = source["v_data"]
         a_url = source["a_url"]
-
         is_split_stream = False
 
         if a_url is not None:
@@ -321,37 +327,36 @@ class Engine:
 
             af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
 
-            # Ensure we only take exactly one video and one audio stream
             if is_split_stream:
                 command.extend(["-map", "0:v:0", "-map", "1:a:0"])
             else:
                 command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
 
-            command.extend(
-                [
-                    "-t",
-                    str(duration),
-                    "-vf",
-                    vf_filter,
-                    "-af",
-                    af_filter,
-                ]
-            )
+            command.extend(["-t", str(duration), "-vf", vf_filter, "-af", af_filter])
 
             if mode == "amd":
+                adjusted_crf = config.crf - 4
+
+                if adjusted_crf < 0:
+                    adjusted_crf = 0
+
                 command.extend(
-                    ["-c:v", "h264_vaapi", "-rc_mode", "CQP", "-qp", str(config.crf)]
+                    ["-c:v", "h264_vaapi", "-rc_mode", "CQP", "-qp", str(adjusted_crf)]
                 )
             elif mode == "nvidia":
+                adjusted_crf = config.crf - 4
+
+                if adjusted_crf < 0:
+                    adjusted_crf = 0
+
                 command.extend(
-                    ["-c:v", "h264_nvenc", "-cq", str(config.crf), "-preset", "p4"]
+                    ["-c:v", "h264_nvenc", "-cq", str(adjusted_crf), "-preset", "p6"]
                 )
             else:
                 command.extend(
-                    ["-c:v", "libx264", "-preset", "veryfast", "-crf", str(config.crf)]
+                    ["-c:v", "libx264", "-preset", "medium", "-crf", str(config.crf)]
                 )
 
-            # Force uniform audio attributes across all extracted clips
             command.extend(
                 [
                     "-c:a",
@@ -366,7 +371,6 @@ class Engine:
                     name,
                 ]
             )
-
             utils.action(
                 f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s) ({mode})"
             )
@@ -377,7 +381,7 @@ class Engine:
                 )
 
                 if result.returncode == 0:
-                    return name
+                    return name, duration
 
                 utils.error(f"Error extracting clip {i + 1} using {mode}:")
                 utils.error(result.stderr)
@@ -412,28 +416,23 @@ class Engine:
                 futures.append(future)
 
             for future in concurrent.futures.as_completed(futures):
-                clip_path = future.result()
+                result = future.result()
 
-                if clip_path is not None:
-                    self.clips.append(clip_path)
-
-        self.clips.sort(
-            key=lambda x: int(os.path.basename(x).split("_")[2].split(".")[0])
-        )
+                if result is not None:
+                    clip_path, duration = result
+                    self.clips[clip_path] = duration
 
     def select_clips_for_duration(self, target_duration: float) -> list[str]:
         selected = []
         current_duration = 0.0
-
-        pool = list(self.clips)
+        pool = list(self.clips.keys())
         random.shuffle(pool)
 
         for clip in pool:
             if current_duration >= target_duration:
                 break
 
-            info = self.get_stream_info(clip)
-            clip_duration = info.get("duration", 0.0)
+            clip_duration = self.clips.get(clip, 0.0)
 
             if clip_duration > 0:
                 selected.append(clip)
@@ -446,7 +445,6 @@ class Engine:
             utils.error("No clips to concatenate.")
             return False
 
-        # Randomize list filename to avoid conflicts during loops
         list_file = os.path.join(
             config.project_dir, f"concat_list_{random.randint(1000, 9999)}.txt"
         )
