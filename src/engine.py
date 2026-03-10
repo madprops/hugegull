@@ -23,6 +23,7 @@ class Engine:
         self.resolve_timeout = 60
         self.concat_timeout = 120
         self.probe_timeout = 15
+        self.min_clip_duration = 0.5
 
     def prepare(self) -> None:
         os.makedirs(config.project_dir, exist_ok=True)
@@ -252,18 +253,25 @@ class Engine:
         while current_sum < target_duration:
             source = random.choice(self.sources)
             safe_duration = source["duration"] - end_buffer
+            avg_cd = config.clip_duration
+            min_cd = avg_cd - config.clip_diff
+
+            if min_cd < self.min_clip_duration:
+                min_cd = self.min_clip_duration
+
+            max_cd = avg_cd + config.clip_diff
 
             clip_length = random.triangular(
-                config.min_clip_duration,
-                config.max_clip_duration,
-                config.avg_clip_duration,
+                min_cd,
+                avg_cd,
+                max_cd,
             )
 
             if (current_sum + clip_length) > target_duration:
                 clip_length = target_duration - current_sum
 
-            if clip_length < config.min_clip_duration:
-                clip_length = config.min_clip_duration
+            if clip_length < min_cd:
+                clip_length = min_cd
 
             max_start = safe_duration - clip_length
 
@@ -493,7 +501,7 @@ class Engine:
             "-v",
             "quiet",
             "-print_format",
-            "json",
+            "json"
             "-show_format",
             "-show_streams",
             url,

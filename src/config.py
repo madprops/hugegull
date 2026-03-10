@@ -52,36 +52,11 @@ class Config:
         self.name = self.resolve("name", "name", default_name)
         self.amount = self.resolve("amount", "amount", 1)
         self.duration = self.resolve("duration", "duration", 35.0)
+        self.clip_duration = self.resolve("clip-duration", "clip_duration", 6.0)
+        self.clip_diff = self.resolve("clip-diff", "clip_diff", 3.0)
         self.fps = self.resolve("fps", "fps", 30)
         self.crf = self.resolve("crf", "crf", 30)
         self.fade = self.resolve("fade", "fade", 0.03)
-
-        self.min_clip_duration = self.resolve(
-            "min_clip_duration", "min_clip_duration", 3.0
-        )
-
-        self.avg_clip_duration = self.resolve(
-            "avg_clip_duration", "avg_clip_duration", 6.0
-        )
-
-        self.max_clip_duration = self.resolve(
-            "max_clip_duration", "max_clip_duration", 9.0
-        )
-
-        if self.avg_clip_duration > self.max_clip_duration:
-            self.avg_clip_duration = self.max_clip_duration
-
-        if self.avg_clip_duration < self.min_clip_duration:
-            self.avg_clip_duration = self.min_clip_duration
-
-        if self.max_clip_duration < self.min_clip_duration:
-            self.max_clip_duration = self.min_clip_duration
-            self.avg_clip_duration = self.min_clip_duration
-
-        if self.min_clip_duration > self.max_clip_duration:
-            self.min_clip_duration = self.max_clip_duration
-            self.avg_clip_duration = self.max_clip_duration
-
         self.gpu = self.resolve("gpu", "gpu", "")
         self.path = self.resolve("path", "path", self.path)
 
@@ -110,19 +85,9 @@ class Config:
         self.parser.add_argument("--fps", type=int)
         self.parser.add_argument("--crf", type=int)
         self.parser.add_argument("--duration", type=float)
+        self.parser.add_argument("--clip-duration", type=float)
+        self.parser.add_argument("--clip-diff", type=float)
         self.parser.add_argument("--fade", type=float)
-
-        self.parser.add_argument(
-            "--min-clip-duration", type=float, dest="min_clip_duration"
-        )
-
-        self.parser.add_argument(
-            "--avg-clip-duration", type=float, dest="avg_clip_duration"
-        )
-
-        self.parser.add_argument(
-            "--max-clip-duration", type=float, dest="max_clip_duration"
-        )
 
         args = self.parser.parse_args()
 

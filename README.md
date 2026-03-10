@@ -89,9 +89,8 @@ fade = 0.03
 | **FPS** | `--fps` | `fps` | `30` | Output video frames per second. |
 | **CRF** | `--crf` | `crf` | `30` | Video quality/compression factor. |
 | **Crossfade** | `--fade` | `fade` | `0.03` | Crossfade duration between clips. |
-| **Min Clip** | `--min-clip-duration`| `min_clip_duration`| `3.0` | Minimum duration for a single grabbed section. |
-| **Avg Clip** | `--avg-clip-duration`| `avg_clip_duration`| `6.0` | Average duration for a single grabbed section. |
-| **Max Clip** | `--max-clip-duration`| `max_clip_duration`| `9.0` | Maximum duration for a single grabbed section. |
+| **Clip Duration** | `--clip-duration`| `clip_duration`| `6.0` | Average duration for a single grabbed section. |
+| **Clip Diff** | `--clip-diff`| `clip_diff`| `3.0` | The range around the clip duration, more or less. |
 
 ---
 
