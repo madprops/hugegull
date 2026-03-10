@@ -11,7 +11,7 @@ It supports local files, YouTube links, Twitch streams, and direct `.m3u8` URLs.
 The easiest way to install Hugegull is globally via `pipx`:
 
 ```bash
-pipx install git+[https://github.com/madprops/hugegull](https://github.com/madprops/hugegull) --force
+pipx install git+https://github.com/madprops/hugegull --force
 ```
 
 ### Manual
@@ -19,7 +19,7 @@ pipx install git+[https://github.com/madprops/hugegull](https://github.com/madpr
 Alternatively, you can clone the repository and set up a shell alias:
 
 ```bash
-git clone [https://github.com/madprops/hugegull.git](https://github.com/madprops/hugegull.git) ~/code/hugegull
+git clone https://github.com/madprops/hugegull ~/code/hugegull
 alias hgg="python ~/code/hugegull/main.py"
 ```
 
