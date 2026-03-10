@@ -1,113 +1,117 @@
 ![](seagulls.jpg)
 
-This gets random sections from a stream video.
+Hugegull grabs random sections of variable durations from streaming videos and stitches them together into a single, cohesive highlight video.
 
-Each section is of variable duration.
-
-Then it joins them into a single video.
-
-`--open` can be used to open the file when ready.
+It supports local files, YouTube links, Twitch streams, and direct `.m3u8` URLs.
 
 ## Installation
 
 ### Automatic (Recommended)
 
-You can simply use `pipx`:
+The easiest way to install Hugegull is globally via `pipx`:
 
-`pipx install git+https://github.com/madprops/hugegull --force`
+```bash
+pipx install git+[https://github.com/madprops/hugegull](https://github.com/madprops/hugegull) --force
+```
 
 ### Manual
 
-git clone this somewhere.
+Alternatively, you can clone the repository and set up a shell alias:
 
-Make a shell alias:
-
-`alias hgg="python ~/code/hugegull/main.py"`
-
-## Configuration
-
-Edit `~/.config/hugegull/hugegull.toml`
-
-It is empty but you can make it look like this:
-
+```bash
+git clone [https://github.com/madprops/hugegull.git](https://github.com/madprops/hugegull.git) ~/code/hugegull
+alias hgg="python ~/code/hugegull/main.py"
 ```
-path = "/home/memphis/toilet"
-duration = 35
-fps = 30
-crf = 30
-gpu = "amd"
-```
+
+---
 
 ## Usage
 
-`hugegull https://something.m3u8`
+You can pass URLs directly to the program. The output name will be randomly generated unless specified.
 
-Local, YouTube, and Twitch video urls work as well.
-
-The name can be ommitted to use a random one.
-
----
-
-Or:
-
-`hugegull --url https://something.m3u8 --name "nice video" --open`
-
----
-
-Or:
-
+**Basic Usage:**
+```bash
+hugegull https://something.m3u8
 ```
-export HUGE_URL="https://something.m3u8"
+
+**Multiple Sources:**
+```bash
+hugegull https://something.m3u8 https://otherthing.m3u8
+# OR
+hugegull --url https://something.m3u8 --url https://otherthing.m3u8
+```
+
+**With Options:**
+```bash
+hugegull https://something.m3u8 --name "nice video" --open
+```
+
+**Using Environment Variables:**
+```bash
+export HUGE_URL="https://something.m3u8 https://otherthing.m3u8"
 export HUGE_NAME="nice video"
 hugegull
 ```
 
 ---
 
-Or:
+## Configuration
 
-`hugegull https://something.m3u8 https://otherthing.m3u8`
+Hugegull can be configured via Command Line Arguments, Environment Variables, or a TOML configuration file.
 
-It supports multiple source arguments.
+The default configuration file is located at `~/.config/hugegull/config.toml`. It is created automatically on your first run.
+
+### Configuration File Example
+```toml
+path = "/home/memphis/toilet"
+duration = 35.0
+fps = 30
+crf = 30
+gpu = "amd"
+amount = 1
+fade = 0.03
+```
+
+### Options Reference
+
+*Note: CLI arguments will always override TOML config settings.*
+
+| Option | CLI Argument | TOML Key | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **URLs** | `[urls]` or `--url` | `urls` | *None* | Source video URLs. |
+| **Name** | `--name` | `name` | *Random* | Output filename. (Env: `HUGE_NAME`) |
+| **Config Path** | `--config` | *N/A* | `~/.config/hugegull/config.toml` | Path to a custom TOML config file. |
+| **Output Path** | `--path` | `path` | Script directory | Base directory for the `temp` and `output` folders. |
+| **Open** | `--open` | *N/A* | `False` | Opens the final video file automatically when finished. |
+| **GPU** | `--gpu` | `gpu` | `""` | Hardware acceleration identifier (e.g., "amd"). |
+| **Amount** | `--amount` | `amount` | `1` | Total number of output videos to generate. |
+| **Total Duration** | `--duration` | `duration` | `35.0` | Total target duration (in seconds) of the output video. |
+| **FPS** | `--fps` | `fps` | `30` | Output video frames per second. |
+| **CRF** | `--crf` | `crf` | `30` | Video quality/compression factor. |
+| **Crossfade** | `--fade` | `fade` | `0.03` | Crossfade duration between clips. |
+| **Min Clip** | `--min-clip-duration`| `min_clip_duration`| `3.0` | Minimum duration for a single grabbed section. |
+| **Avg Clip** | `--avg-clip-duration`| `avg_clip_duration`| `6.0` | Average duration for a single grabbed section. |
+| **Max Clip** | `--max-clip-duration`| `max_clip_duration`| `9.0` | Maximum duration for a single grabbed section. |
 
 ---
 
-Or:
+## Shell Integration
 
-`hugegull --url https://something.m3u8 --url https://otherthing.m3u8`
+To make running Hugegull even faster, you can add these snippets to your shell configuration.
 
----
+### Fish Shell (`~/.config/fish/config.fish`)
 
-Or:
+```fish
+alias hgg="hugegull"
+# Or if installed manually: alias hgg="python ~/code/hugegull/main.py"
 
-```
-export HUGE_URL="https://something.m3u8 https://otherthing.m3u8"
-hugegull
-```
-
-## More
-
-Suggested alias:
-
-`alias hgg="hugegull"`
-
-Or:
-
-`alias hgg="python ~/code/hugegull/main.py"`
-
----
-
-Suggested `fish` function:
-
-```
 function egull
-  export HUGE_URL="$argv[1]"
+  set -x HUGE_URL $argv[1]
 end
 ```
 
 Then you can do:
-
-```
+```fish
 egull "https://something.m3u8 https://otherthing.m3u8"
 hgg
 ```
