@@ -1,6 +1,6 @@
 ![](seagulls.jpg)
 
-HugeGull grabs random sections of variable durations from streaming videos and stitches them together into a single, cohesive highlight video.
+hugegull grabs random sections of variable durations from streaming videos and stitches them together into a single, cohesive highlight video.
 
 It supports local files, YouTube links, Twitch streams, and direct `.m3u8` URLs.
 
@@ -8,7 +8,7 @@ It supports local files, YouTube links, Twitch streams, and direct `.m3u8` URLs.
 
 ### Automatic (Recommended)
 
-The easiest way to install HugeGull is globally via `pipx`:
+The easiest way to install hugegull is globally via `pipx`:
 
 ```bash
 pipx install git+https://github.com/madprops/hugegull --force
@@ -57,7 +57,7 @@ hugegull
 
 ## Configuration
 
-HugeGull can be configured via Command Line Arguments, Environment Variables, or a TOML configuration file.
+hugegull can be configured via Command Line Arguments, Environment Variables, or a TOML configuration file.
 
 The default configuration file is located at `~/.config/hugegull/config.toml`. It is created automatically on your first run.
 
@@ -96,7 +96,7 @@ fade = 0.03
 
 ## Shell Integration
 
-To make running HugeGull even faster, you can add these snippets to your shell configuration.
+To make running hugegull even faster, you can add these snippets to your shell configuration.
 
 ### Fish Shell (`~/.config/fish/config.fish`)
 
