@@ -123,6 +123,7 @@ class Engine:
                         self.max_height = source["height"]
 
     def start(self) -> bool:
+        config.check_name()
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
         os.makedirs(config.project_dir, exist_ok=True)
         self.prepare_sources()

@@ -159,8 +159,6 @@ class Config:
         if "name" in data:
             if data["name"]:
                 self.name = data["name"]
-            else:
-                self.name = utils.get_random_name()
 
         if "gpu" in data:
             self.gpu = data["gpu"]
@@ -190,6 +188,10 @@ class Config:
             self.open = bool(data["open"])
 
         self.refresh_paths()
+
+    def check_name(self) -> None:
+        if not self.name:
+            self.name = utils.get_random_name()
 
 
 config = Config()
