@@ -6,7 +6,6 @@ import os
 import threading
 
 import config as config_module
-from main import run
 
 config = config_module.config
 
@@ -23,6 +22,12 @@ DISABLED_BG = "#333333"
 DISABLED_FG = "#777777"
 
 
+def main() -> None:
+    main_window = tk.Tk()
+    app = GUI(main_window)
+    main_window.mainloop()
+
+
 def get_resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -32,7 +37,7 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-class VideoApp:
+class GUI:
     def __init__(self, root):
         global ROW
 
@@ -479,6 +484,8 @@ class VideoApp:
         config.update(data)
 
         def thread_target():
+            from main import run
+
             self.make_button.config(
                 state=tk.DISABLED,
                 text="Working...",
@@ -501,7 +508,4 @@ class VideoApp:
 
 
 if __name__ == "__main__":
-    main_window = tk.Tk()
-    app = VideoApp(main_window)
-
-    main_window.mainloop()
+    main()

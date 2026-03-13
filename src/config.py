@@ -22,6 +22,7 @@ class Config:
         # 3. Parse CLI Arguments
         self.args = self.parse_arguments()
         self.open = self.args.open
+        self.gui = self.args.gui
         self.config = self.args.config or ""
 
         # 4. Setup Directories and Files
@@ -84,6 +85,12 @@ class Config:
             "--open",
             action="store_true",
             help="Opens the final video file automatically when finished.",
+        )
+
+        self.parser.add_argument(
+            "--gui",
+            action="store_true",
+            help="Show the graphical user interface.",
         )
 
         self.parser.add_argument(

@@ -10,6 +10,7 @@ from __future__ import annotations
 import sys
 import time
 
+import gui
 from config import config
 from utils import utils
 from engine import engine
@@ -40,11 +41,13 @@ def run() -> None:
 
 
 def main() -> None:
-    if not config.urls:
+    if config.gui:
+        gui.main()
+    elif not config.urls:
         config.show_help()
         sys.exit(1)
-
-    run()
+    else:
+        run()
 
 
 if __name__ == "__main__":
