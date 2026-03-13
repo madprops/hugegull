@@ -59,7 +59,7 @@ class GUI:
 
         self.url_label = tk.Label(
             root,
-            text="Source URLs (one per line)",
+            text="Source URLs",
             bg=BG_COLOR,
             fg=TEXT_COLOR,
             font=("helvetica", 12),
@@ -67,8 +67,15 @@ class GUI:
 
         self.url_label.pack(pady=(20, 5), padx=20, anchor="w")
 
+        # Frame to hold the Text widget and Scrollbar
+        self.url_frame = tk.Frame(root, bg=BG_COLOR)
+        self.url_frame.pack(padx=20, fill=tk.BOTH, expand=False)
+
+        self.url_scrollbar = tk.Scrollbar(self.url_frame)
+        self.url_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         self.url_text = tk.Text(
-            root,
+            self.url_frame,
             height=6,
             bg=WIDGET_BG,
             fg=TEXT_COLOR,
@@ -77,12 +84,21 @@ class GUI:
             relief="flat",
             highlightthickness=0,
             font=("helvetica", 12),
+            yscrollcommand=self.url_scrollbar.set
         )
 
-        self.url_text.pack(padx=20, fill=tk.X)
+        self.url_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.url_scrollbar.config(command=self.url_text.yview)
+
+        # Bindings for Select All and dynamic counting
+        self.url_text.bind("<Control-a>", self.select_all)
+        self.url_text.bind("<Control-A>", self.select_all)
+        self.url_text.bind("<KeyRelease>", self.update_url_count)
 
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
+
+        self.update_url_count()
 
         self.settings_frame = tk.Frame(root, bg=BG_COLOR)
         self.settings_frame.pack(pady=(30, 10), padx=0, fill=tk.X)
@@ -195,6 +211,22 @@ class GUI:
         self.load_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.make_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
+
+    def select_all(self, event: Any = None) -> str:
+        self.url_text.tag_add(tk.SEL, "1.0", tk.END)
+        self.url_text.mark_set(tk.INSERT, "1.0")
+        self.url_text.see(tk.INSERT)
+        return "break"
+
+    def update_url_count(self, event: Any = None) -> None:
+        raw_text = self.url_text.get("1.0", tk.END).strip()
+
+        if raw_text == "":
+            count = 0
+        else:
+            count = len(raw_text.split("\n"))
+
+        self.url_label.config(text=f"Source URLs ({count})")
 
     def show_info_msg(self, id_: str) -> None:
         help_text = "No help available for this setting."
@@ -485,6 +517,8 @@ class GUI:
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
 
+        self.update_url_count()
+
         self.update_entry(self.entries["path"], config.path)
         self.update_entry(self.entries["name"], config.name)
         self.update_entry(self.entries["fps"], config.fps)
@@ -500,7 +534,6 @@ class GUI:
     def default_config(self) -> None:
         global config
 
-        # Clear all arguments to ensure pure defaults are loaded
         sys.argv = [sys.argv[0]]
 
         importlib.reload(config_module)
@@ -510,6 +543,8 @@ class GUI:
 
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
+
+        self.update_url_count()
 
         self.update_entry(self.entries["path"], config.path)
         self.update_entry(self.entries["name"], config.name)
