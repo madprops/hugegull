@@ -404,7 +404,6 @@ class VideoApp:
         skip_next = False
 
         for arg in sys.argv:
-
             if skip_next:
                 skip_next = False
                 continue

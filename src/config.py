@@ -47,9 +47,7 @@ class Config:
             if s != "":
                 self.urls.append(s.strip())
 
-        default_name = self.env_name or utils.get_random_name()
-
-        self.name = self.resolve("name", "name", default_name)
+        self.name = self.resolve("name", "name", "")
         self.amount = self.resolve("amount", "amount", 1)
         self.duration = self.resolve("duration", "duration", 35)
         self.clip_duration = self.resolve("clip_duration", "clip_duration", 6.0)
