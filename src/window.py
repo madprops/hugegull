@@ -360,9 +360,11 @@ class VideoApp:
         fade_val = self.fade_entry.get().strip()
         amount_val = self.amount_entry.get().strip()
         open_val = self.open_var.get()
+        name = self.name_entry.get()
 
         toml_lines = [
             f'path = "{path_val}"',
+            f'name = "{name}"',
             f'gpu = "{gpu_val}"',
             f'fps = {fps_val}',
             f'crf = {crf_val}',
