@@ -72,20 +72,71 @@ class Config:
             "--version", "-v", action="version", version=info.version
         )
 
-        self.parser.add_argument("positional_urls", nargs="*", type=str, help="Source video URLs.")
-        self.parser.add_argument("--url", action="append", dest="urls", help="Source video URLs.")
-        self.parser.add_argument("--open", action="store_true", help="Opens the final video file automatically when finished.")
-        self.parser.add_argument("--config", type=str, help="Path to a custom TOML config file.")
-        self.parser.add_argument("--name", type=str, help="Output filename. (Env: HUGE_NAME)")
-        self.parser.add_argument("--gpu", type=str, help="Hardware acceleration identifier (e.g., 'amd').")
-        self.parser.add_argument("--path", type=str, help="Base directory for the temp and output folders.")
-        self.parser.add_argument("--amount", type=int, help="Total number of output videos to generate.")
-        self.parser.add_argument("--fps", type=int, help="Output video frames per second.")
-        self.parser.add_argument("--crf", type=int, help="Video quality/compression factor. Lower means higher quality.")
-        self.parser.add_argument("--duration", type=int, help="Total target duration (in seconds) of the output video.")
-        self.parser.add_argument("--clip-duration", type=float, help="Average duration for a single grabbed section.")
-        self.parser.add_argument("--clip-diff", type=float, help="The range around the clip duration, more or less.")
-        self.parser.add_argument("--fade", type=float, help="Crossfade duration between clips.")
+        self.parser.add_argument(
+            "positional_urls", nargs="*", type=str, help="Source video URLs."
+        )
+
+        self.parser.add_argument(
+            "--url", action="append", dest="urls", help="Source video URLs."
+        )
+
+        self.parser.add_argument(
+            "--open",
+            action="store_true",
+            help="Opens the final video file automatically when finished.",
+        )
+
+        self.parser.add_argument(
+            "--config", type=str, help="Path to a custom TOML config file."
+        )
+
+        self.parser.add_argument(
+            "--name", type=str, help="Output filename. (Env: HUGE_NAME)"
+        )
+
+        self.parser.add_argument(
+            "--gpu", type=str, help="Hardware acceleration identifier (e.g., 'amd')."
+        )
+
+        self.parser.add_argument(
+            "--path", type=str, help="Base directory for the temp and output folders."
+        )
+
+        self.parser.add_argument(
+            "--amount", type=int, help="Total number of output videos to generate."
+        )
+
+        self.parser.add_argument(
+            "--fps", type=int, help="Output video frames per second."
+        )
+
+        self.parser.add_argument(
+            "--crf",
+            type=int,
+            help="Video quality/compression factor. Lower means higher quality.",
+        )
+
+        self.parser.add_argument(
+            "--duration",
+            type=int,
+            help="Total target duration (in seconds) of the output video.",
+        )
+
+        self.parser.add_argument(
+            "--clip-duration",
+            type=float,
+            help="Average duration for a single grabbed section.",
+        )
+
+        self.parser.add_argument(
+            "--clip-diff",
+            type=float,
+            help="The range around the clip duration, more or less.",
+        )
+
+        self.parser.add_argument(
+            "--fade", type=float, help="Crossfade duration between clips."
+        )
 
         args = self.parser.parse_args()
 

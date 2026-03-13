@@ -3,12 +3,9 @@ from tkinter import simpledialog, filedialog, messagebox
 import sys
 import importlib
 import os
-import time
 import threading
 
 import config as config_module
-from engine import engine
-from utils import utils
 from main import run
 
 config = config_module.config
@@ -25,6 +22,7 @@ ACCENT_COLOR = "#05d9e8"
 DISABLED_BG = "#333333"
 DISABLED_FG = "#777777"
 
+
 def get_resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -33,17 +31,17 @@ def get_resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
+
 class VideoApp:
     def __init__(self, root):
         global ROW
 
         self.root = root
         self.root.title("HugeGull")
-
         self.root.geometry("720x550")
         self.root.configure(bg=BG_COLOR)
-
         icon_path = get_resource_path("icon.png")
+
         if os.path.exists(icon_path):
             self.icon_img = tk.PhotoImage(file=icon_path)
             self.root.iconphoto(True, self.icon_img)
@@ -90,18 +88,34 @@ class VideoApp:
 
         self.text_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
         self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
-        self.combo_entry("gpu", self.settings_frame, "GPU", ["cpu", "amd", "nvidia"], gpu_val, c_col)
+
+        self.combo_entry(
+            "gpu", self.settings_frame, "GPU", ["cpu", "amd", "nvidia"], gpu_val, c_col
+        )
+
         self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
 
         ROW = 0
         c_col = 3
 
-        self.text_entry("duration", self.settings_frame, "Duration", config.duration, c_col)
-        self.text_entry("clip_duration", self.settings_frame, "Clip Duration", config.clip_duration, c_col)
-        self.text_entry("clip_diff", self.settings_frame, "Clip Diff", config.clip_diff, c_col)
+        self.text_entry(
+            "duration", self.settings_frame, "Duration", config.duration, c_col
+        )
+
+        self.text_entry(
+            "clip_duration",
+            self.settings_frame,
+            "Clip Duration",
+            config.clip_duration,
+            c_col,
+        )
+
+        self.text_entry(
+            "clip_diff", self.settings_frame, "Clip Diff", config.clip_diff, c_col
+        )
+
         self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
         self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
-
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
 
@@ -222,7 +236,6 @@ class VideoApp:
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
         setattr(self, f"{id_}_label", label)
-
         var = tk.StringVar(value=value)
         setattr(self, f"{id_}_var", var)
 
@@ -284,7 +297,6 @@ class VideoApp:
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
         setattr(self, f"{id_}_label", label)
-
         var = tk.BooleanVar(value=bool(value))
 
         checkbox = tk.Checkbutton(
@@ -302,7 +314,6 @@ class VideoApp:
         )
 
         checkbox.grid(row=ROW, column=col + 1, sticky="w", pady=5)
-
         setattr(self, f"{id_}_checkbox", checkbox)
         setattr(self, f"{id_}_var", var)
 
@@ -330,9 +341,7 @@ class VideoApp:
 
     def save_config(self):
         config_name = simpledialog.askstring(
-            "Save Config",
-            "Enter config name (e.g. my_preset):",
-            parent=self.root
+            "Save Config", "Enter config name (e.g. my_preset):", parent=self.root
         )
 
         if not config_name:
@@ -366,19 +375,19 @@ class VideoApp:
             f'path = "{path_val}"',
             f'name = "{name}"',
             f'gpu = "{gpu_val}"',
-            f'fps = {fps_val}',
-            f'crf = {crf_val}',
-            f'duration = {duration_val}',
-            f'clip_duration = {clip_duration_val}',
-            f'clip_diff = {clip_diff_val}',
-            f'fade = {fade_val}',
-            f'amount = {amount_val}',
+            f"fps = {fps_val}",
+            f"crf = {crf_val}",
+            f"duration = {duration_val}",
+            f"clip_duration = {clip_duration_val}",
+            f"clip_diff = {clip_diff_val}",
+            f"fade = {fade_val}",
+            f"amount = {amount_val}",
         ]
 
         if open_val:
-            toml_lines.append('open = true')
+            toml_lines.append("open = true")
         else:
-            toml_lines.append('open = false')
+            toml_lines.append("open = false")
 
         with open(save_path, "w") as f:
             f.write("\n".join(toml_lines))
@@ -396,7 +405,7 @@ class VideoApp:
         config_path = filedialog.askopenfilename(
             initialdir=load_dir,
             title="Select Config",
-            filetypes=[("TOML files", "*.toml"), ("All files", "*.*")]
+            filetypes=[("TOML files", "*.toml"), ("All files", "*.*")],
         )
 
         if not config_path:
@@ -475,18 +484,21 @@ class VideoApp:
                 text="Working...",
                 bg=DISABLED_BG,
                 fg=DISABLED_FG,
-                cursor="arrow"
+                cursor="arrow",
             )
+
             run()
+
             self.make_button.config(
                 state=tk.NORMAL,
                 text="Make",
                 bg=ACCENT_COLOR,
                 fg=BG_COLOR,
-                cursor="hand2"
+                cursor="hand2",
             )
 
         threading.Thread(target=thread_target, daemon=True).start()
+
 
 if __name__ == "__main__":
     main_window = tk.Tk()
