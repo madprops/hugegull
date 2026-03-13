@@ -15,10 +15,10 @@ from utils import utils
 from engine import engine
 
 
-def main() -> None:
+def run() -> None:
     if not config.urls:
-        config.show_help()
-        sys.exit(1)
+        utils.error("No valid URLs to process.")
+        return
 
     start_time = time.perf_counter()
 
@@ -30,10 +30,19 @@ def main() -> None:
         if config.open:
             utils.open_file(engine.file)
         else:
+
             if config.amount == 1:
                 utils.notify("Video Complete")
             else:
                 utils.notify("Videos Complete")
+
+
+def main() -> None:
+    if not config.urls:
+        config.show_help()
+        sys.exit(1)
+
+    run()
 
 
 if __name__ == "__main__":

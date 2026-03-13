@@ -3,7 +3,12 @@ from tkinter import simpledialog, filedialog
 import sys
 import importlib
 import os
+import time
+import threading
+
 import config as config_module
+from engine import engine
+from utils import utils
 
 config = config_module.config
 
@@ -367,13 +372,31 @@ class VideoApp:
 
     def make_video(self):
         raw_urls = self.url_text.get("1.0", tk.END).strip()
+        urls = list(map(lambda e: e.strip(), raw_urls.split("\n")))
 
-        if len(raw_urls) == 0:
-            print("No URLs found in the text area.")
-            return
+        data = {
+            "urls": urls,
+            "path": self.path_entry.get().strip(),
+            "name": self.name_entry.get().strip(),
+            "gpu": self.gpu_var.get().strip(),
+            "fps": self.fps_entry.get().strip(),
+            "crf": self.crf_entry.get().strip(),
+            "duration": self.duration_entry.get().strip(),
+            "clip_duration": self.clip_duration_entry.get().strip(),
+            "clip_diff": self.clip_diff_entry.get().strip(),
+            "fade": self.fade_entry.get().strip(),
+            "amount": self.amount_entry.get().strip(),
+            "open": self.open_var.get(),
+        }
 
-        URLS = list(map(lambda e: e.strip(), raw_urls.split("\n")))
-        print(URLS)
+        config.update(data)
+
+        def thread_target():
+            self.make_button.config(state=tk.DISABLED, text="Working...")
+            main.run()
+            self.make_button.config(state=tk.NORMAL, text="Make")
+
+        threading.Thread(target=thread_target, daemon=True).start()
 
 if __name__ == "__main__":
     main_window = tk.Tk()

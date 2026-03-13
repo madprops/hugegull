@@ -136,5 +136,60 @@ class Config:
             with open(self.config_path, "w") as f:
                 f.write("")
 
+    def refresh_paths(self) -> None:
+        self.temp_dir = os.path.join(self.path, "temp")
+        self.output_dir = os.path.join(self.path, "output")
+        run_id = str(int(time.time() * 1000))
+        self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
+
+        os.makedirs(self.temp_dir, exist_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def update(self, data: dict[str, Any]) -> None:
+        if "urls" in data:
+            self.urls = []
+
+            for u in data["urls"]:
+                if u:
+                    self.urls.append(u)
+
+        if "path" in data:
+            self.path = data["path"]
+
+        if "name" in data:
+            if data["name"]:
+                self.name = data["name"]
+            else:
+                self.name = utils.get_random_name()
+
+        if "gpu" in data:
+            self.gpu = data["gpu"]
+
+        if "fps" in data:
+            self.fps = int(data["fps"])
+
+        if "crf" in data:
+            self.crf = int(data["crf"])
+
+        if "duration" in data:
+            self.duration = float(data["duration"])
+
+        if "clip_duration" in data:
+            self.clip_duration = float(data["clip_duration"])
+
+        if "clip_diff" in data:
+            self.clip_diff = float(data["clip_diff"])
+
+        if "fade" in data:
+            self.fade = float(data["fade"])
+
+        if "amount" in data:
+            self.amount = int(data["amount"])
+
+        if "open" in data:
+            self.open = bool(data["open"])
+
+        self.refresh_paths()
+
 
 config = Config()
