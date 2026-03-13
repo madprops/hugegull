@@ -9,6 +9,7 @@ import threading
 import config as config_module
 from engine import engine
 from utils import utils
+from main import run
 
 config = config_module.config
 
@@ -293,7 +294,7 @@ class VideoApp:
             f'clip_duration = {clip_duration_val}',
             f'clip_diff = {clip_diff_val}',
             f'fade = {fade_val}',
-            f'amount = {amount_val}'
+            f'amount = {amount_val}',
         ]
 
         if open_val:
@@ -393,7 +394,7 @@ class VideoApp:
 
         def thread_target():
             self.make_button.config(state=tk.DISABLED, text="Working...")
-            main.run()
+            run()
             self.make_button.config(state=tk.NORMAL, text="Make")
 
         threading.Thread(target=thread_target, daemon=True).start()

@@ -51,7 +51,7 @@ class Config:
 
         self.name = self.resolve("name", "name", default_name)
         self.amount = self.resolve("amount", "amount", 1)
-        self.duration = self.resolve("duration", "duration", 35.0)
+        self.duration = self.resolve("duration", "duration", 35)
         self.clip_duration = self.resolve("clip_duration", "clip_duration", 6.0)
         self.clip_diff = self.resolve("clip_diff", "clip_diff", 3.0)
         self.fps = self.resolve("fps", "fps", 30)
@@ -84,7 +84,7 @@ class Config:
         self.parser.add_argument("--amount", type=int)
         self.parser.add_argument("--fps", type=int)
         self.parser.add_argument("--crf", type=int)
-        self.parser.add_argument("--duration", type=float)
+        self.parser.add_argument("--duration", type=int)
         self.parser.add_argument("--clip-duration", type=float)
         self.parser.add_argument("--clip-diff", type=float)
         self.parser.add_argument("--fade", type=float)
@@ -172,7 +172,7 @@ class Config:
             self.crf = int(data["crf"])
 
         if "duration" in data:
-            self.duration = float(data["duration"])
+            self.duration = int(data["duration"])
 
         if "clip_duration" in data:
             self.clip_duration = float(data["clip_duration"])
