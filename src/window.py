@@ -22,6 +22,16 @@ WIDGET_BG = "#242424"
 TEXT_COLOR = "#ff2a6d"
 TEXT_COLOR_2 = "#ffffff"
 ACCENT_COLOR = "#05d9e8"
+DISABLED_BG = "#333333"
+DISABLED_FG = "#777777"
+
+def get_resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    return os.path.join(base_path, relative_path)
 
 class VideoApp:
     def __init__(self, root):
@@ -32,6 +42,11 @@ class VideoApp:
 
         self.root.geometry("720x550")
         self.root.configure(bg=BG_COLOR)
+
+        icon_path = get_resource_path("icon.png")
+        if os.path.exists(icon_path):
+            self.icon_img = tk.PhotoImage(file=icon_path)
+            self.root.iconphoto(True, self.icon_img)
 
         self.url_label = tk.Label(
             root,
@@ -66,7 +81,7 @@ class VideoApp:
         c_col = 0
 
         self.text_entry("path", self.settings_frame, "Path", config.path, c_col)
-        self.text_entry("name", self.settings_frame, "Name", config.name, c_col)
+        self.text_entry("name", self.settings_frame, "Name", "", c_col)
 
         gpu_val = "cpu"
 
@@ -454,13 +469,26 @@ class VideoApp:
         config.update(data)
 
         def thread_target():
-            self.make_button.config(state=tk.DISABLED, text="Working...")
+            self.make_button.config(
+                state=tk.DISABLED,
+                text="Working...",
+                bg=DISABLED_BG,
+                fg=DISABLED_FG,
+                cursor="arrow"
+            )
             run()
-            self.make_button.config(state=tk.NORMAL, text="Make")
+            self.make_button.config(
+                state=tk.NORMAL,
+                text="Make",
+                bg=ACCENT_COLOR,
+                fg=BG_COLOR,
+                cursor="hand2"
+            )
 
         threading.Thread(target=thread_target, daemon=True).start()
 
 if __name__ == "__main__":
     main_window = tk.Tk()
     app = VideoApp(main_window)
+
     main_window.mainloop()
