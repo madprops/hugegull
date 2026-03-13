@@ -1,6 +1,8 @@
 import tkinter as tk
+from tkinter import simpledialog
 import sys
 import importlib
+import os
 import config as config_module
 
 config = config_module.config
@@ -95,6 +97,20 @@ class VideoApp:
             cursor="hand2",
         )
 
+        self.save_button = tk.Button(
+            self.button_frame,
+            text="Save",
+            command=self.save_config,
+            bg=ACCENT_COLOR,
+            fg=BG_COLOR,
+            font=("monospace", 12, "bold"),
+            activebackground=TEXT_COLOR,
+            activeforeground=BG_COLOR,
+            highlightthickness=0,
+            relief="flat",
+            cursor="hand2",
+        )
+
         self.config_button = tk.Button(
             self.button_frame,
             text="Config",
@@ -110,7 +126,8 @@ class VideoApp:
         )
 
         self.make_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
-        self.config_button.pack(side=tk.LEFT, padx=(10, 0), ipadx=0, ipady=0)
+        self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
+        self.config_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
 
     def text_entry(self, id_, frame, text, value, col):
         global ROW
@@ -227,6 +244,61 @@ class VideoApp:
     def update_entry(self, entry_widget, new_value):
         entry_widget.delete(0, tk.END)
         entry_widget.insert(0, str(new_value))
+
+    def save_config(self):
+        config_name = simpledialog.askstring(
+            "Save Config",
+            "Enter config name (e.g. my_preset):",
+            parent=self.root
+        )
+
+        if not config_name:
+            return
+
+        config_name = config_name.strip()
+
+        if not config_name.endswith(".toml"):
+            config_name = f"{config_name}.toml"
+
+        save_dir = os.path.expanduser("~/.config/hugegull/configs")
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir, exist_ok=True)
+
+        save_path = os.path.join(save_dir, config_name)
+
+        path_val = self.path_entry.get().strip()
+        gpu_val = self.gpu_var.get().strip()
+        fps_val = self.fps_entry.get().strip()
+        crf_val = self.crf_entry.get().strip()
+        duration_val = self.duration_entry.get().strip()
+        clip_duration_val = self.clip_duration_entry.get().strip()
+        clip_diff_val = self.clip_diff_entry.get().strip()
+        fade_val = self.fade_entry.get().strip()
+        amount_val = self.amount_entry.get().strip()
+        open_val = self.open_var.get()
+
+        toml_lines = [
+            f'path = "{path_val}"',
+            f'gpu = "{gpu_val}"',
+            f'fps = {fps_val}',
+            f'crf = {crf_val}',
+            f'duration = {duration_val}',
+            f'clip_duration = {clip_duration_val}',
+            f'clip_diff = {clip_diff_val}',
+            f'fade = {fade_val}',
+            f'amount = {amount_val}'
+        ]
+
+        if open_val:
+            toml_lines.append('open = true')
+        else:
+            toml_lines.append('open = false')
+
+        with open(save_path, "w") as f:
+            f.write("\n".join(toml_lines))
+
+        print(f"Config successfully saved to {save_path}")
 
     def reload_config(self):
         global config
