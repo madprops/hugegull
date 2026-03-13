@@ -514,25 +514,26 @@ class GUI:
         config.update(data)
 
         def thread_target():
-            from main import run
+            import main
+            importlib.reload(main)
 
-            self.make_button.config(
+            self.root.after(0, lambda: self.make_button.config(
                 state=tk.DISABLED,
                 text="Working...",
                 bg=DISABLED_BG,
                 fg=DISABLED_FG,
                 cursor="arrow",
-            )
+            ))
 
-            run()
+            main.run()
 
-            self.make_button.config(
+            self.root.after(0, lambda: self.make_button.config(
                 state=tk.NORMAL,
                 text="Make",
                 bg=ACCENT_COLOR,
                 fg=BG_COLOR,
                 cursor="hand2",
-            )
+            ))
 
         threading.Thread(target=thread_target, daemon=True).start()
 

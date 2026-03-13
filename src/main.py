@@ -32,7 +32,7 @@ def run() -> None:
             if config.amount == 1:
                 utils.open_file(engine.file)
             else:
-                utils.open_dir(config.path)
+                utils.open_dir(config.output_dir)
         else:
             if config.amount == 1:
                 utils.notify("Video Complete")
