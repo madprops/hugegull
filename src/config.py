@@ -56,7 +56,7 @@ class Config:
         self.fps = self.resolve("fps", "fps", 30)
         self.crf = self.resolve("crf", "crf", 30)
         self.fade = self.resolve("fade", "fade", 0.03)
-        self.gpu = self.resolve("gpu", "gpu", "")
+        self.gpu = self.resolve("gpu", "gpu", "cpu")
         self.path = self.resolve("path", "path", self.path)
 
         # 7. Finalize generated paths

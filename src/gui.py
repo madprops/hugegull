@@ -85,17 +85,12 @@ class GUI:
 
         self.text_entry("path", self.settings_frame, "Path", config.path, c_col)
         self.text_entry("name", self.settings_frame, "Name", "", c_col)
-
-        gpu_val = "cpu"
-
-        if config.gpu:
-            gpu_val = config.gpu
-
+        self.text_entry("gpu", self.settings_frame, "GPU", "", c_col)
         self.text_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
         self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
 
         self.combo_entry(
-            "gpu", self.settings_frame, "GPU", ["cpu", "amd", "nvidia"], gpu_val, c_col
+            "gpu", self.settings_frame, "GPU", ["cpu", "amd", "nvidia"], config.gpu, c_col
         )
 
         self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
@@ -166,6 +161,21 @@ class GUI:
             cursor="hand2",
         )
 
+        self.default_button = tk.Button(
+            self.button_frame,
+            text="Default",
+            command=self.default_config,
+            bg=ACCENT_COLOR,
+            fg=BG_COLOR,
+            font=("monospace", 12, "bold"),
+            activebackground=TEXT_COLOR,
+            activeforeground=BG_COLOR,
+            highlightthickness=0,
+            relief="flat",
+            cursor="hand2",
+        )
+
+        self.default_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.load_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.make_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
@@ -453,13 +463,33 @@ class GUI:
         self.update_entry(self.clip_diff_entry, config.clip_diff)
         self.update_entry(self.fade_entry, config.fade)
         self.update_entry(self.amount_entry, config.amount)
+        self.update_entry(self.gpu_entry, config.gpu)
+        self.open_var.set(bool(config.open))
 
-        gpu_val = "cpu"
+    def default_config(self):
+        global config
 
-        if config.gpu:
-            gpu_val = config.gpu
+        # Clear all arguments to ensure pure defaults are loaded
+        sys.argv = [sys.argv[0]]
 
-        self.gpu_var.set(gpu_val)
+        importlib.reload(config_module)
+        config = config_module.config
+
+        self.url_text.delete("1.0", tk.END)
+
+        if len(config.urls) > 0:
+            self.url_text.insert(tk.END, "\n".join(config.urls))
+
+        self.update_entry(self.path_entry, config.path)
+        self.update_entry(self.name_entry, config.name)
+        self.update_entry(self.fps_entry, config.fps)
+        self.update_entry(self.crf_entry, config.crf)
+        self.update_entry(self.duration_entry, config.duration)
+        self.update_entry(self.clip_duration_entry, config.clip_duration)
+        self.update_entry(self.clip_diff_entry, config.clip_diff)
+        self.update_entry(self.fade_entry, config.fade)
+        self.update_entry(self.amount_entry, config.amount)
+        self.update_entry(self.gpu_entry, config.gpu)
         self.open_var.set(bool(config.open))
 
     def make_video(self):
