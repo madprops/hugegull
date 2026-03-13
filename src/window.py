@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import simpledialog, filedialog
 import sys
 import importlib
 import os
@@ -57,28 +57,29 @@ class VideoApp:
         self.settings_frame = tk.Frame(root, bg=BG_COLOR)
         self.settings_frame.pack(pady=(30, 10), padx=0, fill=tk.X)
 
-        self.text_entry("config", self.settings_frame, "Config", config.config, 0)
-        self.text_entry("path", self.settings_frame, "Path", config.path, 0)
-        self.text_entry("name", self.settings_frame, "Name", config.name, 0)
+        c_col = 0
+
+        self.text_entry("path", self.settings_frame, "Path", config.path, c_col)
+        self.text_entry("name", self.settings_frame, "Name", config.name, c_col)
 
         gpu_val = "cpu"
 
         if config.gpu:
             gpu_val = config.gpu
 
-        self.combo_entry("gpu", self.settings_frame, "GPU", ["cpu", "amd", "nvidia"], gpu_val, 0)
-
-        self.text_entry("fps", self.settings_frame, "FPS", config.fps, 0)
-        self.text_entry("crf", self.settings_frame, "CRF", config.crf, 0)
+        self.text_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
+        self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
+        self.combo_entry("gpu", self.settings_frame, "GPU", ["cpu", "amd", "nvidia"], gpu_val, c_col)
+        self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
 
         ROW = 0
+        c_col = 2
 
-        self.text_entry("duration", self.settings_frame, "Duration", config.duration, 2)
-        self.text_entry("clip_duration", self.settings_frame, "Clip Duration", config.clip_duration, 2)
-        self.text_entry("clip_diff", self.settings_frame, "Clip Diff", config.clip_diff, 2)
-        self.text_entry("fade", self.settings_frame, "Fade", config.fade, 2)
-        self.text_entry("amount", self.settings_frame, "Amount", config.amount, 2)
-        self.checkbox_entry("open", self.settings_frame, "Open", config.open, 2)
+        self.text_entry("duration", self.settings_frame, "Duration", config.duration, c_col)
+        self.text_entry("clip_duration", self.settings_frame, "Clip Duration", config.clip_duration, c_col)
+        self.text_entry("clip_diff", self.settings_frame, "Clip Diff", config.clip_diff, c_col)
+        self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
+        self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
 
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
@@ -111,10 +112,10 @@ class VideoApp:
             cursor="hand2",
         )
 
-        self.config_button = tk.Button(
+        self.load_button = tk.Button(
             self.button_frame,
-            text="Config",
-            command=self.reload_config,
+            text="Load",
+            command=self.load_config,
             bg=ACCENT_COLOR,
             fg=BG_COLOR,
             font=("monospace", 12, "bold"),
@@ -125,9 +126,9 @@ class VideoApp:
             cursor="hand2",
         )
 
-        self.make_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
+        self.load_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
-        self.config_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
+        self.make_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
 
     def text_entry(self, id_, frame, text, value, col):
         global ROW
@@ -300,9 +301,23 @@ class VideoApp:
 
         print(f"Config successfully saved to {save_path}")
 
-    def reload_config(self):
+    def load_config(self):
         global config
-        config_path = self.config_entry.get().strip()
+
+        load_dir = os.path.expanduser("~/.config/hugegull/configs")
+
+        if not os.path.exists(load_dir):
+            os.makedirs(load_dir, exist_ok=True)
+
+        config_path = filedialog.askopenfilename(
+            initialdir=load_dir,
+            title="Select Config",
+            filetypes=[("TOML files", "*.toml"), ("All files", "*.*")]
+        )
+
+        if not config_path:
+            return
+
         new_argv = []
         skip_next = False
 
@@ -322,9 +337,7 @@ class VideoApp:
             new_argv.append(arg)
 
         sys.argv = new_argv
-
-        if config_path != "":
-            sys.argv.extend(["--config", config_path])
+        sys.argv.extend(["--config", config_path])
 
         importlib.reload(config_module)
         config = config_module.config
