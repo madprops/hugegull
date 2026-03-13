@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import simpledialog, filedialog
+from tkinter import simpledialog, filedialog, messagebox
 import sys
 import importlib
 import os
@@ -30,7 +30,7 @@ class VideoApp:
         self.root = root
         self.root.title("HugeGull")
 
-        self.root.geometry("640x550")
+        self.root.geometry("720x550")
         self.root.configure(bg=BG_COLOR)
 
         self.url_label = tk.Label(
@@ -79,7 +79,7 @@ class VideoApp:
         self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
 
         ROW = 0
-        c_col = 2
+        c_col = 3
 
         self.text_entry("duration", self.settings_frame, "Duration", config.duration, c_col)
         self.text_entry("clip_duration", self.settings_frame, "Clip Duration", config.clip_duration, c_col)
@@ -136,6 +136,17 @@ class VideoApp:
         self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.make_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
 
+    def show_info_msg(self, id_):
+        help_text = "No help available for this setting."
+
+        for action in config.parser._actions:
+            if action.dest == id_:
+                if action.help:
+                    help_text = action.help
+                break
+
+        messagebox.showinfo("Config Information", help_text)
+
     def text_entry(self, id_, frame, text, value, col):
         global ROW
 
@@ -164,6 +175,23 @@ class VideoApp:
         entry.grid(row=ROW, column=col + 1, pady=5, ipadx=8, ipady=4)
         entry.insert(0, str(value))
         setattr(self, f"{id_}_entry", entry)
+
+        help_btn = tk.Button(
+            frame,
+            text="?",
+            command=lambda i=id_: self.show_info_msg(i),
+            bg=BG_COLOR,
+            fg=ACCENT_COLOR,
+            activebackground=BG_COLOR,
+            activeforeground=TEXT_COLOR,
+            borderwidth=0,
+            relief="flat",
+            highlightthickness=0,
+            font=("helvetica", 10, "bold"),
+            cursor="hand2",
+        )
+
+        help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
     def combo_entry(self, id_, frame, text, options, value, col):
@@ -209,6 +237,23 @@ class VideoApp:
 
         dropdown.grid(row=ROW, column=col + 1, pady=5, sticky="ew")
         setattr(self, f"{id_}_dropdown", dropdown)
+
+        help_btn = tk.Button(
+            frame,
+            text="?",
+            command=lambda i=id_: self.show_info_msg(i),
+            bg=BG_COLOR,
+            fg=ACCENT_COLOR,
+            activebackground=BG_COLOR,
+            activeforeground=TEXT_COLOR,
+            borderwidth=0,
+            relief="flat",
+            highlightthickness=0,
+            font=("helvetica", 10, "bold"),
+            cursor="hand2",
+        )
+
+        help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
     def checkbox_entry(self, id_, frame, text, value, col):
@@ -246,6 +291,22 @@ class VideoApp:
         setattr(self, f"{id_}_checkbox", checkbox)
         setattr(self, f"{id_}_var", var)
 
+        help_btn = tk.Button(
+            frame,
+            text="?",
+            command=lambda i=id_: self.show_info_msg(i),
+            bg=BG_COLOR,
+            fg=ACCENT_COLOR,
+            activebackground=BG_COLOR,
+            activeforeground=TEXT_COLOR,
+            borderwidth=0,
+            relief="flat",
+            highlightthickness=0,
+            font=("helvetica", 10, "bold"),
+            cursor="hand2",
+        )
+
+        help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
     def update_entry(self, entry_widget, new_value):

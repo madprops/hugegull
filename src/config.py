@@ -83,7 +83,7 @@ class Config:
         self.parser.add_argument("--path", type=str, help="Base directory for the temp and output folders.")
         self.parser.add_argument("--amount", type=int, help="Total number of output videos to generate.")
         self.parser.add_argument("--fps", type=int, help="Output video frames per second.")
-        self.parser.add_argument("--crf", type=int, help="Video quality/compression factor.")
+        self.parser.add_argument("--crf", type=int, help="Video quality/compression factor. Lower means higher quality.")
         self.parser.add_argument("--duration", type=int, help="Total target duration (in seconds) of the output video.")
         self.parser.add_argument("--clip-duration", type=float, help="Average duration for a single grabbed section.")
         self.parser.add_argument("--clip-diff", type=float, help="The range around the clip duration, more or less.")
