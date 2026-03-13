@@ -4,13 +4,14 @@ import sys
 import importlib
 import os
 import threading
+from typing import Any, Callable
 
 import config as config_module
 
 config = config_module.config
 
-URLS = []
-ROW = 0
+URLS: list[str] = []
+ROW: int = 0
 
 # Style
 BG_COLOR = "#121212"
@@ -24,13 +25,13 @@ DISABLED_FG = "#777777"
 
 def main() -> None:
     main_window = tk.Tk()
-    app = GUI(main_window)
+    GUI(main_window)
     main_window.mainloop()
 
 
-def get_resource_path(relative_path):
+def get_resource_path(relative_path: str) -> str:
     try:
-        base_path = sys._MEIPASS
+        base_path = sys._MEIPASS  # type: ignore
     except Exception:
         base_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,8 +39,13 @@ def get_resource_path(relative_path):
 
 
 class GUI:
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk) -> None:
         global ROW
+
+        self.entries: dict[str, tk.Entry] = {}
+        self.string_vars: dict[str, tk.StringVar] = {}
+        self.bool_vars: dict[str, tk.BooleanVar] = {}
+        self.labels: dict[str, tk.Label] = {}
 
         self.root = root
         self.root.title("HugeGull")
@@ -89,11 +95,20 @@ class GUI:
         self.text_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
         self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
 
-        self.combo_entry(
-            "gpu", self.settings_frame, "GPU", ["cpu", "amd", "nvidia"], config.gpu, c_col
-        )
+        gpu_choices = []
+        for action in config.parser._actions:
+            if action.dest == "gpu" and action.choices:
+                gpu_choices = list(action.choices)
+                break
 
-        self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
+        self.combo_entry(
+            "gpu",
+            self.settings_frame,
+            "GPU",
+            gpu_choices,
+            config.gpu,
+            c_col,
+        )
 
         ROW = 0
         c_col = 3
@@ -116,6 +131,7 @@ class GUI:
 
         self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
         self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
+        self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
 
@@ -180,7 +196,7 @@ class GUI:
         self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.make_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
 
-    def show_info_msg(self, id_):
+    def show_info_msg(self, id_: str) -> None:
         help_text = "No help available for this setting."
 
         for action in config.parser._actions:
@@ -191,7 +207,12 @@ class GUI:
 
         messagebox.showinfo("Config Information", help_text)
 
-    def text_entry(self, id_, frame, text, value, col):
+    def make_help_cmd(self, id_: str) -> Callable[[], None]:
+        return lambda: self.show_info_msg(id_)
+
+    def text_entry(
+        self, id_: str, frame: tk.Frame, text: str, value: Any, col: int
+    ) -> None:
         global ROW
 
         label = tk.Label(
@@ -203,7 +224,7 @@ class GUI:
         )
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
-        setattr(self, f"{id_}_label", label)
+        self.labels[id_] = label
 
         entry = tk.Entry(
             frame,
@@ -218,12 +239,12 @@ class GUI:
 
         entry.grid(row=ROW, column=col + 1, pady=5, ipadx=8, ipady=4)
         entry.insert(0, str(value))
-        setattr(self, f"{id_}_entry", entry)
+        self.entries[id_] = entry
 
         help_btn = tk.Button(
             frame,
             text="?",
-            command=lambda i=id_: self.show_info_msg(i),
+            command=self.make_help_cmd(id_),
             bg=BG_COLOR,
             fg=ACCENT_COLOR,
             activebackground=BG_COLOR,
@@ -238,7 +259,15 @@ class GUI:
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
-    def combo_entry(self, id_, frame, text, options, value, col):
+    def combo_entry(
+        self,
+        id_: str,
+        frame: tk.Frame,
+        text: str,
+        options: list[str],
+        value: str,
+        col: int,
+    ) -> None:
         global ROW
 
         label = tk.Label(
@@ -250,9 +279,10 @@ class GUI:
         )
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
-        setattr(self, f"{id_}_label", label)
+        self.labels[f"{id_}_combo"] = label
+
         var = tk.StringVar(value=value)
-        setattr(self, f"{id_}_var", var)
+        self.string_vars[id_] = var
 
         dropdown = tk.OptionMenu(
             frame,
@@ -279,12 +309,11 @@ class GUI:
         )
 
         dropdown.grid(row=ROW, column=col + 1, pady=5, sticky="ew")
-        setattr(self, f"{id_}_dropdown", dropdown)
 
         help_btn = tk.Button(
             frame,
             text="?",
-            command=lambda i=id_: self.show_info_msg(i),
+            command=self.make_help_cmd(id_),
             bg=BG_COLOR,
             fg=ACCENT_COLOR,
             activebackground=BG_COLOR,
@@ -299,7 +328,9 @@ class GUI:
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
-    def checkbox_entry(self, id_, frame, text, value, col):
+    def checkbox_entry(
+        self, id_: str, frame: tk.Frame, text: str, value: Any, col: int
+    ) -> None:
         global ROW
 
         label = tk.Label(
@@ -311,8 +342,10 @@ class GUI:
         )
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
-        setattr(self, f"{id_}_label", label)
+        self.labels[id_] = label
+
         var = tk.BooleanVar(value=bool(value))
+        self.bool_vars[id_] = var
 
         checkbox = tk.Checkbutton(
             frame,
@@ -329,13 +362,11 @@ class GUI:
         )
 
         checkbox.grid(row=ROW, column=col + 1, sticky="w", pady=5)
-        setattr(self, f"{id_}_checkbox", checkbox)
-        setattr(self, f"{id_}_var", var)
 
         help_btn = tk.Button(
             frame,
             text="?",
-            command=lambda i=id_: self.show_info_msg(i),
+            command=self.make_help_cmd(id_),
             bg=BG_COLOR,
             fg=ACCENT_COLOR,
             activebackground=BG_COLOR,
@@ -350,11 +381,11 @@ class GUI:
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
-    def update_entry(self, entry_widget, new_value):
+    def update_entry(self, entry_widget: tk.Entry, new_value: Any) -> None:
         entry_widget.delete(0, tk.END)
         entry_widget.insert(0, str(new_value))
 
-    def save_config(self):
+    def save_config(self) -> None:
         config_name = simpledialog.askstring(
             "Save Config", "Enter config name (e.g. my_preset):", parent=self.root
         )
@@ -374,17 +405,17 @@ class GUI:
 
         save_path = os.path.join(save_dir, config_name)
 
-        path_val = self.path_entry.get().strip()
-        gpu_val = self.gpu_var.get().strip()
-        fps_val = self.fps_entry.get().strip()
-        crf_val = self.crf_entry.get().strip()
-        duration_val = self.duration_entry.get().strip()
-        clip_duration_val = self.clip_duration_entry.get().strip()
-        clip_diff_val = self.clip_diff_entry.get().strip()
-        fade_val = self.fade_entry.get().strip()
-        amount_val = self.amount_entry.get().strip()
-        open_val = self.open_var.get()
-        name = self.name_entry.get()
+        path_val = self.entries["path"].get().strip()
+        gpu_val = self.string_vars["gpu"].get().strip()
+        fps_val = self.entries["fps"].get().strip()
+        crf_val = self.entries["crf"].get().strip()
+        duration_val = self.entries["duration"].get().strip()
+        clip_duration_val = self.entries["clip_duration"].get().strip()
+        clip_diff_val = self.entries["clip_diff"].get().strip()
+        fade_val = self.entries["fade"].get().strip()
+        amount_val = self.entries["amount"].get().strip()
+        open_val = self.bool_vars["open"].get()
+        name = self.entries["name"].get()
 
         toml_lines = [
             f'path = "{path_val}"',
@@ -409,7 +440,7 @@ class GUI:
 
         print(f"Config successfully saved to {save_path}")
 
-    def load_config(self):
+    def load_config(self) -> None:
         global config
 
         load_dir = os.path.expanduser("~/.config/hugegull/configs")
@@ -454,19 +485,19 @@ class GUI:
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
 
-        self.update_entry(self.path_entry, config.path)
-        self.update_entry(self.name_entry, config.name)
-        self.update_entry(self.fps_entry, config.fps)
-        self.update_entry(self.crf_entry, config.crf)
-        self.update_entry(self.duration_entry, config.duration)
-        self.update_entry(self.clip_duration_entry, config.clip_duration)
-        self.update_entry(self.clip_diff_entry, config.clip_diff)
-        self.update_entry(self.fade_entry, config.fade)
-        self.update_entry(self.amount_entry, config.amount)
-        self.update_entry(self.gpu_entry, config.gpu)
-        self.open_var.set(bool(config.open))
+        self.update_entry(self.entries["path"], config.path)
+        self.update_entry(self.entries["name"], config.name)
+        self.update_entry(self.entries["fps"], config.fps)
+        self.update_entry(self.entries["crf"], config.crf)
+        self.update_entry(self.entries["duration"], config.duration)
+        self.update_entry(self.entries["clip_duration"], config.clip_duration)
+        self.update_entry(self.entries["clip_diff"], config.clip_diff)
+        self.update_entry(self.entries["fade"], config.fade)
+        self.update_entry(self.entries["amount"], config.amount)
+        self.update_entry(self.entries["gpu"], config.gpu)
+        self.bool_vars["open"].set(bool(config.open))
 
-    def default_config(self):
+    def default_config(self) -> None:
         global config
 
         # Clear all arguments to ensure pure defaults are loaded
@@ -480,60 +511,67 @@ class GUI:
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
 
-        self.update_entry(self.path_entry, config.path)
-        self.update_entry(self.name_entry, config.name)
-        self.update_entry(self.fps_entry, config.fps)
-        self.update_entry(self.crf_entry, config.crf)
-        self.update_entry(self.duration_entry, config.duration)
-        self.update_entry(self.clip_duration_entry, config.clip_duration)
-        self.update_entry(self.clip_diff_entry, config.clip_diff)
-        self.update_entry(self.fade_entry, config.fade)
-        self.update_entry(self.amount_entry, config.amount)
-        self.update_entry(self.gpu_entry, config.gpu)
-        self.open_var.set(bool(config.open))
+        self.update_entry(self.entries["path"], config.path)
+        self.update_entry(self.entries["name"], config.name)
+        self.update_entry(self.entries["fps"], config.fps)
+        self.update_entry(self.entries["crf"], config.crf)
+        self.update_entry(self.entries["duration"], config.duration)
+        self.update_entry(self.entries["clip_duration"], config.clip_duration)
+        self.update_entry(self.entries["clip_diff"], config.clip_diff)
+        self.update_entry(self.entries["fade"], config.fade)
+        self.update_entry(self.entries["amount"], config.amount)
+        self.update_entry(self.entries["gpu"], config.gpu)
+        self.bool_vars["open"].set(bool(config.open))
 
-    def make_video(self):
+    def make_video(self) -> None:
         raw_urls = self.url_text.get("1.0", tk.END).strip()
         urls = list(map(lambda e: e.strip(), raw_urls.split("\n")))
 
         data = {
             "urls": urls,
-            "path": self.path_entry.get().strip(),
-            "name": self.name_entry.get().strip(),
-            "gpu": self.gpu_var.get().strip(),
-            "fps": self.fps_entry.get().strip(),
-            "crf": self.crf_entry.get().strip(),
-            "duration": self.duration_entry.get().strip(),
-            "clip_duration": self.clip_duration_entry.get().strip(),
-            "clip_diff": self.clip_diff_entry.get().strip(),
-            "fade": self.fade_entry.get().strip(),
-            "amount": self.amount_entry.get().strip(),
-            "open": self.open_var.get(),
+            "path": self.entries["path"].get().strip(),
+            "name": self.entries["name"].get().strip(),
+            "gpu": self.string_vars["gpu"].get().strip(),
+            "fps": self.entries["fps"].get().strip(),
+            "crf": self.entries["crf"].get().strip(),
+            "duration": self.entries["duration"].get().strip(),
+            "clip_duration": self.entries["clip_duration"].get().strip(),
+            "clip_diff": self.entries["clip_diff"].get().strip(),
+            "fade": self.entries["fade"].get().strip(),
+            "amount": self.entries["amount"].get().strip(),
+            "open": self.bool_vars["open"].get(),
         }
 
         config.update(data)
 
-        def thread_target():
+        def thread_target() -> None:
             import main
+
             importlib.reload(main)
 
-            self.root.after(0, lambda: self.make_button.config(
-                state=tk.DISABLED,
-                text="Working...",
-                bg=DISABLED_BG,
-                fg=DISABLED_FG,
-                cursor="arrow",
-            ))
+            self.root.after(
+                0,
+                lambda: self.make_button.config(
+                    state=tk.DISABLED,
+                    text="Working...",
+                    bg=DISABLED_BG,
+                    fg=DISABLED_FG,
+                    cursor="arrow",
+                ),
+            )
 
             main.run()
 
-            self.root.after(0, lambda: self.make_button.config(
-                state=tk.NORMAL,
-                text="Make",
-                bg=ACCENT_COLOR,
-                fg=BG_COLOR,
-                cursor="hand2",
-            ))
+            self.root.after(
+                0,
+                lambda: self.make_button.config(
+                    state=tk.NORMAL,
+                    text="Make",
+                    bg=ACCENT_COLOR,
+                    fg=BG_COLOR,
+                    cursor="hand2",
+                ),
+            )
 
         threading.Thread(target=thread_target, daemon=True).start()
 
