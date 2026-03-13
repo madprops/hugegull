@@ -85,7 +85,7 @@ fade = 0.03
 | **Open** | `--open` | *N/A* | `False` | Opens the final video file automatically when finished. |
 | **GPU** | `--gpu` | `gpu` | `""` | Hardware acceleration identifier (e.g., "amd"). |
 | **Amount** | `--amount` | `amount` | `1` | Total number of output videos to generate. |
-| **Total Duration** | `--duration` | `duration` | `35.0` | Total target duration (in seconds) of the output video. |
+| **Total Duration** | `--duration` | `duration` | `35` | Total target duration (in seconds) of the output video. |
 | **FPS** | `--fps` | `fps` | `30` | Output video frames per second. |
 | **CRF** | `--crf` | `crf` | `30` | Video quality/compression factor. |
 | **Crossfade** | `--fade` | `fade` | `0.03` | Crossfade duration between clips. |
