@@ -28,7 +28,10 @@ def run() -> None:
         utils.info(f"Done in {int(duration)} seconds")
 
         if config.open:
-            utils.open_file(engine.file)
+            if config.amount == 1:
+                utils.open_file(engine.file)
+            else:
+                utils.open_dir(config.path)
         else:
             if config.amount == 1:
                 utils.notify("Video Complete")

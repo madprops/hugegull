@@ -101,5 +101,9 @@ class Utils:
         except Exception as e:
             self.error(f"Failed to open file: {e}")
 
+    def open_dir(self, path: str) -> None:
+        if os.path.isdir(path):
+            subprocess.run(["xdg-open", path])
+
 
 utils = Utils()
