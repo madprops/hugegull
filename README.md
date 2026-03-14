@@ -26,7 +26,8 @@ Alternatively, you can clone the repository and set up a shell alias:
 
 ```bash
 git clone https://github.com/madprops/hugegull ~/code/hugegull
-alias hgg="python ~/code/hugegull/main.py"
+"./install.sh"
+alias hgg="~/code/hugegull/run.sh"
 ```
 
 ---
