@@ -46,11 +46,12 @@ class GUI:
         self.string_vars: dict[str, tk.StringVar] = {}
         self.bool_vars: dict[str, tk.BooleanVar] = {}
         self.labels: dict[str, tk.Label] = {}
-
+        self.current_config_name: str = ""
         self.root = root
         self.root.title("HugeGull")
         self.root.geometry("720x550")
         self.root.configure(bg=BG_COLOR)
+
         icon_path = get_resource_path("icon.png")
 
         if os.path.exists(icon_path):
@@ -134,10 +135,13 @@ class GUI:
         self.url_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.url_scrollbar.config(command=self.url_text.yview)
 
-        # Bindings for Select All and dynamic counting
+        # Bindings for Select All, dynamic counting, and focus traversal
         self.url_text.bind("<Control-a>", self.select_all)
         self.url_text.bind("<Control-A>", self.select_all)
         self.url_text.bind("<KeyRelease>", self.update_url_count)
+        self.url_text.bind("<Tab>", self.focus_next_widget)
+        self.url_text.bind("<Shift-Tab>", self.focus_prev_widget)
+        self.url_text.bind("<ISO_Left_Tab>", self.focus_prev_widget)
 
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
@@ -192,27 +196,14 @@ class GUI:
 
         self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
         self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
+
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
 
-        self.make_button = tk.Button(
+        self.default_button = tk.Button(
             self.button_frame,
-            text="Make",
-            command=self.make_video,
-            bg=ACCENT_COLOR,
-            fg=BG_COLOR,
-            font=("monospace", 12, "bold"),
-            activebackground=TEXT_COLOR,
-            activeforeground=BG_COLOR,
-            highlightthickness=0,
-            relief="flat",
-            cursor="hand2",
-        )
-
-        self.save_button = tk.Button(
-            self.button_frame,
-            text="Save",
-            command=self.save_config,
+            text="Default",
+            command=self.default_config,
             bg=ACCENT_COLOR,
             fg=BG_COLOR,
             font=("monospace", 12, "bold"),
@@ -237,10 +228,24 @@ class GUI:
             cursor="hand2",
         )
 
-        self.default_button = tk.Button(
+        self.save_button = tk.Button(
             self.button_frame,
-            text="Default",
-            command=self.default_config,
+            text="Save",
+            command=self.save_config,
+            bg=ACCENT_COLOR,
+            fg=BG_COLOR,
+            font=("monospace", 12, "bold"),
+            activebackground=TEXT_COLOR,
+            activeforeground=BG_COLOR,
+            highlightthickness=0,
+            relief="flat",
+            cursor="hand2",
+        )
+
+        self.make_button = tk.Button(
+            self.button_frame,
+            text="Make",
+            command=self.make_video,
             bg=ACCENT_COLOR,
             fg=BG_COLOR,
             font=("monospace", 12, "bold"),
@@ -255,6 +260,14 @@ class GUI:
         self.load_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.make_button.pack(side=tk.LEFT, padx=(0, 0), ipadx=0, ipady=0)
+
+    def focus_next_widget(self, event: Any) -> str:
+        event.widget.tk_focusNext().focus()
+        return "break"
+
+    def focus_prev_widget(self, event: Any) -> str:
+        event.widget.tk_focusPrev().focus()
+        return "break"
 
     def select_all(self, event: Any = None) -> str:
         self.url_text.tag_add(tk.SEL, "1.0", tk.END)
@@ -302,7 +315,6 @@ class GUI:
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
         self.labels[id_] = label
 
-        # Wrap entry in a frame to simulate internal padding
         entry_frame = tk.Frame(frame, bg=WIDGET_BG)
         entry_frame.grid(row=ROW, column=col + 1, pady=5)
 
@@ -334,6 +346,7 @@ class GUI:
             highlightthickness=0,
             font=("helvetica", 10, "bold"),
             cursor="hand2",
+            takefocus=0,
         )
 
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
@@ -403,6 +416,7 @@ class GUI:
             highlightthickness=0,
             font=("helvetica", 10, "bold"),
             cursor="hand2",
+            takefocus=0,
         )
 
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
@@ -456,6 +470,7 @@ class GUI:
             highlightthickness=0,
             font=("helvetica", 10, "bold"),
             cursor="hand2",
+            takefocus=0,
         )
 
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
@@ -467,7 +482,10 @@ class GUI:
 
     def save_config(self) -> None:
         config_name = simpledialog.askstring(
-            "Save Config", "Enter config name (e.g. my_preset):", parent=self.root
+            "Save Config",
+            "Enter config name (e.g. my_preset):",
+            parent=self.root,
+            initialvalue=self.current_config_name,
         )
 
         if not config_name:
@@ -475,7 +493,10 @@ class GUI:
 
         config_name = config_name.strip()
 
-        if not config_name.endswith(".toml"):
+        if config_name.endswith(".toml"):
+            self.current_config_name = config_name[:-5]
+        else:
+            self.current_config_name = config_name
             config_name = f"{config_name}.toml"
 
         save_dir = os.path.expanduser("~/.config/hugegull/configs")
@@ -484,7 +505,6 @@ class GUI:
             os.makedirs(save_dir, exist_ok=True)
 
         save_path = os.path.join(save_dir, config_name)
-
         path_val = self.entries["path"].get().strip()
         gpu_val = self.string_vars["gpu"].get().strip()
         fps_val = self.entries["fps"].get().strip()
@@ -537,6 +557,8 @@ class GUI:
         if not config_path:
             return
 
+        self.current_config_name = os.path.splitext(os.path.basename(config_path))[0]
+
         new_argv = []
         skip_next = False
 
@@ -576,17 +598,19 @@ class GUI:
         self.update_entry(self.entries["clip_diff"], config.clip_diff)
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
-        self.update_entry(self.entries["gpu"], config.gpu)
+
+        # Fixed: Update the StringVar for the combobox instead of looking for an Entry
+        self.string_vars["gpu"].set(config.gpu)
+
         self.bool_vars["open"].set(bool(config.open))
 
     def default_config(self) -> None:
         global config
 
+        self.current_config_name = ""
         sys.argv = [sys.argv[0]]
-
         importlib.reload(config_module)
         config = config_module.config
-
         self.url_text.delete("1.0", tk.END)
 
         if len(config.urls) > 0:
@@ -603,7 +627,10 @@ class GUI:
         self.update_entry(self.entries["clip_diff"], config.clip_diff)
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
-        self.update_entry(self.entries["gpu"], config.gpu)
+
+        # Fixed: Update the StringVar for the combobox instead of looking for an Entry
+        self.string_vars["gpu"].set(config.gpu)
+
         self.bool_vars["open"].set(bool(config.open))
 
     def make_video(self) -> None:
