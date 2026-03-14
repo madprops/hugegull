@@ -84,7 +84,7 @@ class GUI:
             bordercolor=BG_COLOR,
             arrowcolor=ACCENT_COLOR,
             lightcolor=WIDGET_BG,
-            darkcolor=WIDGET_BG
+            darkcolor=WIDGET_BG,
         )
 
         # Map dynamic states (disabled, active/hover, pressed) to dark colors
@@ -93,33 +93,25 @@ class GUI:
             background=[
                 ("disabled", BG_COLOR),
                 ("pressed", "#444444"),
-                ("active", "#333333")
+                ("active", "#333333"),
             ],
-            arrowcolor=[
-                ("disabled", DISABLED_BG)
-            ],
-            troughcolor=[
-                ("disabled", BG_COLOR)
-            ],
+            arrowcolor=[("disabled", DISABLED_BG)],
+            troughcolor=[("disabled", BG_COLOR)],
             lightcolor=[
                 ("disabled", BG_COLOR),
                 ("pressed", "#444444"),
-                ("active", "#333333")
+                ("active", "#333333"),
             ],
             darkcolor=[
                 ("disabled", BG_COLOR),
                 ("pressed", "#444444"),
-                ("active", "#333333")
+                ("active", "#333333"),
             ],
-            bordercolor=[
-                ("disabled", BG_COLOR)
-            ]
+            bordercolor=[("disabled", BG_COLOR)],
         )
 
         self.url_scrollbar = ttk.Scrollbar(
-            self.url_frame,
-            orient="vertical",
-            style="Vertical.TScrollbar"
+            self.url_frame, orient="vertical", style="Vertical.TScrollbar"
         )
 
         self.url_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -134,7 +126,7 @@ class GUI:
             relief="flat",
             highlightthickness=0,
             font=("helvetica", 12),
-            yscrollcommand=self.url_scrollbar.set
+            yscrollcommand=self.url_scrollbar.set,
         )
 
         self.url_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)

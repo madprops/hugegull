@@ -60,7 +60,9 @@ class Config:
         self.path = self.resolve("path", "path", self.path)
 
         if self.gpu not in ["cpu", "amd", "nvidia"]:
-            raise ValueError(f"Invalid GPU option '{self.gpu}'. Allowed values are 'cpu', 'amd', 'nvidia'.")
+            raise ValueError(
+                f"Invalid GPU option '{self.gpu}'. Allowed values are 'cpu', 'amd', 'nvidia'."
+            )
 
         # 7. Finalize generated paths
         self.temp_dir = os.path.join(self.path, "temp")
@@ -108,7 +110,7 @@ class Config:
             "--gpu",
             type=str,
             choices=["cpu", "amd", "nvidia"],
-            help="Hardware acceleration identifier."
+            help="Hardware acceleration identifier.",
         )
 
         self.parser.add_argument(
@@ -224,7 +226,9 @@ class Config:
 
         if "gpu" in data:
             if data["gpu"] not in ["cpu", "amd", "nvidia"]:
-                raise ValueError(f"Invalid GPU option '{data['gpu']}'. Allowed values are 'cpu', 'amd', 'nvidia'.")
+                raise ValueError(
+                    f"Invalid GPU option '{data['gpu']}'. Allowed values are 'cpu', 'amd', 'nvidia'."
+                )
 
             self.gpu = data["gpu"]
 
