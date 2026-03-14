@@ -505,8 +505,6 @@ class Engine:
             futures = []
 
             for i in range(len(sections)):
-                gui.update_progress(f"Generating Section: {i + 1}")
-
                 if data.abort:
                     break
 
@@ -514,8 +512,6 @@ class Engine:
                 futures.append(future)
 
             for future in concurrent.futures.as_completed(futures):
-                gui.update_progress(f"Generating Clip: {i + 1}")
-
                 if data.abort:
                     break
 
