@@ -82,6 +82,7 @@ class GUI:
 
         self.url_label.pack(pady=(20, 5), padx=20, anchor="w")
         self.url_label.bind("<Button-1>", self.paste_urls)
+        self.url_label.bind("<Button-2>", self.clear_urls)
         self.url_label.bind("<Enter>", lambda e: self.url_label.config(fg=ACCENT_COLOR))
         self.url_label.bind("<Leave>", lambda e: self.url_label.config(fg=TEXT_COLOR))
 
@@ -291,6 +292,10 @@ class GUI:
         self.url_text.mark_set(tk.INSERT, "1.0")
         self.url_text.see(tk.INSERT)
         return "break"
+
+    def clear_urls(self, event: Any = None) -> None:
+        self.url_text.delete("1.0", tk.END)
+        self.update_url_count()
 
     def clean_urls(self, event: Any = None) -> None:
         try:
