@@ -4,7 +4,6 @@ import os
 import random
 import subprocess
 import json
-import shutil
 import concurrent.futures
 from typing import Any
 
@@ -36,6 +35,8 @@ class Engine:
             counter += 1
 
     def process_url(self, url: str) -> dict[str, Any] | None:
+        utils.check_abort()
+
         source: dict[str, Any] = {
             "url": url,
             "v_data": url,
@@ -101,16 +102,19 @@ class Engine:
             return None
 
     def prepare_sources(self) -> None:
+        utils.check_abort()
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.workers
         ) as executor:
             futures = []
 
             for url in config.urls:
+                utils.check_abort()
                 future = executor.submit(self.process_url, url)
                 futures.append(future)
 
             for future in concurrent.futures.as_completed(futures):
+                utils.check_abort()
                 source = future.result()
 
                 if source is not None:
@@ -123,6 +127,7 @@ class Engine:
                         self.max_height = source["height"]
 
     def start(self) -> bool:
+        utils.check_abort()
         self.sources.clear()
         self.clips.clear()
         config.check_name()
@@ -135,7 +140,7 @@ class Engine:
                 "No valid sources found in the pool. Stream is live/endless or invalid."
             )
 
-            shutil.rmtree(config.project_dir, ignore_errors=True)
+            utils.cleanup()
             return False
 
         amount = config.amount or 1
@@ -151,6 +156,8 @@ class Engine:
         available_clips = list(self.clips.keys())
 
         for i in range(amount):
+            utils.check_abort()
+
             if amount > 1:
                 utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
@@ -167,7 +174,7 @@ class Engine:
             if not self.concatenate_clips(selected_clips):
                 all_successful = False
 
-        shutil.rmtree(config.project_dir, ignore_errors=True)
+        utils.cleanup()
         return all_successful
 
     def resolve_with_ytdlp(self, url: str) -> dict[str, Any] | None:
@@ -425,6 +432,7 @@ class Engine:
         return None
 
     def generate_random_clips(self, target_duration: float) -> None:
+        utils.check_abort()
         sections = self.generate_clip_sections(target_duration)
 
         with concurrent.futures.ThreadPoolExecutor(
@@ -433,10 +441,12 @@ class Engine:
             futures = []
 
             for i in range(len(sections)):
+                utils.check_abort()
                 future = executor.submit(self.extract_single_clip, i, sections[i])
                 futures.append(future)
 
             for future in concurrent.futures.as_completed(futures):
+                utils.check_abort()
                 result = future.result()
 
                 if result is not None:
@@ -466,6 +476,8 @@ class Engine:
         return selected
 
     def concatenate_clips(self, selected_clips: list[str]) -> bool:
+        utils.check_abort()
+
         if len(selected_clips) == 0:
             utils.error("No clips to concatenate.")
             return False

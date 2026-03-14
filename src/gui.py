@@ -9,6 +9,7 @@ from typing import Any, Callable
 from info import info
 from utils import utils
 import config as config_module
+from data import data
 
 config = config_module.config
 
@@ -54,6 +55,7 @@ class GUI:
         self.root.title("Huge Gull")
         self.root.geometry("720x550")
         self.root.configure(bg=BG_COLOR)
+        self.is_running: bool = False
 
         icon_path = get_resource_path("icon.png")
 
@@ -688,11 +690,26 @@ class GUI:
     def make_video(self) -> None:
         import main
 
+        if self.is_running:
+            self.make_button.config(
+                state=tk.DISABLED,
+                text="Aborting...",
+                bg=DISABLED_BG,
+                fg=DISABLED_FG,
+                cursor="arrow",
+            )
+
+            data.abort = True
+            return
+
+        self.is_running = True
+        data.abort = False
+
         self.clean_urls()
         raw_urls = self.url_text.get("1.0", tk.END).strip()
         urls = list(map(lambda e: e.strip(), raw_urls.split("\n")))
 
-        data = {
+        props = {
             "urls": urls,
             "path": self.entries["path"].get().strip(),
             "name": self.entries["name"].get().strip(),
@@ -707,32 +724,33 @@ class GUI:
             "open": self.bool_vars["open"].get(),
         }
 
-        config.update(data)
+        config.update(props)
 
-        # Disable the button immediately on the main GUI thread
         self.make_button.config(
-            state=tk.DISABLED,
-            text="Working...",
-            bg=DISABLED_BG,
-            fg=DISABLED_FG,
-            cursor="arrow",
+            state=tk.NORMAL,
+            text="Working",
+            bg=TEXT_COLOR,  # Using the pinkish/red text color to indicate a stop action
+            fg=BG_COLOR,
+            cursor="hand2",
         )
 
         def thread_target() -> None:
-            # Run the heavy task in the background thread
-            main.run()
+            try:
+                # Run the heavy task in the background thread
+                main.run()
+            finally:
+                self.is_running = False
 
-            # Schedule the button reset back on the main GUI thread after the task finishes
-            self.root.after(
-                0,
-                lambda: self.make_button.config(
-                    state=tk.NORMAL,
-                    text="Make",
-                    bg=ACCENT_COLOR,
-                    fg=BG_COLOR,
-                    cursor="hand2",
-                ),
-            )
+                self.root.after(
+                    0,
+                    lambda: self.make_button.config(
+                        state=tk.NORMAL,
+                        text="Make",
+                        bg=ACCENT_COLOR,
+                        fg=BG_COLOR,
+                        cursor="hand2",
+                    ),
+                )
 
         threading.Thread(target=thread_target, daemon=True).start()
 
