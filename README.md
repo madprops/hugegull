@@ -114,3 +114,11 @@ Then you can do:
 egull "https://something.m3u8" "https://otherthing.m3u8"
 hgg
 ```
+
+---
+
+## GUI
+
+There is a graphical user interface that can be spawned with `--gui`.
+
+![](gui.png)
