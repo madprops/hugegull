@@ -14,6 +14,8 @@ from utils import utils
 from data import data
 import gui
 
+import webrtcvad
+
 
 class Engine:
     def __init__(self) -> None:
@@ -189,6 +191,7 @@ class Engine:
 
         self.sources.clear()
         self.clips.clear()
+        self.files.clear()
         config.check_name()
         gui.update_progress("Starting")
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
@@ -645,51 +648,72 @@ class Engine:
     def cleanup(self) -> None:
         shutil.rmtree(config.project_dir, ignore_errors=True)
 
-    def find_silence_end(
-        self,
-        v_data: str,
-        a_url: str | None,
-        start: float,
-        min_dur: float,
-        max_search: float = 5.0,
-    ) -> float:
+    def find_silence_end(self, v_data: str, a_url: str | None, start: float, min_dur: float, max_search: float = 5.0) -> float:
         search_start = start + min_dur
         target_url = a_url
 
         if target_url is None:
             target_url = v_data
 
-        # 1. pan=mono: Mix to mono so we have a consistent single channel
-        # 2. highpass/lowpass: Cut out bass and treble, keeping only the human voice frequencies
-        # 3. silencedetect: We raise the threshold to -25dB since the music will still bleed through slightly
-        audio_filter = "pan=mono|c0=0.5*c0+0.5*c1,highpass=f=300,lowpass=f=3000,silencedetect=noise=-25dB:d=0.4"
-
+        # webrtcvad requires exactly 16kHz, 1-channel (mono), 16-bit PCM audio
         command = [
             "ffmpeg",
-            "-ss",
-            str(search_start),
-            "-i",
-            target_url,
-            "-t",
-            str(max_search),
+            "-ss", str(search_start),
+            "-i", target_url,
+            "-t", str(max_search),
             "-vn",
-            "-af",
-            audio_filter,
-            "-f",
-            "null",
-            "-",
+            "-ac", "1",
+            "-ar", "16000",
+            "-f", "s16le",
+            "-"
         ]
 
         try:
-            result = self.run_process(command, self.probe_timeout)
+            # We bypass self.run_process here because we need stdout as raw bytes, not text
+            process = subprocess.run(
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=self.probe_timeout
+            )
 
-            for line in result.stderr.splitlines():
-                if "silence_start: " in line:
-                    parts = line.split("silence_start: ")
+            if process.returncode != 0:
+                return min_dur
 
-                    if len(parts) > 1:
-                        silence_offset = float(parts[1].split()[0])
-                        return min_dur + silence_offset
+            audio_data = process.stdout
+
+            # Aggressiveness mode from 0 to 3. 2 is usually a good middle ground for noisy audio.
+            vad = webrtcvad.Vad(2)
+
+            sample_rate = 16000
+            # webrtcvad requires frame durations of 10, 20, or 30 ms. We use 30ms.
+            frame_duration_ms = 30
+            frame_size = int(sample_rate * (frame_duration_ms / 1000.0) * 2)
+
+            consecutive_silence_frames = 0
+
+            # Target ~0.6 seconds of consecutive silence to clear a full breath/pause
+            required_silence_frames = int(600 / frame_duration_ms)
+
+            for i in range(0, len(audio_data) - frame_size, frame_size):
+                frame = audio_data[i:i + frame_size]
+
+                is_speech = vad.is_speech(frame, sample_rate)
+
+                if not is_speech:
+                    consecutive_silence_frames += 1
+                else:
+                    consecutive_silence_frames = 0
+
+                if consecutive_silence_frames >= required_silence_frames:
+                    bytes_processed = i + frame_size
+                    current_offset_sec = bytes_processed / (sample_rate * 2)
+                    silence_duration_sec = (required_silence_frames * frame_duration_ms) / 1000.0
+
+                    # Back up to the exact moment speech ended, then add a 0.25s natural breathing buffer
+                    final_offset = current_offset_sec - silence_duration_sec + 0.25
+
+                    if final_offset < 0:
+                        final_offset = 0
+
+                    return min_dur + final_offset
 
         except Exception:
             pass
