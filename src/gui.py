@@ -582,13 +582,6 @@ class GUI:
         importlib.reload(config_module)
         config = config_module.config
 
-        self.url_text.delete("1.0", tk.END)
-
-        if len(config.urls) > 0:
-            self.url_text.insert(tk.END, "\n".join(config.urls))
-
-        self.update_url_count()
-
         self.update_entry(self.entries["path"], config.path)
         self.update_entry(self.entries["name"], config.name)
         self.update_entry(self.entries["fps"], config.fps)
@@ -598,10 +591,7 @@ class GUI:
         self.update_entry(self.entries["clip_diff"], config.clip_diff)
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
-
-        # Fixed: Update the StringVar for the combobox instead of looking for an Entry
         self.string_vars["gpu"].set(config.gpu)
-
         self.bool_vars["open"].set(bool(config.open))
 
     def default_config(self) -> None:
