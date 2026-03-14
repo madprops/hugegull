@@ -156,15 +156,12 @@ class GUI:
         # Bindings for Select All, dynamic counting, and focus traversal
         self.url_text.bind("<Control-a>", self.select_all)
         self.url_text.bind("<Control-A>", self.select_all)
-        self.url_text.bind("<KeyRelease>", self.clean_urls)
         self.url_text.bind("<Tab>", self.focus_next_widget)
         self.url_text.bind("<Shift-Tab>", self.focus_prev_widget)
         self.url_text.bind("<ISO_Left_Tab>", self.focus_prev_widget)
 
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
-
-        self.clean_urls()
 
         self.settings_frame = tk.Frame(root, bg=BG_COLOR)
         self.settings_frame.pack(pady=(30, 10), padx=0, fill=tk.X)
@@ -347,7 +344,6 @@ class GUI:
                 self.url_text.insert(tk.END, "\n")
 
         self.url_text.insert(tk.END, clipboard_content.strip())
-        self.clean_urls()
 
     def update_url_count(self, event: Any = None) -> None:
         raw_text = self.url_text.get("1.0", tk.END).strip()
@@ -692,6 +688,7 @@ class GUI:
     def make_video(self) -> None:
         import main
 
+        self.clean_urls()
         raw_urls = self.url_text.get("1.0", tk.END).strip()
         urls = list(map(lambda e: e.strip(), raw_urls.split("\n")))
 
