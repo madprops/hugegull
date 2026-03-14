@@ -149,7 +149,6 @@ class GUI:
 
         self.text_entry("path", self.settings_frame, "Path", config.path, c_col)
         self.text_entry("name", self.settings_frame, "Name", "", c_col)
-        self.text_entry("gpu", self.settings_frame, "GPU", "", c_col)
         self.text_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
         self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
 
@@ -167,6 +166,8 @@ class GUI:
             config.gpu,
             c_col,
         )
+
+        self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
 
         ROW = 0
         c_col = 3
@@ -189,7 +190,6 @@ class GUI:
 
         self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
         self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
-        self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
 
