@@ -431,6 +431,7 @@ class GUI:
 
         entry.pack(padx=4, pady=4)
         entry.insert(0, str(value))
+        entry.xview(tk.END)
         self.entries[id_] = entry
 
         help_btn = tk.Button(
@@ -579,6 +580,7 @@ class GUI:
     def update_entry(self, entry_widget: tk.Entry, new_value: Any) -> None:
         entry_widget.delete(0, tk.END)
         entry_widget.insert(0, str(new_value))
+        entry_widget.xview(tk.END)
 
     def save_config(self) -> None:
         config_name = simpledialog.askstring(
