@@ -25,6 +25,11 @@ TEXT_COLOR_2 = "#ffffff"
 ACCENT_COLOR = "#05d9e8"
 DISABLED_BG = "#333333"
 DISABLED_FG = "#777777"
+BUTTON_FONT = ("monospace", 11, "bold")
+FONT_1 = ("helvetica", 10, "bold")
+FONT_2 = ("helvetica", 10)
+FONT_3 = ("helvetica", 12)
+FONT_4 = ("monospace", 12)
 
 
 def main() -> None:
@@ -79,7 +84,7 @@ class GUI:
             text=f"v{info.version}",
             bg=BG_COLOR,
             fg=DISABLED_FG,
-            font=("helvetica", 10),
+            font=FONT_2,
         )
 
         self.version_label.place(relx=1.0, y=20, x=-20, anchor="ne")
@@ -92,7 +97,7 @@ class GUI:
             textvariable=self.progress_var,
             bg=BG_COLOR,
             fg=TEXT_COLOR_2,
-            font=("helvetica", 10, "bold"),
+            font=FONT_1,
             justify="center",
         )
 
@@ -104,7 +109,7 @@ class GUI:
             text="Source URLs",
             bg=BG_COLOR,
             fg=TEXT_COLOR,
-            font=("helvetica", 12),
+            font=FONT_3,
             cursor="hand2",
         )
 
@@ -172,7 +177,7 @@ class GUI:
             borderwidth=0,
             relief="flat",
             highlightthickness=0,
-            font=("helvetica", 12),
+            font=FONT_3,
             yscrollcommand=self.url_scrollbar.set,
             padx=4,
             pady=4,
@@ -187,6 +192,9 @@ class GUI:
         self.url_text.bind("<Tab>", self.focus_next_widget)
         self.url_text.bind("<Shift-Tab>", self.focus_prev_widget)
         self.url_text.bind("<ISO_Left_Tab>", self.focus_prev_widget)
+        self.url_text.bind("<KeyRelease>", self.update_url_count)
+
+        self.update_url_count()
 
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
@@ -244,61 +252,10 @@ class GUI:
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
 
-        self.default_button = tk.Button(
-            self.button_frame,
-            text="Default",
-            command=self.default_config,
-            bg=ACCENT_COLOR,
-            fg=BG_COLOR,
-            font=("monospace", 12, "bold"),
-            activebackground=TEXT_COLOR,
-            activeforeground=BG_COLOR,
-            highlightthickness=0,
-            relief="flat",
-            cursor="hand2",
-        )
-
-        self.load_button = tk.Button(
-            self.button_frame,
-            text="Load",
-            command=self.load_config,
-            bg=ACCENT_COLOR,
-            fg=BG_COLOR,
-            font=("monospace", 12, "bold"),
-            activebackground=TEXT_COLOR,
-            activeforeground=BG_COLOR,
-            highlightthickness=0,
-            relief="flat",
-            cursor="hand2",
-        )
-
-        self.save_button = tk.Button(
-            self.button_frame,
-            text="Save",
-            command=self.save_config,
-            bg=ACCENT_COLOR,
-            fg=BG_COLOR,
-            font=("monospace", 12, "bold"),
-            activebackground=TEXT_COLOR,
-            activeforeground=BG_COLOR,
-            highlightthickness=0,
-            relief="flat",
-            cursor="hand2",
-        )
-
-        self.make_button = tk.Button(
-            self.button_frame,
-            text="Make",
-            command=self.make_video,
-            bg=ACCENT_COLOR,
-            fg=BG_COLOR,
-            font=("monospace", 12, "bold"),
-            activebackground=TEXT_COLOR,
-            activeforeground=BG_COLOR,
-            highlightthickness=0,
-            relief="flat",
-            cursor="hand2",
-        )
+        self.default_button = self.make_button("Default", self.default_config)
+        self.load_button = self.make_button("Load", self.load_config)
+        self.save_button = self.make_button("Save", self.save_config)
+        self.make_button = self.make_button("Make", self.make_video)
 
         self.default_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.load_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
@@ -399,6 +356,21 @@ class GUI:
     def make_help_cmd(self, id_: str) -> Callable[[], None]:
         return lambda: self.show_info_msg(id_)
 
+    def make_button(self, text, cmd) -> tk.Button:
+        return tk.Button(
+            self.button_frame,
+            text=text,
+            command=cmd,
+            bg=ACCENT_COLOR,
+            fg=BG_COLOR,
+            font=BUTTON_FONT,
+            activebackground=TEXT_COLOR,
+            activeforeground=BG_COLOR,
+            highlightthickness=0,
+            relief="flat",
+            cursor="hand2",
+        )
+
     def text_entry(
         self, id_: str, frame: tk.Frame, text: str, value: Any, col: int
     ) -> None:
@@ -409,7 +381,7 @@ class GUI:
             text=text,
             bg=BG_COLOR,
             fg=TEXT_COLOR,
-            font=("helvetica", 12),
+            font=FONT_3,
         )
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
@@ -426,7 +398,7 @@ class GUI:
             borderwidth=0,
             relief="flat",
             highlightthickness=0,
-            font=("monospace", 12),
+            font=FONT_4,
         )
 
         entry.pack(padx=4, pady=4)
@@ -445,7 +417,7 @@ class GUI:
             borderwidth=0,
             relief="flat",
             highlightthickness=0,
-            font=("helvetica", 10, "bold"),
+            font=FONT_1,
             cursor="hand2",
             takefocus=0,
         )
@@ -469,7 +441,7 @@ class GUI:
             text=text,
             bg=BG_COLOR,
             fg=TEXT_COLOR,
-            font=("helvetica", 12),
+            font=FONT_3,
         )
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
@@ -492,7 +464,7 @@ class GUI:
             borderwidth=0,
             relief="flat",
             highlightthickness=0,
-            font=("helvetica", 12),
+            font=FONT_3,
             anchor="w",
             padx=8,
         )
@@ -515,7 +487,7 @@ class GUI:
             borderwidth=0,
             relief="flat",
             highlightthickness=0,
-            font=("helvetica", 10, "bold"),
+            font=FONT_1,
             cursor="hand2",
             takefocus=0,
         )
@@ -533,7 +505,7 @@ class GUI:
             text=text,
             bg=BG_COLOR,
             fg=TEXT_COLOR,
-            font=("helvetica", 12),
+            font=FONT_3,
         )
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
@@ -553,7 +525,7 @@ class GUI:
             borderwidth=0,
             relief="flat",
             highlightthickness=0,
-            font=("helvetica", 12),
+            font=FONT_3,
         )
 
         checkbox.grid(row=ROW, column=col + 1, sticky="w", pady=5)
@@ -569,7 +541,7 @@ class GUI:
             borderwidth=0,
             relief="flat",
             highlightthickness=0,
-            font=("helvetica", 10, "bold"),
+            font=FONT_1,
             cursor="hand2",
             takefocus=0,
         )
