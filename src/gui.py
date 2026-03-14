@@ -69,8 +69,6 @@ class GUI:
             font=("helvetica", 10),
         )
 
-        # relx=1.0 means the far right edge. anchor="ne" means North-East (top-right).
-        # x=-20 and y=20 add a little padding so it isn't flush against the window border.
         self.version_label.place(relx=1.0, y=20, x=-20, anchor="ne")
 
         self.url_label = tk.Label(
@@ -79,9 +77,13 @@ class GUI:
             bg=BG_COLOR,
             fg=TEXT_COLOR,
             font=("helvetica", 12),
+            cursor="hand2",
         )
 
         self.url_label.pack(pady=(20, 5), padx=20, anchor="w")
+        self.url_label.bind("<Button-1>", self.paste_urls)
+        self.url_label.bind("<Enter>", lambda e: self.url_label.config(fg=ACCENT_COLOR))
+        self.url_label.bind("<Leave>", lambda e: self.url_label.config(fg=TEXT_COLOR))
 
         # Frame to hold the Text widget and Scrollbar
         self.url_frame = tk.Frame(root, bg=BG_COLOR)
@@ -153,7 +155,7 @@ class GUI:
         # Bindings for Select All, dynamic counting, and focus traversal
         self.url_text.bind("<Control-a>", self.select_all)
         self.url_text.bind("<Control-A>", self.select_all)
-        self.url_text.bind("<KeyRelease>", self.update_url_count)
+        self.url_text.bind("<KeyRelease>", self.clean_urls)
         self.url_text.bind("<Tab>", self.focus_next_widget)
         self.url_text.bind("<Shift-Tab>", self.focus_prev_widget)
         self.url_text.bind("<ISO_Left_Tab>", self.focus_prev_widget)
@@ -161,7 +163,7 @@ class GUI:
         if len(config.urls) > 0:
             self.url_text.insert(tk.END, "\n".join(config.urls))
 
-        self.update_url_count()
+        self.clean_urls()
 
         self.settings_frame = tk.Frame(root, bg=BG_COLOR)
         self.settings_frame.pack(pady=(30, 10), padx=0, fill=tk.X)
@@ -289,6 +291,58 @@ class GUI:
         self.url_text.mark_set(tk.INSERT, "1.0")
         self.url_text.see(tk.INSERT)
         return "break"
+
+    def clean_urls(self, event: Any = None) -> None:
+        try:
+            cursor_pos = self.url_text.index(tk.INSERT)
+        except tk.TclError:
+            cursor_pos = "1.0"
+
+        raw_text = self.url_text.get("1.0", "end-1c")
+
+        if raw_text == "":
+            self.update_url_count()
+            return
+
+        lines = raw_text.split("\n")
+        unique_lines = []
+        seen = set()
+
+        for line in lines:
+            if line not in seen:
+                unique_lines.append(line)
+                seen.add(line)
+
+        new_text = "\n".join(unique_lines)
+
+        if new_text != raw_text:
+            self.url_text.delete("1.0", tk.END)
+            self.url_text.insert("1.0", new_text)
+
+            try:
+                self.url_text.mark_set(tk.INSERT, cursor_pos)
+            except tk.TclError:
+                pass
+
+        self.update_url_count()
+
+    def paste_urls(self, event: Any = None) -> None:
+        try:
+            clipboard_content = self.root.clipboard_get()
+        except tk.TclError:
+            return
+
+        if not clipboard_content:
+            return
+
+        current_text = self.url_text.get("1.0", "end-1c")
+
+        if current_text != "":
+            if not current_text.endswith("\n"):
+                self.url_text.insert(tk.END, "\n")
+
+        self.url_text.insert(tk.END, clipboard_content.strip())
+        self.clean_urls()
 
     def update_url_count(self, event: Any = None) -> None:
         raw_text = self.url_text.get("1.0", tk.END).strip()
