@@ -49,7 +49,7 @@ class GUI:
         self.labels: dict[str, tk.Label] = {}
         self.current_config_name: str = ""
         self.root = root
-        self.root.title("HugeGull")
+        self.root.title("Huge Gull")
         self.root.geometry("720x550")
         self.root.configure(bg=BG_COLOR)
 
