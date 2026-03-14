@@ -13,11 +13,11 @@ from data import data
 
 config = config_module.config
 
+WIDTH = 720
+HEIGHT = 520
 URLS: list[str] = []
 ROW: int = 0
 INSTANCE = None
-
-# Style
 BG_COLOR = "#121212"
 WIDGET_BG = "#242424"
 TEXT_COLOR = "#ff2a6d"
@@ -68,7 +68,7 @@ class GUI:
         self.current_config_name: str = ""
         self.root = root
         self.root.title("Huge Gull")
-        self.root.geometry("720x550")
+        self.root.geometry(f"{WIDTH}x{HEIGHT}")
         self.root.configure(bg=BG_COLOR)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.is_running: bool = False
@@ -252,10 +252,10 @@ class GUI:
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
 
-        self.default_button = self.make_button("Default", self.default_config)
-        self.load_button = self.make_button("Load", self.load_config)
-        self.save_button = self.make_button("Save", self.save_config)
-        self.make_button = self.make_button("Make", self.make_video)
+        self.default_button = self.action_button("Default", self.default_config)
+        self.load_button = self.action_button("Load", self.load_config)
+        self.save_button = self.action_button("Save", self.save_config)
+        self.make_button = self.action_button("Make", self.make_video)
 
         self.default_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.load_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
@@ -356,7 +356,7 @@ class GUI:
     def make_help_cmd(self, id_: str) -> Callable[[], None]:
         return lambda: self.show_info_msg(id_)
 
-    def make_button(self, text, cmd) -> tk.Button:
+    def action_button(self, text: str, cmd: Callable[[], None]) -> tk.Button:
         return tk.Button(
             self.button_frame,
             text=text,
