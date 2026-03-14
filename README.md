@@ -17,7 +17,7 @@ pipx install git+https://github.com/madprops/hugegull --force
 Or
 
 ```bash
-uv tool install git+https://github.com/madprops/hugegull --force
+uv tool install --python python git+https://github.com/madprops/hugegull.git
 ```
 
 ### Manual
