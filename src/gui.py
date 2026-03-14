@@ -373,6 +373,7 @@ class GUI:
                 self.url_text.insert(tk.END, "\n")
 
         self.url_text.insert(tk.END, clipboard_content.strip())
+        self.clean_urls()
 
     def update_url_count(self, event: Any = None) -> None:
         raw_text = self.url_text.get("1.0", tk.END).strip()
