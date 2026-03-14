@@ -757,8 +757,12 @@ class GUI:
         threading.Thread(target=thread_target, daemon=True).start()
 
     def on_closing(self) -> None:
+        from engine import engine
+
         if self.is_running:
             data.abort = True
+
+        engine.kill_all_processes()
 
         self.root.destroy()
         os._exit(0)

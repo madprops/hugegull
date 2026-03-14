@@ -40,7 +40,7 @@ def run() -> None:
                     utils.notify("Video Complete")
                 else:
                     utils.notify("Videos Complete")
-    except:
+    except Exception:
         engine.cleanup()
 
 

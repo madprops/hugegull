@@ -5,6 +5,7 @@ import random
 import subprocess
 import json
 import shutil
+import time
 import concurrent.futures
 from typing import Any
 
@@ -25,6 +26,50 @@ class Engine:
         self.concat_timeout = 120
         self.probe_timeout = 15
         self.min_clip_duration = 0.5
+        self.active_processes: list[subprocess.Popen[str]] = []
+
+    def kill_all_processes(self) -> None:
+        for p in self.active_processes:
+            try:
+                p.kill()
+            except Exception:
+                pass
+
+        self.active_processes.clear()
+
+    def run_process(
+        self, command: list[str], timeout_val: float
+    ) -> subprocess.CompletedProcess[str]:
+        process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+
+        self.active_processes.append(process)
+        end_time = time.time() + timeout_val
+
+        try:
+            while True:
+                if data.abort:
+                    process.terminate()
+                    process.wait()
+                    return subprocess.CompletedProcess(process.args, 1, "", "Aborted")
+
+                if time.time() > end_time:
+                    process.kill()
+                    process.wait()
+                    raise subprocess.TimeoutExpired(process.args, timeout_val)
+
+                try:
+                    # Check every 0.5 seconds so we can respond to data.abort quickly
+                    out, err = process.communicate(timeout=0.5)
+                    return subprocess.CompletedProcess(
+                        process.args, process.returncode, out, err
+                    )
+                except subprocess.TimeoutExpired:
+                    continue
+        finally:
+            if process in self.active_processes:
+                self.active_processes.remove(process)
 
     def prepare(self) -> None:
         os.makedirs(config.project_dir, exist_ok=True)
@@ -226,12 +271,7 @@ class Engine:
                 method_name = " ".join(args)
 
             try:
-                result = subprocess.run(
-                    command,
-                    capture_output=True,
-                    text=True,
-                    timeout=self.resolve_timeout,
-                )
+                result = self.run_process(command, self.resolve_timeout)
             except subprocess.TimeoutExpired:
                 errors.append(f"[{method_name}] -> Process timed out.")
                 continue
@@ -422,9 +462,7 @@ class Engine:
             )
 
             try:
-                result = subprocess.run(
-                    command, capture_output=True, text=True, timeout=self.clip_timeout
-                )
+                result = self.run_process(command, self.clip_timeout)
 
                 if result.returncode == 0:
                     return name, duration
@@ -533,9 +571,7 @@ class Engine:
         ]
 
         try:
-            result = subprocess.run(
-                command, capture_output=True, text=True, timeout=self.concat_timeout
-            )
+            result = self.run_process(command, self.concat_timeout)
 
             if result.returncode != 0:
                 utils.error("Error concatenating clips:")
@@ -564,9 +600,7 @@ class Engine:
         info = {"duration": 0.0, "width": 0, "height": 0}
 
         try:
-            result = subprocess.run(
-                command, capture_output=True, text=True, timeout=self.probe_timeout
-            )
+            result = self.run_process(command, self.probe_timeout)
         except subprocess.TimeoutExpired:
             utils.error(f"Timeout expired probing stream info for {url}.")
             return info
