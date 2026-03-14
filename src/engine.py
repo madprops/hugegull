@@ -371,13 +371,21 @@ class Engine:
 
         source = section["source"]
         start = section["start"]
-        duration = section["duration"]
+        base_duration = section["duration"]
         v_data = source["v_data"]
         a_url = source["a_url"]
         is_split_stream = False
 
         if a_url is not None:
             is_split_stream = True
+
+        duration = self.find_silence_end(
+            v_data=v_data,
+            a_url=a_url,
+            start=start,
+            min_dur=base_duration,
+            max_search=5.0
+        )
 
         name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
         modes_to_try = [config.gpu]
@@ -636,6 +644,45 @@ class Engine:
 
     def cleanup(self) -> None:
         shutil.rmtree(config.project_dir, ignore_errors=True)
+
+    def find_silence_end(self, v_data: str, a_url: str | None, start: float, min_dur: float, max_search: float = 5.0) -> float:
+        search_start = start + min_dur
+        target_url = a_url
+
+        if target_url is None:
+            target_url = v_data
+
+        # 1. pan=mono: Mix to mono so we have a consistent single channel
+        # 2. highpass/lowpass: Cut out bass and treble, keeping only the human voice frequencies
+        # 3. silencedetect: We raise the threshold to -25dB since the music will still bleed through slightly
+        audio_filter = "pan=mono|c0=0.5*c0+0.5*c1,highpass=f=300,lowpass=f=3000,silencedetect=noise=-25dB:d=0.4"
+
+        command = [
+            "ffmpeg",
+            "-ss", str(search_start),
+            "-i", target_url,
+            "-t", str(max_search),
+            "-vn",
+            "-af", audio_filter,
+            "-f", "null",
+            "-"
+        ]
+
+        try:
+            result = self.run_process(command, self.probe_timeout)
+
+            for line in result.stderr.splitlines():
+                if "silence_start: " in line:
+                    parts = line.split("silence_start: ")
+
+                    if len(parts) > 1:
+                        silence_offset = float(parts[1].split()[0])
+                        return min_dur + silence_offset
+
+        except Exception:
+            pass
+
+        return min_dur
 
 
 engine = Engine()
