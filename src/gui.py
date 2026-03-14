@@ -35,6 +35,7 @@ FONT_4 = ("monospace", 12)
 def main() -> None:
     utils.set_proc_name(info.name)
     main_window = tk.Tk(className=info.name)
+    main_window.minsize(WIDTH, HEIGHT)
     GUI(main_window)
     main_window.mainloop()
 
