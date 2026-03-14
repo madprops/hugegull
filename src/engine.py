@@ -460,6 +460,8 @@ class Engine:
                 ]
             )
 
+            gui.update_progress(f"Making Clip {i + 1}")
+
             utils.action(
                 f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s) ({mode})"
             )
