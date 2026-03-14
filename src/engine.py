@@ -12,6 +12,7 @@ from typing import Any
 from config import config
 from utils import utils
 from data import data
+import gui
 
 
 class Engine:
@@ -187,6 +188,7 @@ class Engine:
         self.sources.clear()
         self.clips.clear()
         config.check_name()
+        gui.update_progress("Starting")
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
         os.makedirs(config.project_dir, exist_ok=True)
         self.prepare_sources()
@@ -218,6 +220,7 @@ class Engine:
                 return False
 
             if amount > 1:
+                gui.update_progress(f"Generating Video {i + 1}")
                 utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
             self.prepare()
@@ -471,18 +474,21 @@ class Engine:
                 utils.error(result.stderr)
 
                 if mode != modes_to_try[-1]:
+                    gui.update_progress(f"Retrying Clip {i + 1}")
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
             except subprocess.TimeoutExpired:
                 utils.error(f"Timeout expired. Extracting clip {i + 1} using {mode}.")
 
                 if mode != modes_to_try[-1]:
+                    gui.update_progress(f"Retrying Clip {i + 1}")
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
             except Exception as e:
                 utils.error(f"Exception extracting clip {i + 1} using {mode}: {e}")
 
                 if mode != modes_to_try[-1]:
+                    gui.update_progress(f"Retrying Clip {i + 1}")
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
         return None
@@ -499,6 +505,8 @@ class Engine:
             futures = []
 
             for i in range(len(sections)):
+                gui.update_progress(f"Generating Section: {i + 1}")
+
                 if data.abort:
                     break
 
@@ -506,6 +514,8 @@ class Engine:
                 futures.append(future)
 
             for future in concurrent.futures.as_completed(futures):
+                gui.update_progress(f"Generating Clip: {i + 1}")
+
                 if data.abort:
                     break
 

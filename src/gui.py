@@ -15,6 +15,7 @@ config = config_module.config
 
 URLS: list[str] = []
 ROW: int = 0
+INSTANCE = None
 
 # Style
 BG_COLOR = "#121212"
@@ -33,6 +34,12 @@ def main() -> None:
     main_window.mainloop()
 
 
+def update_progress(text: str) -> None:
+    """Updates the progress label from any thread or module."""
+    if INSTANCE is not None:
+        INSTANCE.root.after(0, lambda: INSTANCE.progress_var.set(text))
+
+
 def get_resource_path(relative_path: str) -> str:
     try:
         base_path = sys._MEIPASS  # type: ignore
@@ -45,6 +52,9 @@ def get_resource_path(relative_path: str) -> str:
 class GUI:
     def __init__(self, root: tk.Tk) -> None:
         global ROW
+        global INSTANCE
+
+        INSTANCE = self
 
         self.entries: dict[str, tk.Entry] = {}
         self.string_vars: dict[str, tk.StringVar] = {}
@@ -73,6 +83,21 @@ class GUI:
         )
 
         self.version_label.place(relx=1.0, y=20, x=-20, anchor="ne")
+
+        # Progress Widget setup
+        self.progress_var = tk.StringVar(value="")
+
+        self.progress_label = tk.Label(
+            root,
+            textvariable=self.progress_var,
+            bg=BG_COLOR,
+            fg=TEXT_COLOR_2,
+            font=("helvetica", 10, "bold"),
+            justify="center",
+        )
+
+        # Placed to the left of the version text, expanding backwards
+        self.progress_label.place(relx=1.0, y=20, x=-80, anchor="ne")
 
         self.url_label = tk.Label(
             root,
@@ -707,6 +732,9 @@ class GUI:
         self.is_running = True
         data.abort = False
 
+        # Reset progress label on each run
+        self.progress_var.set("")
+
         self.clean_urls()
         raw_urls = self.url_text.get("1.0", tk.END).strip()
         urls = list(map(lambda e: e.strip(), raw_urls.split("\n")))
@@ -753,6 +781,8 @@ class GUI:
                         cursor="hand2",
                     ),
                 )
+
+                update_progress("")
 
         threading.Thread(target=thread_target, daemon=True).start()
 
