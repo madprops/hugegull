@@ -693,7 +693,7 @@ class GUI:
         if self.is_running:
             self.make_button.config(
                 state=tk.DISABLED,
-                text="Aborting...",
+                text="Aborting",
                 bg=DISABLED_BG,
                 fg=DISABLED_FG,
                 cursor="arrow",

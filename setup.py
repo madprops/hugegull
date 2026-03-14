@@ -7,7 +7,7 @@ setup(
     version=info.version,
     package_dir={"": "src"},
     packages=[""],
-    package_data={"": ["*.toml", "*.txt"]},
+    package_data={"": ["*.toml", "*.txt", "*.png"]},
     entry_points={
         "console_scripts": [
             "hugegull = main:main",

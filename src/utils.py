@@ -4,12 +4,9 @@ import os
 import sys
 import random
 import ctypes
-import shutil
 import ctypes.util
 import subprocess
 from pathlib import Path
-
-from data import data
 
 
 class Utils:
@@ -122,16 +119,6 @@ class Utils:
                 libc.prctl(self.pr_set_name, ctypes.c_char_p(name_bytes), 0, 0, 0)
             else:
                 pass
-
-    def check_abort(self) -> None:
-        if data.abort:
-            self.cleanup()
-            sys.exit(1)
-
-    def cleanup(self) -> None:
-        from config import config
-
-        shutil.rmtree(config.project_dir, ignore_errors=True)
 
 
 utils = Utils()
