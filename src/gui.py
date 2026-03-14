@@ -323,6 +323,9 @@ class GUI:
         if not clipboard_content:
             return
 
+        if not utils.is_path(clipboard_content):
+            return
+
         current_text = self.url_text.get("1.0", "end-1c")
 
         if current_text != "":

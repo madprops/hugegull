@@ -41,6 +41,18 @@ class Utils:
         selected = random.sample(self.words, n)
         return join_str.join(selected)
 
+    def is_path(self, s: str) -> bool:
+        return self.is_url(s) or self.is_file(s)
+
+    def is_file(self, s: str) -> bool:
+        try:
+            if Path(s).exists():
+                return True
+        except OSError:
+            pass
+
+        return False
+
     def is_url(self, s: str) -> bool:
         return s.startswith(("http", "https"))
 
