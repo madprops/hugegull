@@ -14,7 +14,7 @@ from utils import utils
 from data import data
 import gui
 
-import webrtcvad
+import webrtcvad  # type: ignore
 
 
 class Engine:
@@ -648,7 +648,14 @@ class Engine:
     def cleanup(self) -> None:
         shutil.rmtree(config.project_dir, ignore_errors=True)
 
-    def find_silence_end(self, v_data: str, a_url: str | None, start: float, min_dur: float, max_search: float = 5.0) -> float:
+    def find_silence_end(
+        self,
+        v_data: str,
+        a_url: str | None,
+        start: float,
+        min_dur: float,
+        max_search: float = 5.0,
+    ) -> float:
         search_start = start + min_dur
         target_url = a_url
 
@@ -658,20 +665,29 @@ class Engine:
         # webrtcvad requires exactly 16kHz, 1-channel (mono), 16-bit PCM audio
         command = [
             "ffmpeg",
-            "-ss", str(search_start),
-            "-i", target_url,
-            "-t", str(max_search),
+            "-ss",
+            str(search_start),
+            "-i",
+            target_url,
+            "-t",
+            str(max_search),
             "-vn",
-            "-ac", "1",
-            "-ar", "16000",
-            "-f", "s16le",
-            "-"
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-f",
+            "s16le",
+            "-",
         ]
 
         try:
             # We bypass self.run_process here because we need stdout as raw bytes, not text
             process = subprocess.run(
-                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=self.probe_timeout
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=self.probe_timeout,
             )
 
             if process.returncode != 0:
@@ -693,7 +709,7 @@ class Engine:
             required_silence_frames = int(600 / frame_duration_ms)
 
             for i in range(0, len(audio_data) - frame_size, frame_size):
-                frame = audio_data[i:i + frame_size]
+                frame = audio_data[i : i + frame_size]
 
                 is_speech = vad.is_speech(frame, sample_rate)
 
@@ -705,7 +721,9 @@ class Engine:
                 if consecutive_silence_frames >= required_silence_frames:
                     bytes_processed = i + frame_size
                     current_offset_sec = bytes_processed / (sample_rate * 2)
-                    silence_duration_sec = (required_silence_frames * frame_duration_ms) / 1000.0
+                    silence_duration_sec = (
+                        required_silence_frames * frame_duration_ms
+                    ) / 1000.0
 
                     # Back up to the exact moment speech ended, then add a 0.25s natural breathing buffer
                     final_offset = current_offset_sec - silence_duration_sec + 0.25
