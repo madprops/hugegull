@@ -660,10 +660,11 @@ class GUI:
                     bg=ACCENT_COLOR,
                     fg=BG_COLOR,
                     cursor="hand2",
-                )
+                ),
             )
 
         threading.Thread(target=thread_target, daemon=True).start()
+
 
 if __name__ == "__main__":
     main()
