@@ -55,6 +55,7 @@ class GUI:
         self.root.title("Huge Gull")
         self.root.geometry("720x550")
         self.root.configure(bg=BG_COLOR)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.is_running: bool = False
 
         icon_path = get_resource_path("icon.png")
@@ -176,6 +177,7 @@ class GUI:
         self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
 
         gpu_choices = []
+
         for action in config.parser._actions:
             if action.dest == "gpu" and action.choices:
                 gpu_choices = list(action.choices)
@@ -753,6 +755,13 @@ class GUI:
                 )
 
         threading.Thread(target=thread_target, daemon=True).start()
+
+    def on_closing(self) -> None:
+        if self.is_running:
+            data.abort = True
+
+        self.root.destroy()
+        os._exit(0)
 
 
 if __name__ == "__main__":
