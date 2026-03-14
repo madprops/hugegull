@@ -6,6 +6,7 @@ import os
 import threading
 from typing import Any, Callable
 
+from info import info
 import config as config_module
 
 config = config_module.config
@@ -57,6 +58,18 @@ class GUI:
         if os.path.exists(icon_path):
             self.icon_img = tk.PhotoImage(file=icon_path)
             self.root.iconphoto(True, self.icon_img)
+
+        self.version_label = tk.Label(
+            root,
+            text=f"v{info.version}",
+            bg=BG_COLOR,
+            fg=DISABLED_FG,
+            font=("helvetica", 10),
+        )
+
+        # relx=1.0 means the far right edge. anchor="ne" means North-East (top-right).
+        # x=-20 and y=20 add a little padding so it isn't flush against the window border.
+        self.version_label.place(relx=1.0, y=20, x=-20, anchor="ne")
 
         self.url_label = tk.Label(
             root,
