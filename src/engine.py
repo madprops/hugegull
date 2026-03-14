@@ -160,7 +160,9 @@ class Engine:
         self.generate_random_clips(total_needed_duration)
 
         if len(self.clips) == 0:
-            utils.error("Failed to generate any clips for the master pool.")
+            if not data.abort:
+                utils.error("Failed to generate any clips for the master pool.")
+
             return False
 
         all_successful = True
@@ -319,6 +321,9 @@ class Engine:
     def extract_single_clip(
         self, i: int, section: dict[str, Any]
     ) -> tuple[str, float] | None:
+        if data.abort:
+            return None
+
         source = section["source"]
         start = section["start"]
         duration = section["duration"]
@@ -411,6 +416,7 @@ class Engine:
                     name,
                 ]
             )
+
             utils.action(
                 f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s) ({mode})"
             )
