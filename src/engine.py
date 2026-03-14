@@ -155,7 +155,9 @@ class Engine:
                 utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
             self.prepare()
-            selected_clips = self.select_clips_for_duration(config.duration, available_clips)
+            selected_clips = self.select_clips_for_duration(
+                config.duration, available_clips
+            )
 
             for clip in selected_clips:
                 if clip in available_clips:
@@ -439,7 +441,9 @@ class Engine:
                     clip_path, duration = result
                     self.clips[clip_path] = duration
 
-    def select_clips_for_duration(self, target_duration: float, available_clips: list[str]) -> list[str]:
+    def select_clips_for_duration(
+        self, target_duration: float, available_clips: list[str]
+    ) -> list[str]:
         selected = []
         current_duration = 0.0
 

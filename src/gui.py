@@ -637,10 +637,6 @@ class GUI:
         config.update(data)
 
         def thread_target() -> None:
-            import main
-
-            # REMOVE importlib.reload(main) - it is breaking your references!
-
             self.root.after(
                 0,
                 lambda: self.make_button.config(
