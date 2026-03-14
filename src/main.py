@@ -24,21 +24,24 @@ def run() -> None:
 
     start_time = time.perf_counter()
 
-    if engine.start():
-        end_time = time.perf_counter()
-        duration = end_time - start_time
-        utils.info(f"Done in {int(duration)} seconds")
+    try:
+        if engine.start():
+            end_time = time.perf_counter()
+            duration = end_time - start_time
+            utils.info(f"Done in {int(duration)} seconds")
 
-        if config.open:
-            if config.amount == 1:
-                utils.open_file(engine.file)
+            if config.open:
+                if config.amount == 1:
+                    utils.open_file(engine.file)
+                else:
+                    utils.open_dir(config.output_dir)
             else:
-                utils.open_dir(config.output_dir)
-        else:
-            if config.amount == 1:
-                utils.notify("Video Complete")
-            else:
-                utils.notify("Videos Complete")
+                if config.amount == 1:
+                    utils.notify("Video Complete")
+                else:
+                    utils.notify("Videos Complete")
+    except:
+        engine.cleanup()
 
 
 def main() -> None:
