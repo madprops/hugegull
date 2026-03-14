@@ -28,7 +28,7 @@ class Engine:
         self.probe_timeout = 15
         self.min_clip_duration = 0.5
         self.active_processes: list[subprocess.Popen[str]] = []
-        self.files = []
+        self.files: list[str] = []
 
     def kill_all_processes(self) -> None:
         for p in self.active_processes:

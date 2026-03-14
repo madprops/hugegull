@@ -95,20 +95,15 @@ class Utils:
 
         return str(path)
 
-    def quote_strings(strs: list[str]) -> str:
-        lst = []
-
-        for s in strs:
-            list.append(f"\"{s}\"")
-
-        return " ".join(lst)
-
     def open_videos(self, paths: list[str]) -> None:
-        s_paths = quote_strings(paths)
+        from config import config
 
         try:
+            command = [config.player]
+            command.extend(paths)
+
             subprocess.Popen(
-                [config.player, paths], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
         except Exception as e:
             self.error(f"Failed to open file: {e}")

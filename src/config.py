@@ -109,9 +109,7 @@ class Config:
             "--name", type=str, help="Output filename. (Env: HUGE_NAME)"
         )
 
-        self.parser.add_argument(
-            "--player", type=str, help="Name of the video player"
-        )
+        self.parser.add_argument("--player", type=str, help="Name of the video player")
 
         self.parser.add_argument(
             "--gpu",

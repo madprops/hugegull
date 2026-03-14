@@ -37,7 +37,8 @@ def run() -> None:
                     utils.notify("Video Complete")
                 else:
                     utils.notify("Videos Complete")
-    except Exception:
+    except Exception as e:
+        utils.error(f"Error at Main: {e}")
         engine.cleanup()
 
 
