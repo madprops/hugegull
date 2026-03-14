@@ -7,6 +7,7 @@ import threading
 from typing import Any, Callable
 
 from info import info
+from utils import utils
 import config as config_module
 
 config = config_module.config
@@ -25,7 +26,8 @@ DISABLED_FG = "#777777"
 
 
 def main() -> None:
-    main_window = tk.Tk()
+    utils.set_proc_name("hugegull")
+    main_window = tk.Tk(className="hugegull")
     GUI(main_window)
     main_window.mainloop()
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import random
 import subprocess
 from pathlib import Path
@@ -104,6 +105,20 @@ class Utils:
     def open_dir(self, path: str) -> None:
         if os.path.isdir(path):
             subprocess.run(["xdg-open", path])
+
+    def set_proc_name(self, name: str) -> None:
+        if sys.platform.startswith("linux"):
+            try:
+                libc = ctypes.cdll.LoadLibrary("libc.so.6")
+
+                # PR_SET_NAME is 15 in C
+                # The name string must be encoded to bytes
+                name_bytes = name.encode("utf-8")
+
+                libc.prctl(15, name_bytes, 0, 0, 0)
+            except Exception:
+                # Silently fail if libc cannot be loaded or prctl fails
+                pass
 
 
 utils = Utils()
