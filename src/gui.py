@@ -127,6 +127,8 @@ class GUI:
             highlightthickness=0,
             font=("helvetica", 12),
             yscrollcommand=self.url_scrollbar.set,
+            padx=4,
+            pady=4,
         )
 
         self.url_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -300,8 +302,12 @@ class GUI:
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
         self.labels[id_] = label
 
+        # Wrap entry in a frame to simulate internal padding
+        entry_frame = tk.Frame(frame, bg=WIDGET_BG)
+        entry_frame.grid(row=ROW, column=col + 1, pady=5)
+
         entry = tk.Entry(
-            frame,
+            entry_frame,
             bg=WIDGET_BG,
             fg=TEXT_COLOR_2,
             insertbackground=TEXT_COLOR,
@@ -311,7 +317,7 @@ class GUI:
             font=("monospace", 12),
         )
 
-        entry.grid(row=ROW, column=col + 1, pady=5, ipadx=8, ipady=4)
+        entry.pack(padx=4, pady=4)
         entry.insert(0, str(value))
         self.entries[id_] = entry
 
@@ -637,18 +643,19 @@ class GUI:
                 ),
             )
 
-            main.run()
-
-            self.root.after(
-                0,
-                lambda: self.make_button.config(
-                    state=tk.NORMAL,
-                    text="Make",
-                    bg=ACCENT_COLOR,
-                    fg=BG_COLOR,
-                    cursor="hand2",
-                ),
-            )
+            try:
+                main.run()
+            finally:
+                self.root.after(
+                    0,
+                    lambda: self.make_button.config(
+                        state=tk.NORMAL,
+                        text="Make",
+                        bg=ACCENT_COLOR,
+                        fg=BG_COLOR,
+                        cursor="hand2",
+                    ),
+                )
 
         threading.Thread(target=thread_target, daemon=True).start()
 
