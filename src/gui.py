@@ -616,6 +616,8 @@ class GUI:
         self.bool_vars["open"].set(bool(config.open))
 
     def make_video(self) -> None:
+        import main
+
         raw_urls = self.url_text.get("1.0", tk.END).strip()
         urls = list(map(lambda e: e.strip(), raw_urls.split("\n")))
 
@@ -646,6 +648,8 @@ class GUI:
                     fg=DISABLED_FG,
                     cursor="arrow",
                 ),
+
+                main.run()
             )
 
         threading.Thread(target=thread_target, daemon=True).start()
