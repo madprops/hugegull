@@ -638,22 +638,32 @@ class GUI:
 
         config.update(data)
 
+        # Disable the button immediately on the main GUI thread
+        self.make_button.config(
+            state=tk.DISABLED,
+            text="Working...",
+            bg=DISABLED_BG,
+            fg=DISABLED_FG,
+            cursor="arrow",
+        )
+
         def thread_target() -> None:
+            # Run the heavy task in the background thread
+            main.run()
+
+            # Schedule the button reset back on the main GUI thread after the task finishes
             self.root.after(
                 0,
                 lambda: self.make_button.config(
-                    state=tk.DISABLED,
-                    text="Working...",
-                    bg=DISABLED_BG,
-                    fg=DISABLED_FG,
-                    cursor="arrow",
-                ),
-
-                main.run()
+                    state=tk.NORMAL,
+                    text="Make",
+                    bg=ACCENT_COLOR,
+                    fg=BG_COLOR,
+                    cursor="hand2",
+                )
             )
 
         threading.Thread(target=thread_target, daemon=True).start()
-
 
 if __name__ == "__main__":
     main()

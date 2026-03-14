@@ -155,6 +155,7 @@ class Engine:
                 utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
             self.prepare()
+
             selected_clips = self.select_clips_for_duration(
                 config.duration, available_clips
             )
@@ -181,6 +182,7 @@ class Engine:
                 ["--cookies-from-browser", "chrome"],
             ]
         )
+
         result = None
         errors = []
 
