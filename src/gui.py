@@ -786,7 +786,6 @@ class GUI:
                 update_progress("")
                 config.name = self.entries["name"].get()
 
-
         threading.Thread(target=thread_target, daemon=True).start()
 
     def on_closing(self) -> None:
