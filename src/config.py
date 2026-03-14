@@ -58,6 +58,7 @@ class Config:
         self.gpu = self.resolve("gpu", "gpu", "cpu")
         self.path = self.resolve("path", "path", self.path)
         self.open = self.resolve("open", "open", False)
+        self.player = self.resolve("player", "player", "mpv")
 
         if self.gpu not in ["cpu", "amd", "nvidia"]:
             raise ValueError(
@@ -106,6 +107,10 @@ class Config:
 
         self.parser.add_argument(
             "--name", type=str, help="Output filename. (Env: HUGE_NAME)"
+        )
+
+        self.parser.add_argument(
+            "--player", type=str, help="Name of the video player"
         )
 
         self.parser.add_argument(
@@ -218,6 +223,9 @@ class Config:
             for u in data["urls"]:
                 if u:
                     self.urls.append(u)
+
+        if "player" in data:
+            self.path = data["player"]
 
         if "path" in data:
             self.path = data["path"]

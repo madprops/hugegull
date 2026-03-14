@@ -97,6 +97,7 @@ fade = 0.03
 | **Crossfade** | `--fade` | `fade` | `0.03` | Crossfade duration between clips. |
 | **Clip Duration** | `--clip-duration`| `clip_duration`| `6.0` | Average duration for a single grabbed section. |
 | **Clip Diff** | `--clip-diff`| `clip_diff`| `3.0` | The range around the clip duration, more or less. |
+| **Player** | `--player`| `player`| `mpv` | Name of the video player to open files. |
 
 ---
 

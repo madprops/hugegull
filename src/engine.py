@@ -28,6 +28,7 @@ class Engine:
         self.probe_timeout = 15
         self.min_clip_duration = 0.5
         self.active_processes: list[subprocess.Popen[str]] = []
+        self.files = []
 
     def kill_all_processes(self) -> None:
         for p in self.active_processes:
@@ -63,6 +64,7 @@ class Engine:
                 try:
                     # Check every 0.5 seconds so we can respond to data.abort quickly
                     out, err = process.communicate(timeout=0.5)
+
                     return subprocess.CompletedProcess(
                         process.args, process.returncode, out, err
                     )
@@ -582,6 +584,7 @@ class Engine:
                 utils.error("Error concatenating clips:")
                 utils.error(result.stderr)
             else:
+                self.files.append(self.file)
                 utils.info(f"Saved: {self.file}")
 
         except subprocess.TimeoutExpired:

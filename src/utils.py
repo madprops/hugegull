@@ -83,15 +83,8 @@ class Utils:
 
         try:
             subprocess.run(["notify-send", title, message], check=True)
-        except Exception as e:
-            from config import config
-
-            if config.gui:
-                import tkinter.messagebox
-
-                tkinter.messagebox.showinfo(title, message)
-            else:
-                self.print(f"Error sending notification: {e}")
+        except subprocess.CalledProcessError as e:
+            utils.print(f"Error sending notification: {e}")
 
     def short_path(self, file_path: str) -> str:
         path = Path(file_path).resolve()
@@ -102,14 +95,20 @@ class Utils:
 
         return str(path)
 
-    def open_file(self, path: str) -> None:
-        if not os.path.exists(path):
-            self.error(f"Error: The path '{path}' does not exist.")
-            return
+    def quote_strings(strs: list[str]) -> str:
+        lst = []
+
+        for s in strs:
+            list.append(f"\"{s}\"")
+
+        return " ".join(lst)
+
+    def open_videos(self, paths: list[str]) -> None:
+        s_paths = quote_strings(paths)
 
         try:
             subprocess.Popen(
-                ["xdg-open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                [config.player, paths], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
         except Exception as e:
             self.error(f"Failed to open file: {e}")
