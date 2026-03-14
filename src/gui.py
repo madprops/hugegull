@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import simpledialog, filedialog, messagebox
+from tkinter import simpledialog, filedialog, messagebox, ttk
 import sys
 import importlib
 import os
@@ -71,7 +71,57 @@ class GUI:
         self.url_frame = tk.Frame(root, bg=BG_COLOR)
         self.url_frame.pack(padx=20, fill=tk.BOTH, expand=False)
 
-        self.url_scrollbar = tk.Scrollbar(self.url_frame)
+        # Apply ttk style for the scrollbar
+        style = ttk.Style()
+
+        if "clam" in style.theme_names():
+            style.theme_use("clam")
+
+        style.configure(
+            "Vertical.TScrollbar",
+            background=WIDGET_BG,
+            troughcolor=BG_COLOR,
+            bordercolor=BG_COLOR,
+            arrowcolor=ACCENT_COLOR,
+            lightcolor=WIDGET_BG,
+            darkcolor=WIDGET_BG
+        )
+
+        # Map dynamic states (disabled, active/hover, pressed) to dark colors
+        style.map(
+            "Vertical.TScrollbar",
+            background=[
+                ("disabled", BG_COLOR),
+                ("pressed", "#444444"),
+                ("active", "#333333")
+            ],
+            arrowcolor=[
+                ("disabled", DISABLED_BG)
+            ],
+            troughcolor=[
+                ("disabled", BG_COLOR)
+            ],
+            lightcolor=[
+                ("disabled", BG_COLOR),
+                ("pressed", "#444444"),
+                ("active", "#333333")
+            ],
+            darkcolor=[
+                ("disabled", BG_COLOR),
+                ("pressed", "#444444"),
+                ("active", "#333333")
+            ],
+            bordercolor=[
+                ("disabled", BG_COLOR)
+            ]
+        )
+
+        self.url_scrollbar = ttk.Scrollbar(
+            self.url_frame,
+            orient="vertical",
+            style="Vertical.TScrollbar"
+        )
+
         self.url_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.url_text = tk.Text(
