@@ -602,12 +602,6 @@ class GUI:
         importlib.reload(config_module)
         config = config_module.config
         self.url_text.delete("1.0", tk.END)
-
-        if len(config.urls) > 0:
-            self.url_text.insert(tk.END, "\n".join(config.urls))
-
-        self.update_url_count()
-
         self.update_entry(self.entries["path"], config.path)
         self.update_entry(self.entries["name"], config.name)
         self.update_entry(self.entries["fps"], config.fps)

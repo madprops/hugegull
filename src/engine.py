@@ -132,12 +132,11 @@ class Engine:
             utils.info(
                 "No valid sources found in the pool. Stream is live/endless or invalid."
             )
-
             shutil.rmtree(config.project_dir, ignore_errors=True)
             return False
 
         amount = config.amount or 1
-        total_needed_duration = config.duration * amount * 1.2
+        total_needed_duration = config.duration * amount * 1.3
         utils.info(f"Generating clip pool for {amount} videos...")
         self.generate_random_clips(total_needed_duration)
 
@@ -146,13 +145,18 @@ class Engine:
             return False
 
         all_successful = True
+        available_clips = list(self.clips.keys())
 
         for i in range(amount):
             if amount > 1:
                 utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
             self.prepare()
-            selected_clips = self.select_clips_for_duration(config.duration)
+            selected_clips = self.select_clips_for_duration(config.duration, available_clips)
+
+            for clip in selected_clips:
+                if clip in available_clips:
+                    available_clips.remove(clip)
 
             if not self.concatenate_clips(selected_clips):
                 all_successful = False
@@ -432,10 +436,12 @@ class Engine:
                     clip_path, duration = result
                     self.clips[clip_path] = duration
 
-    def select_clips_for_duration(self, target_duration: float) -> list[str]:
+    def select_clips_for_duration(self, target_duration: float, available_clips: list[str]) -> list[str]:
         selected = []
         current_duration = 0.0
-        pool = list(self.clips.keys())
+
+        # Shuffle the remaining available clips to keep selection random
+        pool = list(available_clips)
         random.shuffle(pool)
 
         for clip in pool:
