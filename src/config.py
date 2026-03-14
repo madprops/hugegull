@@ -21,7 +21,6 @@ class Config:
 
         # 3. Parse CLI Arguments
         self.args = self.parse_arguments()
-        self.open = self.args.open
         self.gui = self.args.gui
         self.config = self.args.config or ""
 
@@ -58,6 +57,7 @@ class Config:
         self.fade = self.resolve("fade", "fade", 0.03)
         self.gpu = self.resolve("gpu", "gpu", "cpu")
         self.path = self.resolve("path", "path", self.path)
+        self.open = self.resolve("open", "open", False)
 
         if self.gpu not in ["cpu", "amd", "nvidia"]:
             raise ValueError(
@@ -89,12 +89,14 @@ class Config:
         self.parser.add_argument(
             "--open",
             action="store_true",
+            default=None,
             help="Opens the final video file automatically when finished.",
         )
 
         self.parser.add_argument(
             "--gui",
             action="store_true",
+            default=None,
             help="Show the graphical user interface.",
         )
 

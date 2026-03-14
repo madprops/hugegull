@@ -123,6 +123,8 @@ class Engine:
                         self.max_height = source["height"]
 
     def start(self) -> bool:
+        self.sources.clear()
+        self.clips.clear()
         config.check_name()
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
         os.makedirs(config.project_dir, exist_ok=True)
@@ -132,6 +134,7 @@ class Engine:
             utils.info(
                 "No valid sources found in the pool. Stream is live/endless or invalid."
             )
+
             shutil.rmtree(config.project_dir, ignore_errors=True)
             return False
 

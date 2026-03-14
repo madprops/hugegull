@@ -541,8 +541,6 @@ class GUI:
         print(f"Config successfully saved to {save_path}")
 
     def load_config(self) -> None:
-        global config
-
         load_dir = os.path.expanduser("~/.config/hugegull/configs")
 
         if not os.path.exists(load_dir):
@@ -578,10 +576,8 @@ class GUI:
 
         sys.argv = new_argv
         sys.argv.extend(["--config", config_path])
-
         importlib.reload(config_module)
-        config = config_module.config
-
+        self.update_config()
         self.update_entry(self.entries["path"], config.path)
         self.update_entry(self.entries["name"], config.name)
         self.update_entry(self.entries["fps"], config.fps)
@@ -594,13 +590,19 @@ class GUI:
         self.string_vars["gpu"].set(config.gpu)
         self.bool_vars["open"].set(bool(config.open))
 
-    def default_config(self) -> None:
-        global config
+    def update_config(self) -> None:
+        importlib.reload(config_module)
 
+        # Update the existing object in place
+        config.__dict__.update(config_module.config.__dict__)
+
+        # FORCE the module namespace to point back to our unified object
+        config_module.config = config
+
+    def default_config(self) -> None:
         self.current_config_name = ""
         sys.argv = [sys.argv[0]]
-        importlib.reload(config_module)
-        config = config_module.config
+        self.update_config()
         self.update_entry(self.entries["path"], config.path)
         self.update_entry(self.entries["name"], config.name)
         self.update_entry(self.entries["fps"], config.fps)
@@ -610,10 +612,7 @@ class GUI:
         self.update_entry(self.entries["clip_diff"], config.clip_diff)
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
-
-        # Fixed: Update the StringVar for the combobox instead of looking for an Entry
         self.string_vars["gpu"].set(config.gpu)
-
         self.bool_vars["open"].set(bool(config.open))
 
     def make_video(self) -> None:
@@ -640,7 +639,7 @@ class GUI:
         def thread_target() -> None:
             import main
 
-            importlib.reload(main)
+            # REMOVE importlib.reload(main) - it is breaking your references!
 
             self.root.after(
                 0,
@@ -652,20 +651,6 @@ class GUI:
                     cursor="arrow",
                 ),
             )
-
-            try:
-                main.run()
-            finally:
-                self.root.after(
-                    0,
-                    lambda: self.make_button.config(
-                        state=tk.NORMAL,
-                        text="Make",
-                        bg=ACCENT_COLOR,
-                        fg=BG_COLOR,
-                        cursor="hand2",
-                    ),
-                )
 
         threading.Thread(target=thread_target, daemon=True).start()
 
