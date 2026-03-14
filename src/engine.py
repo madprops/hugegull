@@ -220,7 +220,7 @@ class Engine:
                 return False
 
             if amount > 1:
-                gui.update_progress(f"Generating Video {i + 1}")
+                gui.update_progress(f"Video {i + 1}")
                 utils.info(f"--- Generating video {i + 1} of {amount} ---")
 
             self.prepare()
@@ -460,7 +460,7 @@ class Engine:
                 ]
             )
 
-            gui.update_progress(f"Making Clip {i + 1}")
+            gui.update_progress(f"Clip {i + 1}")
 
             utils.action(
                 f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s) ({mode})"
@@ -476,21 +476,18 @@ class Engine:
                 utils.error(result.stderr)
 
                 if mode != modes_to_try[-1]:
-                    gui.update_progress(f"Retrying Clip {i + 1}")
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
             except subprocess.TimeoutExpired:
                 utils.error(f"Timeout expired. Extracting clip {i + 1} using {mode}.")
 
                 if mode != modes_to_try[-1]:
-                    gui.update_progress(f"Retrying Clip {i + 1}")
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
             except Exception as e:
                 utils.error(f"Exception extracting clip {i + 1} using {mode}: {e}")
 
                 if mode != modes_to_try[-1]:
-                    gui.update_progress(f"Retrying Clip {i + 1}")
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
         return None
