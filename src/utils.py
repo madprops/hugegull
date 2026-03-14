@@ -88,6 +88,7 @@ class Utils:
 
             if config.gui:
                 import tkinter.messagebox
+
                 tkinter.messagebox.showinfo(title, message)
             else:
                 self.print(f"Error sending notification: {e}")
