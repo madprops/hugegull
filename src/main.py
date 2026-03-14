@@ -47,6 +47,7 @@ def main() -> None:
         config.show_help()
         sys.exit(1)
     else:
+        utils.set_proc_name(info.name)
         run()
 
 

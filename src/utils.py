@@ -3,8 +3,12 @@ from __future__ import annotations
 import os
 import sys
 import random
+import ctypes
+import ctypes.util
 import subprocess
 from pathlib import Path
+
+PR_SET_NAME = 15
 
 
 class Utils:
@@ -108,17 +112,16 @@ class Utils:
 
     def set_proc_name(self, name: str) -> None:
         if sys.platform.startswith("linux"):
-            try:
-                libc = ctypes.cdll.LoadLibrary("libc.so.6")
+            # Dynamically find the C library instead of hardcoding it
+            libc_path = ctypes.util.find_library("c")
 
-                # PR_SET_NAME is 15 in C
-                # The name string must be encoded to bytes
-                name_bytes = name.encode("utf-8")
-
-                libc.prctl(15, name_bytes, 0, 0, 0)
-            except Exception:
-                # Silently fail if libc cannot be loaded or prctl fails
-                pass
+            if libc_path:
+                libc = ctypes.CDLL(libc_path)
+                # Ensure the string is strictly null-terminated and passed as a char pointer
+                name_bytes = name.encode("utf-8") + b"\0"
+                libc.prctl(PR_SET_NAME, ctypes.c_char_p(name_bytes), 0, 0, 0)
+            else:
+                print("Failed to locate C library. Process name will not be changed.")
 
 
 utils = Utils()

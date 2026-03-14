@@ -26,7 +26,7 @@ DISABLED_FG = "#777777"
 
 
 def main() -> None:
-    utils.set_proc_name("hugegull")
+    utils.set_proc_name(info.name)
     main_window = tk.Tk(className="hugegull")
     GUI(main_window)
     main_window.mainloop()
