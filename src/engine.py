@@ -384,7 +384,7 @@ class Engine:
             a_url=a_url,
             start=start,
             min_dur=base_duration,
-            max_search=5.0
+            max_search=5.0,
         )
 
         name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
@@ -645,7 +645,14 @@ class Engine:
     def cleanup(self) -> None:
         shutil.rmtree(config.project_dir, ignore_errors=True)
 
-    def find_silence_end(self, v_data: str, a_url: str | None, start: float, min_dur: float, max_search: float = 5.0) -> float:
+    def find_silence_end(
+        self,
+        v_data: str,
+        a_url: str | None,
+        start: float,
+        min_dur: float,
+        max_search: float = 5.0,
+    ) -> float:
         search_start = start + min_dur
         target_url = a_url
 
@@ -659,13 +666,18 @@ class Engine:
 
         command = [
             "ffmpeg",
-            "-ss", str(search_start),
-            "-i", target_url,
-            "-t", str(max_search),
+            "-ss",
+            str(search_start),
+            "-i",
+            target_url,
+            "-t",
+            str(max_search),
             "-vn",
-            "-af", audio_filter,
-            "-f", "null",
-            "-"
+            "-af",
+            audio_filter,
+            "-f",
+            "null",
+            "-",
         ]
 
         try:
