@@ -11,6 +11,7 @@ import sys
 import time
 
 import gui
+from info import info
 from config import config
 from utils import utils
 from engine import engine
