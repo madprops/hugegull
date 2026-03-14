@@ -8,10 +8,16 @@ It supports local files, YouTube links, Twitch streams, and direct `.m3u8` URLs.
 
 ### Automatic (Recommended)
 
-The easiest way to install hugegull is globally via `pipx`:
+The easiest way to install hugegull is globally via `pipx` or `uv`:
 
 ```bash
 pipx install git+https://github.com/madprops/hugegull --force
+```
+
+Or
+
+```bash
+uv tool install git+https://github.com/madprops/hugegull --force
 ```
 
 ### Manual
