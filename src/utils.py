@@ -8,6 +8,8 @@ import ctypes.util
 import subprocess
 from pathlib import Path
 
+from info import info
+
 
 class Utils:
     def __init__(self) -> None:
@@ -77,12 +79,18 @@ class Utils:
         return os.environ.get(what, "")
 
     def notify(self, message: str) -> None:
-        title = "🤯 hugegull"
+        title = f"🤯 {info.name}"
 
         try:
             subprocess.run(["notify-send", title, message], check=True)
-        except subprocess.CalledProcessError as e:
-            utils.print(f"Error sending notification: {e}")
+        except Exception as e:
+            from config import config
+
+            if config.gui:
+                import tkinter.messagebox
+                tkinter.messagebox.showinfo(title, message)
+            else:
+                self.print(f"Error sending notification: {e}")
 
     def short_path(self, file_path: str) -> str:
         path = Path(file_path).resolve()

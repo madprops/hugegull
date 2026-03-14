@@ -29,7 +29,7 @@ DISABLED_FG = "#777777"
 
 def main() -> None:
     utils.set_proc_name(info.name)
-    main_window = tk.Tk(className="hugegull")
+    main_window = tk.Tk(className=info.name)
     GUI(main_window)
     main_window.mainloop()
 
@@ -599,7 +599,7 @@ class GUI:
             self.current_config_name = config_name
             config_name = f"{config_name}.toml"
 
-        save_dir = os.path.expanduser("~/.config/hugegull/configs")
+        save_dir = os.path.expanduser(f"~/.config/{info.name}/configs")
 
         if not os.path.exists(save_dir):
             os.makedirs(save_dir, exist_ok=True)
@@ -641,7 +641,7 @@ class GUI:
         print(f"Config successfully saved to {save_path}")
 
     def load_config(self) -> None:
-        load_dir = os.path.expanduser("~/.config/hugegull/configs")
+        load_dir = os.path.expanduser(f"~/.config/{info.name}/configs")
 
         if not os.path.exists(load_dir):
             os.makedirs(load_dir, exist_ok=True)
@@ -767,7 +767,6 @@ class GUI:
 
         def thread_target() -> None:
             try:
-                # Run the heavy task in the background thread
                 main.run()
             finally:
                 self.is_running = False

@@ -10,7 +10,7 @@ setup(
     package_data={"": ["*.toml", "*.txt", "*.png"]},
     entry_points={
         "console_scripts": [
-            "hugegull = main:main",
+            f"{info.name} = main:main",
         ],
     },
 )

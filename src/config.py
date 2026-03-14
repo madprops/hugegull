@@ -25,7 +25,7 @@ class Config:
         self.config = self.args.config or ""
 
         # 4. Setup Directories and Files
-        self.config_file = self.config or "~/.config/hugegull/config.toml"
+        self.config_file = self.config or f"~/.config/{info.name}/config.toml"
         self.config_path = os.path.expanduser(self.config_file)
         self.config_dir = os.path.dirname(self.config_path)
 
