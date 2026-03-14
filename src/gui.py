@@ -601,7 +601,6 @@ class GUI:
         sys.argv = [sys.argv[0]]
         importlib.reload(config_module)
         config = config_module.config
-        self.url_text.delete("1.0", tk.END)
         self.update_entry(self.entries["path"], config.path)
         self.update_entry(self.entries["name"], config.name)
         self.update_entry(self.entries["fps"], config.fps)
