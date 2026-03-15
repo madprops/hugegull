@@ -84,7 +84,10 @@ class Engine:
         counter = 2
 
         while os.path.exists(self.file):
-            self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.{ext}")
+            self.file = os.path.join(
+                config.output_dir, f"{config.name}_{counter}.{ext}"
+            )
+
             counter += 1
 
     def process_url(self, url: str) -> dict[str, Any] | None:
