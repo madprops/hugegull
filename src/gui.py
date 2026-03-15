@@ -254,6 +254,7 @@ class GUI:
         self.url_text.bind("<Shift-Tab>", self.focus_prev_widget)
         self.url_text.bind("<ISO_Left_Tab>", self.focus_prev_widget)
         self.url_text.bind("<KeyRelease>", self.update_url_count)
+        self.url_text.bind("<FocusOut>", self.deselect_all) # Add this line
 
         self.update_url_count()
 
@@ -369,10 +370,30 @@ class GUI:
         return "break"
 
     def select_all(self, event: Any = None) -> str:
+        if event is not None:
+            if isinstance(event.widget, tk.Entry):
+                event.widget.select_range(0, tk.END)
+                event.widget.icursor(tk.END)
+                return "break"
+
+            if isinstance(event.widget, tk.Text):
+                event.widget.tag_add(tk.SEL, "1.0", tk.END)
+                event.widget.mark_set(tk.INSERT, "1.0")
+                event.widget.see(tk.INSERT)
+                return "break"
+
         self.url_text.tag_add(tk.SEL, "1.0", tk.END)
         self.url_text.mark_set(tk.INSERT, "1.0")
         self.url_text.see(tk.INSERT)
         return "break"
+
+    def deselect_all(self, event: Any = None) -> None:
+        if event is not None:
+            if isinstance(event.widget, tk.Entry):
+                event.widget.select_clear()
+
+            if isinstance(event.widget, tk.Text):
+                event.widget.tag_remove(tk.SEL, "1.0", tk.END)
 
     def clear_urls(self, event: Any = None) -> None:
         self.url_text.delete("1.0", tk.END)
@@ -520,6 +541,9 @@ class GUI:
         entry.pack(padx=4, pady=4)
         entry.insert(0, str(value))
         entry.xview(tk.END)
+        entry.bind("<Control-a>", self.select_all)
+        entry.bind("<Control-A>", self.select_all)
+        entry.bind("<FocusOut>", self.deselect_all) # Add this line
         self.entries[id_] = entry
         ROW += 1
 
