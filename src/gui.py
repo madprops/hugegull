@@ -18,7 +18,7 @@ from data import data
 config = config_module.config
 
 WIDTH = 624
-HEIGHT = 520
+HEIGHT = 550
 ROW: int = 0
 INSTANCE = None
 BG_COLOR = "#121212"
@@ -286,6 +286,22 @@ class GUI:
             c_col,
         )
 
+        ar_choices = []
+
+        for action in config.parser._actions:
+            if action.dest == "aspect_ratio" and action.choices:
+                ar_choices = list(action.choices)
+                break
+
+        self.combo_entry(
+            "aspect_ratio",
+            self.settings_frame,
+            "Ratio",
+            ar_choices,
+            config.aspect_ratio,
+            c_col,
+        )
+
         ROW = 0
         c_col = 3
 
@@ -307,6 +323,22 @@ class GUI:
 
         self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
         self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
+
+        res_choices = []
+
+        for action in config.parser._actions:
+            if action.dest == "resolution" and action.choices:
+                res_choices = list(action.choices)
+                break
+
+        self.combo_entry(
+            "resolution",
+            self.settings_frame,
+            "Resolution",
+            res_choices,
+            config.resolution,
+            c_col,
+        )
 
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
