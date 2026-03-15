@@ -422,27 +422,39 @@ class Engine:
                 command.extend(["-ss", str(start), "-i", a_url])
 
             fade_out_start = duration - config.fade
-            pad_w = self.max_width
-            pad_h = self.max_height
 
-            if config.resolution != "original":
-                if config.resolution == "720p":
-                    pad_w = 1280
-                    pad_h = 720
-                elif config.resolution == "1080p":
-                    pad_w = 1920
-                    pad_h = 1080
-                elif config.resolution == "1440p":
-                    pad_w = 2560
-                    pad_h = 1440
-                elif config.resolution == "4k":
-                    pad_w = 3840
-                    pad_h = 2160
+            if config.resolution == "720p":
+                baseline = 720
+            elif config.resolution == "1080p":
+                baseline = 1080
+            elif config.resolution == "1440p":
+                baseline = 1440
+            elif config.resolution == "4k":
+                baseline = 2160
+            else:
+                baseline = min(self.max_width, self.max_height)
 
-                if self.max_height > self.max_width:
-                    temp_w = pad_w
-                    pad_w = pad_h
-                    pad_h = temp_w
+            if baseline == 0:
+                baseline = 720
+
+            ratio_w = 16
+            ratio_h = 9
+
+            try:
+                parts = config.aspect_ratio.split(":")
+
+                if len(parts) == 2:
+                    ratio_w = int(parts[0])
+                    ratio_h = int(parts[1])
+            except (ValueError, AttributeError):
+                pass
+
+            if ratio_w >= ratio_h:
+                pad_h = baseline
+                pad_w = int(baseline * ratio_w / ratio_h)
+            else:
+                pad_w = baseline
+                pad_h = int(baseline * ratio_h / ratio_w)
 
             if pad_w % 2 != 0:
                 pad_w += 1
