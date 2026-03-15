@@ -69,7 +69,10 @@ class Config:
         self.combo_arg("gpu", ["cpu", "amd", "nvidia"])
         self.combo_arg("format", ["mp4", "mkv", "mov", "ts"])
         self.combo_arg("resolution", ["720p", "1080p", "1440p", "4k", "original"])
-        self.combo_arg("aspect_ratio", ["16:9", "16:10", "9:16", "4:3", "1:1", "original"])
+
+        self.combo_arg(
+            "aspect_ratio", ["16:9", "16:10", "9:16", "4:3", "1:1", "original"]
+        )
 
         # 7. Finalize generated paths
         self.temp_dir = os.path.join(self.path, "temp")
