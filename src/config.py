@@ -58,25 +58,16 @@ class Config:
         self.gpu = self.resolve("gpu", "gpu", "cpu")
         self.format = self.resolve("format", "format", "mp4")
         self.resolution = self.resolve("resolution", "resolution", "original")
+        self.aspect_ratio = self.resolve("aspect_ratio", "aspect_ratio", "16:9")
         self.path = self.resolve("path", "path", self.path)
         self.open = self.resolve("open", "open", False)
         self.multiple = self.resolve("multiple", "multiple", False)
         self.player = self.resolve("player", "player", "mpv")
 
-        if self.gpu not in ["cpu", "amd", "nvidia"]:
-            raise ValueError(
-                f"Invalid GPU option '{self.gpu}'. Allowed values are 'cpu', 'amd', 'nvidia'."
-            )
-
-        if self.format not in ["mp4", "mkv", "mov", "ts"]:
-            raise ValueError(
-                f"Invalid Format option '{self.format}'. Allowed values are 'mp4', 'mkv', 'mov', 'ts'."
-            )
-
-        if self.resolution not in ["720p", "1080p", "1440p", "4k", "original"]:
-            raise ValueError(
-                f"Invalid Format option '{self.resolution}'. Allowed values are '720p', '1080p', '1440p', '4k', 'original'."
-            )
+        self.combo_arg("gpu", ["cpu", "amd", "nvidia"])
+        self.combo_arg("format", ["mp4", "mkv", "mov", "ts"])
+        self.combo_arg("resolution", ["720p", "1080p", "1440p", "4k", "original"])
+        self.combo_arg("aspect_ratio", ["16:9", "16:10", "9:16", "4:3", "1:1"])
 
         # 7. Finalize generated paths
         self.temp_dir = os.path.join(self.path, "temp")
@@ -84,6 +75,14 @@ class Config:
 
         run_id = str(int(time.time() * 1000))
         self.project_dir = os.path.join(self.temp_dir, f"project_{run_id}")
+
+    def combo_arg(self, what: str, opts: list[str]) -> None:
+        value = getattr(self, what)
+
+        if value not in opts:
+            raise ValueError(
+                f"Invalid Format option '{value}'. Allowed values are {utils.quote(opts)}."
+            )
 
     def parse_arguments(self) -> argparse.Namespace:
         self.parser = argparse.ArgumentParser(description="Hugegull Config Parser")
@@ -149,6 +148,13 @@ class Config:
             "--resolution",
             type=str,
             choices=["720p", "1080p", "1440p", "4k", "original"],
+            help="Resolution for the final video.",
+        )
+
+        self.parser.add_argument(
+            "--aspect-ratio",
+            type=str,
+            choices=["16:9", "16:10", "9:16", "4:3", "1:1"],
             help="Resolution for the final video.",
         )
 

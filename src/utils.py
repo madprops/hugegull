@@ -135,5 +135,8 @@ class Utils:
             else:
                 pass
 
+    def quote(items: list[str]) -> str:
+        return ", ".join(f"'{item}'" for item in items)
+
 
 utils = Utils()
