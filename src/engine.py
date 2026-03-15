@@ -185,7 +185,7 @@ class Engine:
                     if source["height"] > self.max_height:
                         self.max_height = source["height"]
 
-    def reset_engine(self):
+    def reset_engine(self) -> None:
         self.sources.clear()
         self.clips.clear()
         self.files.clear()
