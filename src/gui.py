@@ -140,6 +140,7 @@ class GUI:
         global INSTANCE
 
         INSTANCE = self
+
         self.entries: dict[str, tk.Entry] = {}
         self.string_vars: dict[str, tk.StringVar] = {}
         self.bool_vars: dict[str, tk.BooleanVar] = {}
@@ -151,6 +152,7 @@ class GUI:
         self.root.configure(bg=BG_COLOR)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.is_running: bool = False
+
         icon_path = get_resource_path("icon.png")
 
         if os.path.exists(icon_path):
