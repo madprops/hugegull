@@ -443,14 +443,19 @@ class Engine:
             ratio_w = 16
             ratio_h = 9
 
-            try:
-                parts = config.aspect_ratio.split(":")
+            if config.aspect_ratio == "original":
+                if (self.max_width > 0) and (self.max_height > 0):
+                    ratio_w = self.max_width
+                    ratio_h = self.max_height
+            else:
+                try:
+                    parts = config.aspect_ratio.split(":")
 
-                if len(parts) == 2:
-                    ratio_w = int(parts[0])
-                    ratio_h = int(parts[1])
-            except (ValueError, AttributeError):
-                pass
+                    if len(parts) == 2:
+                        ratio_w = int(parts[0])
+                        ratio_h = int(parts[1])
+                except (ValueError, AttributeError):
+                    pass
 
             if ratio_w >= ratio_h:
                 pad_h = baseline

@@ -58,7 +58,7 @@ class Config:
         self.gpu = self.resolve("gpu", "gpu", "cpu")
         self.format = self.resolve("format", "format", "mp4")
         self.resolution = self.resolve("resolution", "resolution", "original")
-        self.aspect_ratio = self.resolve("aspect_ratio", "aspect_ratio", "16:9")
+        self.aspect_ratio = self.resolve("aspect_ratio", "aspect_ratio", "original")
         self.path = self.resolve("path", "path", self.path)
         self.open = self.resolve("open", "open", False)
         self.multiple = self.resolve("multiple", "multiple", False)
@@ -69,7 +69,7 @@ class Config:
         self.combo_arg("gpu", ["cpu", "amd", "nvidia"])
         self.combo_arg("format", ["mp4", "mkv", "mov", "ts"])
         self.combo_arg("resolution", ["720p", "1080p", "1440p", "4k", "original"])
-        self.combo_arg("aspect_ratio", ["16:9", "16:10", "9:16", "4:3", "1:1"])
+        self.combo_arg("aspect_ratio", ["16:9", "16:10", "9:16", "4:3", "1:1", "original"])
 
         # 7. Finalize generated paths
         self.temp_dir = os.path.join(self.path, "temp")
@@ -156,7 +156,7 @@ class Config:
         self.parser.add_argument(
             "--aspect-ratio",
             type=str,
-            choices=["16:9", "16:10", "9:16", "4:3", "1:1"],
+            choices=["16:9", "16:10", "9:16", "4:3", "1:1", "original"],
             help="Resolution for the final video.",
         )
 

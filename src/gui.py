@@ -266,8 +266,8 @@ class GUI:
 
         c_col = 0
 
-        self.text_entry("path", self.settings_frame, "Path", config.path, c_col)
         self.text_entry("name", self.settings_frame, "Name", "", c_col)
+        self.text_entry("path", self.settings_frame, "Path", config.path, c_col)
         self.text_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
         self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
 
