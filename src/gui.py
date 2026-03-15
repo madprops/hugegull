@@ -351,11 +351,13 @@ class GUI:
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
 
+        self.exit_button = self.action_button("Exit", self.exit)
         self.default_button = self.action_button("Default", self.default_config)
         self.load_button = self.action_button("Load", self.load_config)
         self.save_button = self.action_button("Save", self.save_config)
         self.make_button = self.action_button("Make", self.make_video)
 
+        self.exit_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.default_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.load_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
         self.save_button.pack(side=tk.LEFT, padx=(0, 10), ipadx=0, ipady=0)
@@ -369,7 +371,7 @@ class GUI:
         event.widget.tk_focusPrev().focus()
         return "break"
 
-    def clear_text(self, entry) -> None:
+    def clear_text(self, entry: tk.Entry) -> None:
         entry.delete(0, tk.END)
 
     def select_all(self, event: Any = None) -> str:
@@ -547,8 +549,12 @@ class GUI:
         entry.bind("<Control-a>", self.select_all)
         entry.bind("<Control-A>", self.select_all)
         entry.bind("<FocusOut>", self.deselect_all)
-        label.bind("<Button-2>", lambda e, w=entry: self.clear_text(w))
         self.entries[id_] = entry
+
+        def on_middle_click(event: Any) -> None:
+            self.clear_text(entry)
+
+        label.bind("<Button-2>", on_middle_click)
         ROW += 1
 
     def combo_entry(
@@ -990,6 +996,9 @@ class GUI:
             x = self._start_win_x + dx
             y = self._start_win_y + dy
             self.root.geometry(f"+{x}+{y}")
+
+    def exit(self) -> None:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
