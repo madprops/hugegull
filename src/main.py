@@ -71,9 +71,32 @@ def singleton() -> None:
             fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             print(f"An instance of {app_name} is already running.")
+            trigger_raise()
             sys.exit(1)
 
         LOCKS.append(lock_file)
+
+def trigger_raise() -> None:
+    import socket
+    import tempfile
+    import hashlib
+
+    app_name = info.name
+
+    try:
+        if os.name == "posix":
+            socket_path = os.path.join(tempfile.gettempdir(), f"{app_name}_ipc.sock")
+            client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            client.connect(socket_path)
+        else:
+            port = 50000 + int(hashlib.md5(app_name.encode()).hexdigest(), 16) % 10000
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect(("127.0.0.1", port))
+
+        client.sendall("RAISE".encode("utf-8"))
+        client.close()
+    except Exception:
+        pass
 
 
 def main() -> None:
