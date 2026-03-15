@@ -307,6 +307,8 @@ class GUI:
         ROW = 0
         c_col = 3
 
+        self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
+
         self.text_entry(
             "duration", self.settings_frame, "Duration", config.duration, c_col
         )
@@ -324,7 +326,6 @@ class GUI:
         )
 
         self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
-        self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
 
         res_choices = []
 
