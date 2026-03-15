@@ -674,7 +674,7 @@ class GUI:
         save_path = os.path.join(save_dir, config_name)
         path_val = self.entries["path"].get().strip()
         gpu_val = self.string_vars["gpu"].get().strip()
-        ratio_val = self.string_vars["aspect_ratio"].get().strip()
+        aspect_ratio_val = self.string_vars["aspect_ratio"].get().strip()
         resolution_val = self.string_vars["resolution"].get().strip()
         fps_val = self.entries["fps"].get().strip()
         crf_val = self.entries["crf"].get().strip()
@@ -690,8 +690,8 @@ class GUI:
             f'path = "{path_val}"',
             f'name = "{name}"',
             f'gpu = "{gpu_val}"',
-            f'aspect_ratio = "{aspect_ratio}"',
-            f'resolution = "{resolution}"',
+            f'aspect_ratio = "{aspect_ratio_val}"',
+            f'resolution = "{resolution_val}"',
             f"fps = {fps_val}",
             f"crf = {crf_val}",
             f"duration = {duration_val}",

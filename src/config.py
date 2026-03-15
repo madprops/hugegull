@@ -280,6 +280,12 @@ class Config:
 
             self.gpu = data["gpu"]
 
+        if "aspect_ratio" in data:
+            self.aspect_ratio = data["aspect_ratio"]
+
+        if "resolution" in data:
+            self.resolution = data["resolution"]
+
         if "fps" in data:
             self.fps = int(data["fps"])
 
