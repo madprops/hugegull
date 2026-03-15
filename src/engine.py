@@ -762,6 +762,7 @@ class Engine:
                 if consecutive_silence_frames >= required_silence_frames:
                     bytes_processed = i + frame_size
                     current_offset_sec = bytes_processed / (sample_rate * 2)
+
                     silence_duration_sec = (
                         required_silence_frames * frame_duration_ms
                     ) / 1000.0

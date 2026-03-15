@@ -674,6 +674,8 @@ class GUI:
         save_path = os.path.join(save_dir, config_name)
         path_val = self.entries["path"].get().strip()
         gpu_val = self.string_vars["gpu"].get().strip()
+        ratio_val = self.string_vars["aspect_ratio"].get().strip()
+        resolution_val = self.string_vars["resolution"].get().strip()
         fps_val = self.entries["fps"].get().strip()
         crf_val = self.entries["crf"].get().strip()
         duration_val = self.entries["duration"].get().strip()
@@ -688,6 +690,8 @@ class GUI:
             f'path = "{path_val}"',
             f'name = "{name}"',
             f'gpu = "{gpu_val}"',
+            f'aspect_ratio = "{aspect_ratio}"',
+            f'resolution = "{resolution}"',
             f"fps = {fps_val}",
             f"crf = {crf_val}",
             f"duration = {duration_val}",
@@ -755,6 +759,8 @@ class GUI:
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
         self.string_vars["gpu"].set(config.gpu)
+        self.string_vars["aspect_ratio"].set(config.aspect_ratio)
+        self.string_vars["resolution"].set(config.resolution)
         self.bool_vars["open"].set(bool(config.open))
 
     def update_config(self) -> None:
@@ -780,6 +786,8 @@ class GUI:
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
         self.string_vars["gpu"].set(config.gpu)
+        self.string_vars["aspect_ratio"].set(config.aspect_ratio)
+        self.string_vars["resolution"].set(config.resolution)
         self.bool_vars["open"].set(bool(config.open))
 
     def make_video(self) -> None:
@@ -812,6 +820,8 @@ class GUI:
             "path": self.entries["path"].get().strip(),
             "name": self.entries["name"].get().strip(),
             "gpu": self.string_vars["gpu"].get().strip(),
+            "aspect_ratio": self.string_vars["aspect_ratio"].get().strip(),
+            "resolution": self.string_vars["resolution"].get().strip(),
             "fps": self.entries["fps"].get().strip(),
             "crf": self.entries["crf"].get().strip(),
             "duration": self.entries["duration"].get().strip(),
