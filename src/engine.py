@@ -79,11 +79,12 @@ class Engine:
     def prepare(self) -> None:
         os.makedirs(config.project_dir, exist_ok=True)
         os.makedirs(config.output_dir, exist_ok=True)
-        self.file = os.path.join(config.output_dir, f"{config.name}.mp4")
+        ext = config.format
+        self.file = os.path.join(config.output_dir, f"{config.name}.{ext}")
         counter = 2
 
         while os.path.exists(self.file):
-            self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.mp4")
+            self.file = os.path.join(config.output_dir, f"{config.name}_{counter}.{ext}")
             counter += 1
 
     def process_url(self, url: str) -> dict[str, Any] | None:
@@ -395,7 +396,8 @@ class Engine:
             max_search=5.0,
         )
 
-        name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.mp4")
+        ext = config.format
+        name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.{ext}")
         modes_to_try = [config.gpu]
 
         if config.gpu in ("amd", "nvidia"):

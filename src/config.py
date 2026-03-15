@@ -56,6 +56,7 @@ class Config:
         self.crf = self.resolve("crf", "crf", 30)
         self.fade = self.resolve("fade", "fade", 0.03)
         self.gpu = self.resolve("gpu", "gpu", "cpu")
+        self.format = self.resolve("format", "format", "mp4")
         self.path = self.resolve("path", "path", self.path)
         self.open = self.resolve("open", "open", False)
         self.multiple = self.resolve("multiple", "multiple", False)
@@ -64,6 +65,11 @@ class Config:
         if self.gpu not in ["cpu", "amd", "nvidia"]:
             raise ValueError(
                 f"Invalid GPU option '{self.gpu}'. Allowed values are 'cpu', 'amd', 'nvidia'."
+            )
+
+        if self.format not in ["mp4", "mkv", "mov", "ts"]:
+            raise ValueError(
+                f"Invalid Format option '{self.format}'. Allowed values are 'mp4', 'mkv', 'mov', 'ts'."
             )
 
         # 7. Finalize generated paths
@@ -124,6 +130,13 @@ class Config:
             type=str,
             choices=["cpu", "amd", "nvidia"],
             help="Hardware acceleration identifier.",
+        )
+
+        self.parser.add_argument(
+            "--format",
+            type=str,
+            choices=["mp4", "mkv", "mov", "ts"],
+            help="Format for the final video.",
         )
 
         self.parser.add_argument(

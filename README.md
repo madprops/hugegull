@@ -81,25 +81,7 @@ fade = 0.03
 
 ### Options Reference
 
-*Note: CLI arguments will always override TOML config settings.*
-
-| Option | CLI Argument | TOML Key | Default | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| **URLs** | `[urls]` or `--url` | `urls` | *None* | Source video URLs. |
-| **Name** | `--name` | `name` | *Random* | Output filename. (Env: `HUGE_NAME`) |
-| **Config Path** | `--config` | *N/A* | `~/.config/hugegull/config.toml` | Path to a custom TOML config file. |
-| **Output Path** | `--path` | `path` | Script directory | Base directory for the `temp` and `output` folders. |
-| **Open** | `--open` | `open` | `False` | Opens the final video file automatically when finished. |
-| **GPU** | `--gpu` | `gpu` | `""` | Hardware acceleration identifier (e.g., "amd"). |
-| **Amount** | `--amount` | `amount` | `1` | Total number of output videos to generate. |
-| **Total Duration** | `--duration` | `duration` | `35` | Total target duration (in seconds) of the output video. |
-| **FPS** | `--fps` | `fps` | `30` | Output video frames per second. |
-| **CRF** | `--crf` | `crf` | `30` | Video quality/compression factor. |
-| **Crossfade** | `--fade` | `fade` | `0.03` | Crossfade duration between clips. |
-| **Clip Duration** | `--clip-duration`| `clip_duration`| `6.0` | Average duration for a single grabbed section. |
-| **Clip Diff** | `--clip-diff`| `clip_diff`| `3.0` | The range around the clip duration, more or less. |
-| **Player** | `--player`| `player`| `mpv` | Name of the video player to open files. |
-| **Multiple** | `--multiple`| `multiple`| `False` | Allow multiple instances to be opened. |
+Run `hugegull --help`
 
 ---
 
