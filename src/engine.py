@@ -425,6 +425,25 @@ class Engine:
             pad_w = self.max_width
             pad_h = self.max_height
 
+            if config.resolution != "original":
+                if config.resolution == "720p":
+                    pad_w = 1280
+                    pad_h = 720
+                elif config.resolution == "1080p":
+                    pad_w = 1920
+                    pad_h = 1080
+                elif config.resolution == "1440p":
+                    pad_w = 2560
+                    pad_h = 1440
+                elif config.resolution == "4k":
+                    pad_w = 3840
+                    pad_h = 2160
+
+                if self.max_height > self.max_width:
+                    temp_w = pad_w
+                    pad_w = pad_h
+                    pad_h = temp_w
+
             if pad_w % 2 != 0:
                 pad_w += 1
 
