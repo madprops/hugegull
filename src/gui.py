@@ -14,7 +14,7 @@ from data import data
 config = config_module.config
 
 WIDTH = 720
-HEIGHT = 520
+HEIGHT = 540
 URLS: list[str] = []
 ROW: int = 0
 INSTANCE = None
@@ -186,6 +186,7 @@ class GUI:
             yscrollcommand=self.url_scrollbar.set,
             padx=4,
             pady=4,
+            spacing3=5,
         )
 
         self.url_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
