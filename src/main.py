@@ -76,6 +76,7 @@ def singleton() -> None:
 
         LOCKS.append(lock_file)
 
+
 def trigger_raise() -> None:
     import socket
     import tempfile

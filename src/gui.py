@@ -843,7 +843,9 @@ class GUI:
         def listener() -> None:
             if os.name == "posix":
                 # Unix Domain Socket for Linux/Mac (X11 & Wayland)
-                socket_path = os.path.join(tempfile.gettempdir(), f"{info.name}_ipc.sock")
+                socket_path = os.path.join(
+                    tempfile.gettempdir(), f"{info.name}_ipc.sock"
+                )
 
                 if os.path.exists(socket_path):
                     try:
@@ -855,7 +857,9 @@ class GUI:
                 server.bind(socket_path)
             else:
                 # Localhost TCP Socket for Windows
-                port = 50000 + int(hashlib.md5(info.name.encode()).hexdigest(), 16) % 10000
+                port = (
+                    50000 + int(hashlib.md5(info.name.encode()).hexdigest(), 16) % 10000
+                )
                 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
                 try:
