@@ -4,6 +4,7 @@ import sys
 import importlib
 import os
 import threading
+from typing import cast
 from typing import Any, Callable
 
 from info import info
@@ -67,7 +68,13 @@ class ToolTip:
         if self.tip_window is not None or self.text == "":
             return
 
-        x, y, _, _ = self.widget.bbox("insert")
+        text_widget = cast(tk.Text, self.widget)
+        bbox_result = text_widget.bbox("insert")
+
+        if not bbox_result:
+            return
+
+        x, y, _, _ = bbox_result
         x = x + self.widget.winfo_rootx() + 25
         y = y + self.widget.winfo_rooty() + 20
 
@@ -86,8 +93,9 @@ class ToolTip:
             font=FONT_2,
             padx=5,
             pady=5,
-            wraplength=300
+            wraplength=300,
         )
+
         label.pack()
 
     def hide_tip(self, event: Any = None) -> None:
@@ -520,7 +528,12 @@ class GUI:
         ROW += 1
 
     def checkbox_pack(
-        self, id_: str, frame: tk.Frame, text: str, value: Any, padx: tuple[int, int] | int = (30, 5)
+        self,
+        id_: str,
+        frame: tk.Frame,
+        text: str,
+        value: Any,
+        padx: tuple[int, int] | int = (30, 5),
     ) -> None:
         label = tk.Label(
             frame,
