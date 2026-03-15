@@ -591,11 +591,7 @@ class GUI:
             padx=8,
         )
 
-        dropdown["menu"].config(
-            bg=WIDGET_BG,
-            fg=TEXT_COLOR_2,
-            font=FONT_3
-        )
+        dropdown["menu"].config(bg=WIDGET_BG, fg=TEXT_COLOR_2, font=FONT_3)
 
         dropdown.grid(row=ROW, column=col + 1, pady=5, sticky="ew")
         ROW += 1
