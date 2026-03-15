@@ -33,13 +33,14 @@ FONT_4 = ("monospace", 12)
 
 LOCKS = []
 
+
 def enforce_singleton(app_name: str) -> None:
     if os.name == "nt":
         import ctypes
 
         mutex_name = f"Global\\{app_name}_mutex"
-        mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
-        last_error = ctypes.windll.kernel32.GetLastError()
+        mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)  # type: ignore
+        last_error = ctypes.windll.kernel32.GetLastError()  # type: ignore
 
         if last_error == 183:
             print(f"An instance of {app_name} is already running.")
@@ -60,6 +61,7 @@ def enforce_singleton(app_name: str) -> None:
             sys.exit(1)
 
         LOCKS.append(lock_file)
+
 
 def main() -> None:
     enforce_singleton(info.name)
