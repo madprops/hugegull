@@ -13,8 +13,8 @@ from data import data
 
 config = config_module.config
 
-WIDTH = 720
-HEIGHT = 540
+WIDTH = 624
+HEIGHT = 520
 URLS: list[str] = []
 ROW: int = 0
 INSTANCE = None
@@ -53,6 +53,47 @@ def get_resource_path(relative_path: str) -> str:
         base_path = os.path.dirname(os.path.abspath(__file__))
 
     return os.path.join(base_path, relative_path)
+
+
+class ToolTip:
+    def __init__(self, widget: tk.Widget, text: str) -> None:
+        self.widget = widget
+        self.text = text
+        self.tip_window: tk.Toplevel | None = None
+        self.widget.bind("<Enter>", self.show_tip, add="+")
+        self.widget.bind("<Leave>", self.hide_tip, add="+")
+
+    def show_tip(self, event: Any = None) -> None:
+        if self.tip_window is not None or self.text == "":
+            return
+
+        x, y, _, _ = self.widget.bbox("insert")
+        x = x + self.widget.winfo_rootx() + 25
+        y = y + self.widget.winfo_rooty() + 20
+
+        self.tip_window = tk.Toplevel(self.widget)
+        self.tip_window.wm_overrideredirect(True)
+        self.tip_window.wm_geometry(f"+{x}+{y}")
+
+        label = tk.Label(
+            self.tip_window,
+            text=self.text,
+            justify=tk.LEFT,
+            background=WIDGET_BG,
+            foreground=TEXT_COLOR_2,
+            relief="solid",
+            borderwidth=1,
+            font=FONT_2,
+            padx=5,
+            pady=5,
+            wraplength=300
+        )
+        label.pack()
+
+    def hide_tip(self, event: Any = None) -> None:
+        if self.tip_window is not None:
+            self.tip_window.destroy()
+            self.tip_window = None
 
 
 class GUI:
@@ -98,11 +139,8 @@ class GUI:
         self.url_label.bind("<Button-2>", self.clear_urls)
         self.url_label.bind("<Enter>", lambda e: self.url_label.config(fg=ACCENT_COLOR))
         self.url_label.bind("<Leave>", lambda e: self.url_label.config(fg=TEXT_COLOR))
-
-        self.url_help_btn = self.info_button(self.url_header_frame, "urls")
-        self.url_help_btn.pack(side=tk.LEFT, padx=(10, 0))
-
-        # Progress Widget setup
+        ToolTip(self.url_label, self.get_help_text("urls"))
+        self.checkbox_pack("open", self.url_header_frame, "Open", config.open)
         self.progress_var = tk.StringVar(value="")
 
         self.progress_label = tk.Label(
@@ -231,8 +269,6 @@ class GUI:
             c_col,
         )
 
-        self.checkbox_entry("open", self.settings_frame, "Open", config.open, c_col)
-
         ROW = 0
         c_col = 3
 
@@ -351,6 +387,21 @@ class GUI:
 
         self.url_label.config(text=f"URL List ({count})")
 
+    def get_help_text(self, id_: str) -> str:
+        help_text = "No help available for this setting."
+
+        if id_ == "urls":
+            help_text = "One URL per line. You can click the label to paste from the clipboard. Middle Clicking the label clears the textarea."
+            return help_text
+
+        for action in config.parser._actions:
+            if action.dest == id_:
+                if action.help is not None:
+                    help_text = action.help
+                break
+
+        return help_text
+
     def show_info_msg(self, id_: str) -> None:
         help_text = "No help available for this setting."
 
@@ -365,9 +416,6 @@ class GUI:
 
         messagebox.showinfo("Config Information", help_text)
 
-    def make_help_cmd(self, id_: str) -> Callable[[], None]:
-        return lambda: self.show_info_msg(id_)
-
     def action_button(self, text: str, cmd: Callable[[], None]) -> tk.Button:
         return tk.Button(
             self.button_frame,
@@ -381,23 +429,6 @@ class GUI:
             highlightthickness=0,
             relief="flat",
             cursor="hand2",
-        )
-
-    def info_button(self, frame: Any, what: str) -> tk.Button:
-        return tk.Button(
-            frame,
-            text="?",
-            command=self.make_help_cmd(what),
-            bg=BG_COLOR,
-            fg=ACCENT_COLOR,
-            activebackground=BG_COLOR,
-            activeforeground=TEXT_COLOR,
-            borderwidth=0,
-            relief="flat",
-            highlightthickness=0,
-            font=FONT_1,
-            cursor="hand2",
-            takefocus=0,
         )
 
     def text_entry(
@@ -415,7 +446,7 @@ class GUI:
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
         self.labels[id_] = label
-
+        ToolTip(label, self.get_help_text(id_))
         entry_frame = tk.Frame(frame, bg=WIDGET_BG)
         entry_frame.grid(row=ROW, column=col + 1, pady=5)
 
@@ -434,8 +465,6 @@ class GUI:
         entry.insert(0, str(value))
         entry.xview(tk.END)
         self.entries[id_] = entry
-        help_btn = self.info_button(frame, id_)
-        help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
     def combo_entry(
@@ -459,7 +488,7 @@ class GUI:
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
         self.labels[f"{id_}_combo"] = label
-
+        ToolTip(label, self.get_help_text(id_))
         var = tk.StringVar(value=value)
         self.string_vars[id_] = var
 
@@ -488,9 +517,40 @@ class GUI:
         )
 
         dropdown.grid(row=ROW, column=col + 1, pady=5, sticky="ew")
-        help_btn = self.info_button(frame, id_)
-        help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
+
+    def checkbox_pack(
+        self, id_: str, frame: tk.Frame, text: str, value: Any, padx: tuple[int, int] | int = (30, 5)
+    ) -> None:
+        label = tk.Label(
+            frame,
+            text=text,
+            bg=BG_COLOR,
+            fg=TEXT_COLOR,
+            font=FONT_3,
+        )
+
+        label.pack(side=tk.LEFT, padx=padx)
+        self.labels[id_] = label
+        ToolTip(label, self.get_help_text(id_))
+        var = tk.BooleanVar(value=bool(value))
+        self.bool_vars[id_] = var
+
+        checkbox = tk.Checkbutton(
+            frame,
+            variable=var,
+            bg=BG_COLOR,
+            fg=TEXT_COLOR,
+            activebackground=BG_COLOR,
+            activeforeground=TEXT_COLOR,
+            selectcolor=WIDGET_BG,
+            borderwidth=0,
+            relief="flat",
+            highlightthickness=0,
+            font=FONT_3,
+        )
+
+        checkbox.pack(side=tk.LEFT)
 
     def checkbox_entry(
         self, id_: str, frame: tk.Frame, text: str, value: Any, col: int
@@ -507,7 +567,7 @@ class GUI:
 
         label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
         self.labels[id_] = label
-
+        ToolTip(label, self.get_help_text(id_))
         var = tk.BooleanVar(value=bool(value))
         self.bool_vars[id_] = var
 
@@ -526,8 +586,6 @@ class GUI:
         )
 
         checkbox.grid(row=ROW, column=col + 1, sticky="w", pady=5)
-        help_btn = self.info_button(frame, id_)
-        help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
     def update_entry(self, entry_widget: tk.Entry, new_value: Any) -> None:
