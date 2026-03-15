@@ -391,13 +391,16 @@ class Engine:
         if a_url is not None:
             is_split_stream = True
 
-        duration = self.find_silence_end(
-            v_data=v_data,
-            a_url=a_url,
-            start=start,
-            min_dur=base_duration,
-            max_search=5.0,
-        )
+        if config.audio != "":
+            duration = base_duration
+        else:
+            duration = self.find_silence_end(
+                v_data=v_data,
+                a_url=a_url,
+                start=start,
+                min_dur=base_duration,
+                max_search=5.0,
+            )
 
         ext = config.format
         name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.{ext}")
@@ -473,6 +476,7 @@ class Engine:
 
             if config.audio != "":
                 command.extend(["-t", str(duration), "-vf", vf_filter])
+                command.extend(["-map", "0:v:0", "-an"])
             else:
                 af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
 
@@ -480,31 +484,12 @@ class Engine:
                     ["-t", str(duration), "-vf", vf_filter, "-af", af_filter]
                 )
 
-            if config.audio != "":
-                command.extend(["-map", "0:v:0"])
-                command.extend(["-an", "-y", name])
-            else:
                 if is_split_stream:
                     command.extend(["-map", "0:v:0", "-map", "1:a:0"])
                 else:
                     command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
 
-                command.extend(
-                    [
-                        "-c:a",
-                        "aac",
-                        "-ar",
-                        "48000",
-                        "-ac",
-                        "2",
-                        "-video_track_timescale",
-                        "90000",
-                        "-y",
-                        name,
-                    ]
-                )
-
-            command.extend(["-t", str(duration), "-vf", vf_filter, "-af", af_filter])
+                command.extend(["-c:a", "aac", "-ar", "48000", "-ac", "2"])
 
             if mode == "amd":
                 adjusted_crf = config.crf - 4
@@ -529,20 +514,7 @@ class Engine:
                     ["-c:v", "libx264", "-preset", "medium", "-crf", str(config.crf)]
                 )
 
-            command.extend(
-                [
-                    "-c:a",
-                    "aac",
-                    "-ar",
-                    "48000",
-                    "-ac",
-                    "2",
-                    "-video_track_timescale",
-                    "90000",
-                    "-y",
-                    name,
-                ]
-            )
+            command.extend(["-video_track_timescale", "90000", "-y", name])
 
             gui.update_progress(f"Clip {i + 1}")
 
@@ -575,6 +547,83 @@ class Engine:
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
         return None
+
+    def concatenate_clips(self, selected_clips: list[str]) -> bool:
+        if data.abort:
+            return False
+
+        if len(selected_clips) == 0:
+            utils.error("No clips to concatenate.")
+            return False
+
+        total_duration = 0.0
+
+        for clip in selected_clips:
+            total_duration += self.clips.get(clip, 0.0)
+
+        list_file = os.path.join(
+            config.project_dir, f"concat_list_{random.randint(1000, 9999)}.txt"
+        )
+
+        with open(list_file, "w") as f:
+            for clip in selected_clips:
+                abs_clip_path = os.path.abspath(clip)
+                f.write(f"file '{abs_clip_path}'\n")
+
+        command = [
+            "ffmpeg",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            list_file,
+        ]
+
+        if config.audio != "":
+            command.extend(["-stream_loop", "-1", "-i", config.audio])
+
+            command.extend(
+                [
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "1:a:0",
+                    "-c:v",
+                    "copy",
+                    "-c:a",
+                    "aac",
+                    "-t",
+                    str(total_duration),
+                ]
+            )
+        else:
+            command.extend(["-c", "copy"])
+
+        command.extend(
+            [
+                "-video_track_timescale",
+                "90000",
+                "-y",
+                self.file,
+            ]
+        )
+
+        try:
+            result = self.run_process(command, self.concat_timeout)
+
+            if result.returncode != 0:
+                utils.error("Error concatenating clips:")
+                utils.error(result.stderr)
+            else:
+                self.files.append(self.file)
+                utils.info(f"Saved: {self.file}")
+
+        except subprocess.TimeoutExpired:
+            utils.error("Timeout expired while concatenating clips.")
+            return False
+
+        return True
 
     def generate_random_clips(self, target_duration: float) -> None:
         if data.abort:
@@ -625,77 +674,6 @@ class Engine:
                 current_duration += clip_duration
 
         return selected
-
-    def concatenate_clips(self, selected_clips: list[str]) -> bool:
-        if data.abort:
-            return False
-
-        if len(selected_clips) == 0:
-            utils.error("No clips to concatenate.")
-            return False
-
-        list_file = os.path.join(
-            config.project_dir, f"concat_list_{random.randint(1000, 9999)}.txt"
-        )
-
-        with open(list_file, "w") as f:
-            for clip in selected_clips:
-                abs_clip_path = os.path.abspath(clip)
-                f.write(f"file '{abs_clip_path}'\n")
-
-        command = [
-            "ffmpeg",
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            list_file,
-        ]
-
-        if config.audio != "":
-            command.extend(["-stream_loop", "-1", "-i", config.audio])
-
-            command.extend(
-                [
-                    "-map",
-                    "0:v:0",
-                    "-map",
-                    "1:a:0",
-                    "-c:v",
-                    "copy",
-                    "-c:a",
-                    "aac",
-                    "-shortest",
-                ]
-            )
-        else:
-            command.extend(["-c", "copy"])
-
-        command.extend(
-            [
-                "-video_track_timescale",
-                "90000",
-                "-y",
-                self.file,
-            ]
-        )
-
-        try:
-            result = self.run_process(command, self.concat_timeout)
-
-            if result.returncode != 0:
-                utils.error("Error concatenating clips:")
-                utils.error(result.stderr)
-            else:
-                self.files.append(self.file)
-                utils.info(f"Saved: {self.file}")
-
-        except subprocess.TimeoutExpired:
-            utils.error("Timeout expired while concatenating clips.")
-            return False
-
-        return True
 
     def get_stream_info(self, url: str) -> dict[str, Any]:
         command = [
