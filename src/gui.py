@@ -369,6 +369,9 @@ class GUI:
         event.widget.tk_focusPrev().focus()
         return "break"
 
+    def clear_text(self, entry) -> None:
+        entry.delete(0, tk.END)
+
     def select_all(self, event: Any = None) -> str:
         if event is not None:
             if isinstance(event.widget, tk.Entry):
@@ -544,6 +547,7 @@ class GUI:
         entry.bind("<Control-a>", self.select_all)
         entry.bind("<Control-A>", self.select_all)
         entry.bind("<FocusOut>", self.deselect_all)
+        label.bind("<Button-2>", lambda e, w=entry: self.clear_text(w))
         self.entries[id_] = entry
         ROW += 1
 
