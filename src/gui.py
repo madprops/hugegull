@@ -16,7 +16,6 @@ config = config_module.config
 
 WIDTH = 624
 HEIGHT = 520
-URLS: list[str] = []
 ROW: int = 0
 INSTANCE = None
 BG_COLOR = "#121212"

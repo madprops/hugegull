@@ -185,13 +185,18 @@ class Engine:
                     if source["height"] > self.max_height:
                         self.max_height = source["height"]
 
+    def reset_engine(self):
+        self.sources.clear()
+        self.clips.clear()
+        self.files.clear()
+        self.max_width = 0
+        self.max_height = 0
+
     def start(self) -> bool:
         if data.abort:
             return False
 
-        self.sources.clear()
-        self.clips.clear()
-        self.files.clear()
+        self.reset_engine()
         config.check_name()
         gui.update_progress("Starting")
         utils.info(f"Starting: {config.name} | {int(config.duration)}s")
