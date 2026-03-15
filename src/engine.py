@@ -475,7 +475,10 @@ class Engine:
                 command.extend(["-t", str(duration), "-vf", vf_filter])
             else:
                 af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
-                command.extend(["-t", str(duration), "-vf", vf_filter, "-af", af_filter])
+
+                command.extend(
+                    ["-t", str(duration), "-vf", vf_filter, "-af", af_filter]
+                )
 
             if config.audio != "":
                 command.extend(["-map", "0:v:0"])
@@ -653,22 +656,30 @@ class Engine:
         if config.audio != "":
             command.extend(["-stream_loop", "-1", "-i", config.audio])
 
-            command.extend([
-                "-map", "0:v:0",
-                "-map", "1:a:0",
-                "-c:v", "copy",
-                "-c:a", "aac",
-                "-shortest"
-            ])
+            command.extend(
+                [
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "1:a:0",
+                    "-c:v",
+                    "copy",
+                    "-c:a",
+                    "aac",
+                    "-shortest",
+                ]
+            )
         else:
             command.extend(["-c", "copy"])
 
-        command.extend([
-            "-video_track_timescale",
-            "90000",
-            "-y",
-            self.file,
-        ])
+        command.extend(
+            [
+                "-video_track_timescale",
+                "90000",
+                "-y",
+                self.file,
+            ]
+        )
 
         try:
             result = self.run_process(command, self.concat_timeout)

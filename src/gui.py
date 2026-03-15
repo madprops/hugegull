@@ -342,7 +342,9 @@ class GUI:
             c_col,
         )
 
-        self.text_entry("watermark", self.settings_frame, "Watermark", config.watermark, c_col)
+        self.text_entry(
+            "watermark", self.settings_frame, "Watermark", config.watermark, c_col
+        )
 
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
