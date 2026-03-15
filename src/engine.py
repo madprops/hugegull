@@ -467,12 +467,12 @@ class Engine:
 
             vf_filter = f"scale={pad_w}:{pad_h}:force_original_aspect_ratio=decrease,pad={pad_w}:{pad_h}:(ow-iw)/2:(oh-ih)/2,fps={config.fps},setsar=1"
 
-            if mode == "amd":
-                vf_filter = f"{vf_filter},format=nv12,hwupload"
-
             if config.watermark != "":
                 safe_text = config.watermark.replace(":", "\\:").replace("'", "\\'")
                 vf_filter = f"{vf_filter},drawtext=text='{safe_text}':fontcolor=white:fontsize=h/20:x=w-tw-20:y=h-th-20"
+
+            if mode == "amd":
+                vf_filter = f"{vf_filter},format=nv12,hwupload"
 
             if config.audio != "":
                 command.extend(["-t", str(duration), "-vf", vf_filter])
