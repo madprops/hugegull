@@ -123,6 +123,13 @@ class GUI:
         self.root.geometry(f"{WIDTH}x{HEIGHT}")
         self.root.configure(bg=BG_COLOR)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self._is_moving = False
+        self._start_x = 0
+        self._start_y = 0
+        self._start_win_x = 0
+        self._start_win_y = 0
+        self.root.bind("<Button-1>", self.start_move)
+        self.root.bind("<B1-Motion>", self.move_window)
         self.is_running: bool = False
         self.start_ipc_listener()
 
@@ -884,6 +891,24 @@ class GUI:
 
         thread = threading.Thread(target=listener, daemon=True)
         thread.start()
+
+    def start_move(self, event: Any) -> None:
+        if isinstance(event.widget, (tk.Tk, tk.Frame, tk.Label)):
+            self._is_moving = True
+            self._start_x = event.x_root
+            self._start_y = event.y_root
+            self._start_win_x = self.root.winfo_x()
+            self._start_win_y = self.root.winfo_y()
+        else:
+            self._is_moving = False
+
+    def move_window(self, event: Any) -> None:
+        if self._is_moving:
+            dx = event.x_root - self._start_x
+            dy = event.y_root - self._start_y
+            x = self._start_win_x + dx
+            y = self._start_win_y + dy
+            self.root.geometry(f"+{x}+{y}")
 
 
 if __name__ == "__main__":
