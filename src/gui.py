@@ -80,15 +80,27 @@ class GUI:
             self.icon_img = tk.PhotoImage(file=icon_path)
             self.root.iconphoto(True, self.icon_img)
 
-        self.version_label = tk.Label(
-            root,
-            text=f"v{info.version}",
+        self.url_header_frame = tk.Frame(root, bg=BG_COLOR)
+        self.url_header_frame.pack(fill=tk.X, padx=20, pady=(20, 5))
+
+        self.url_label = tk.Label(
+            self.url_header_frame,
+            text="URL List",
             bg=BG_COLOR,
-            fg=DISABLED_FG,
-            font=FONT_2,
+            fg=TEXT_COLOR,
+            font=FONT_3,
+            cursor="hand2",
         )
 
-        self.version_label.place(relx=1.0, y=20, x=-20, anchor="ne")
+        self.url_label.pack(side=tk.LEFT)
+
+        self.url_label.bind("<Button-1>", self.paste_urls)
+        self.url_label.bind("<Button-2>", self.clear_urls)
+        self.url_label.bind("<Enter>", lambda e: self.url_label.config(fg=ACCENT_COLOR))
+        self.url_label.bind("<Leave>", lambda e: self.url_label.config(fg=TEXT_COLOR))
+
+        self.url_help_btn = self.info_button(self.url_header_frame, "urls")
+        self.url_help_btn.pack(side=tk.LEFT, padx=(10, 0))
 
         # Progress Widget setup
         self.progress_var = tk.StringVar(value="")
@@ -102,25 +114,17 @@ class GUI:
             justify="center",
         )
 
-        # Placed to the left of the version text, expanding backwards
         self.progress_label.place(relx=1.0, y=20, x=-80, anchor="ne")
 
-        self.url_label = tk.Label(
+        self.version_label = tk.Label(
             root,
-            text="Source URLs",
+            text=f"v{info.version}",
             bg=BG_COLOR,
-            fg=TEXT_COLOR,
-            font=FONT_3,
-            cursor="hand2",
+            fg=DISABLED_FG,
+            font=FONT_2,
         )
 
-        self.url_label.pack(pady=(20, 5), padx=20, anchor="w")
-        self.url_label.bind("<Button-1>", self.paste_urls)
-        self.url_label.bind("<Button-2>", self.clear_urls)
-        self.url_label.bind("<Enter>", lambda e: self.url_label.config(fg=ACCENT_COLOR))
-        self.url_label.bind("<Leave>", lambda e: self.url_label.config(fg=TEXT_COLOR))
-
-        # Frame to hold the Text widget and Scrollbar
+        self.version_label.place(relx=1.0, y=20, x=-20, anchor="ne")
         self.url_frame = tk.Frame(root, bg=BG_COLOR)
         self.url_frame.pack(padx=20, fill=tk.BOTH, expand=False)
 
@@ -344,16 +348,19 @@ class GUI:
         else:
             count = len(raw_text.split("\n"))
 
-        self.url_label.config(text=f"Source URLs ({count})")
+        self.url_label.config(text=f"URL List ({count})")
 
     def show_info_msg(self, id_: str) -> None:
         help_text = "No help available for this setting."
 
-        for action in config.parser._actions:
-            if action.dest == id_:
-                if action.help:
-                    help_text = action.help
-                break
+        if id_ == "urls":
+            help_text = "One URL per line. You can click the label to paste from the clipboard. Middle Clicking the label clears the textarea."
+        else:
+            for action in config.parser._actions:
+                if action.dest == id_:
+                    if action.help:
+                        help_text = action.help
+                    break
 
         messagebox.showinfo("Config Information", help_text)
 
@@ -373,6 +380,23 @@ class GUI:
             highlightthickness=0,
             relief="flat",
             cursor="hand2",
+        )
+
+    def info_button(self, frame: Any, what: str) -> tk.Button:
+        return tk.Button(
+            frame,
+            text="?",
+            command=self.make_help_cmd(what),
+            bg=BG_COLOR,
+            fg=ACCENT_COLOR,
+            activebackground=BG_COLOR,
+            activeforeground=TEXT_COLOR,
+            borderwidth=0,
+            relief="flat",
+            highlightthickness=0,
+            font=FONT_1,
+            cursor="hand2",
+            takefocus=0,
         )
 
     def text_entry(
@@ -409,23 +433,7 @@ class GUI:
         entry.insert(0, str(value))
         entry.xview(tk.END)
         self.entries[id_] = entry
-
-        help_btn = tk.Button(
-            frame,
-            text="?",
-            command=self.make_help_cmd(id_),
-            bg=BG_COLOR,
-            fg=ACCENT_COLOR,
-            activebackground=BG_COLOR,
-            activeforeground=TEXT_COLOR,
-            borderwidth=0,
-            relief="flat",
-            highlightthickness=0,
-            font=FONT_1,
-            cursor="hand2",
-            takefocus=0,
-        )
-
+        help_btn = self.info_button(frame, id_)
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
@@ -479,23 +487,7 @@ class GUI:
         )
 
         dropdown.grid(row=ROW, column=col + 1, pady=5, sticky="ew")
-
-        help_btn = tk.Button(
-            frame,
-            text="?",
-            command=self.make_help_cmd(id_),
-            bg=BG_COLOR,
-            fg=ACCENT_COLOR,
-            activebackground=BG_COLOR,
-            activeforeground=TEXT_COLOR,
-            borderwidth=0,
-            relief="flat",
-            highlightthickness=0,
-            font=FONT_1,
-            cursor="hand2",
-            takefocus=0,
-        )
-
+        help_btn = self.info_button(frame, id_)
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
@@ -533,23 +525,7 @@ class GUI:
         )
 
         checkbox.grid(row=ROW, column=col + 1, sticky="w", pady=5)
-
-        help_btn = tk.Button(
-            frame,
-            text="?",
-            command=self.make_help_cmd(id_),
-            bg=BG_COLOR,
-            fg=ACCENT_COLOR,
-            activebackground=BG_COLOR,
-            activeforeground=TEXT_COLOR,
-            borderwidth=0,
-            relief="flat",
-            highlightthickness=0,
-            font=FONT_1,
-            cursor="hand2",
-            takefocus=0,
-        )
-
+        help_btn = self.info_button(frame, id_)
         help_btn.grid(row=ROW, column=col + 2, padx=(5, 10))
         ROW += 1
 
