@@ -18,7 +18,7 @@ from data import data
 config = config_module.config
 
 WIDTH = 624
-HEIGHT = 550
+HEIGHT = 588
 ROW: int = 0
 INSTANCE = None
 BG_COLOR = "#121212"
@@ -302,6 +302,8 @@ class GUI:
             c_col,
         )
 
+        self.text_entry("audio", self.settings_frame, "Audio", config.audio, c_col)
+
         ROW = 0
         c_col = 3
 
@@ -339,6 +341,8 @@ class GUI:
             config.resolution,
             c_col,
         )
+
+        self.text_entry("watermark", self.settings_frame, "Watermark", config.watermark, c_col)
 
         self.button_frame = tk.Frame(root, bg=BG_COLOR)
         self.button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
@@ -685,6 +689,8 @@ class GUI:
         amount_val = self.entries["amount"].get().strip()
         open_val = self.bool_vars["open"].get()
         name = self.entries["name"].get()
+        watermark_val = self.entries["watermark"].get().strip()
+        audio_val = self.entries["audio"].get().strip()
 
         toml_lines = [
             f'path = "{path_val}"',
@@ -699,6 +705,8 @@ class GUI:
             f"clip_diff = {clip_diff_val}",
             f"fade = {fade_val}",
             f"amount = {amount_val}",
+            f'watermark = "{watermark_val}"',
+            f'audio = "{audio_val}"',
         ]
 
         if open_val:
@@ -758,6 +766,8 @@ class GUI:
         self.update_entry(self.entries["clip_diff"], config.clip_diff)
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
+        self.update_entry(self.entries["watermark"], config.watermark)
+        self.update_entry(self.entries["audio"], config.audio)
         self.string_vars["gpu"].set(config.gpu)
         self.string_vars["aspect_ratio"].set(config.aspect_ratio)
         self.string_vars["resolution"].set(config.resolution)
@@ -830,6 +840,8 @@ class GUI:
             "fade": self.entries["fade"].get().strip(),
             "amount": self.entries["amount"].get().strip(),
             "open": self.bool_vars["open"].get(),
+            "watermark": self.entries["watermark"].get().strip(),
+            "audio": self.entries["audio"].get().strip(),
         }
 
         config.update(props)

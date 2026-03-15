@@ -63,6 +63,8 @@ class Config:
         self.open = self.resolve("open", "open", False)
         self.multiple = self.resolve("multiple", "multiple", False)
         self.player = self.resolve("player", "player", "mpv")
+        self.watermark = self.resolve("watermark", "watermark", "")
+        self.audio = self.resolve("audio", "audio", "")
 
         self.combo_arg("gpu", ["cpu", "amd", "nvidia"])
         self.combo_arg("format", ["mp4", "mkv", "mov", "ts"])
@@ -198,6 +200,14 @@ class Config:
             "--fade", type=float, help="Crossfade duration between clips."
         )
 
+        self.parser.add_argument(
+            "--watermark", type=str, help="Text string to overlay as a watermark."
+        )
+
+        self.parser.add_argument(
+            "--audio", type=str, help="Path to a custom background audio file."
+        )
+
         args = self.parser.parse_args()
 
         cli_urls = []
@@ -312,6 +322,12 @@ class Config:
 
         if "multiple" in data:
             self.multiple = bool(data["multiple"])
+
+        if "watermark" in data:
+            self.watermark = str(data["watermark"])
+
+        if "audio" in data:
+            self.audio = str(data["audio"])
 
         self.refresh_paths()
 

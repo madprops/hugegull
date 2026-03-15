@@ -467,12 +467,39 @@ class Engine:
             if mode == "amd":
                 vf_filter = f"{vf_filter},format=nv12,hwupload"
 
-            af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
+            if config.watermark != "":
+                safe_text = config.watermark.replace(":", "\\:").replace("'", "\\'")
+                vf_filter = f"{vf_filter},drawtext=text='{safe_text}':fontcolor=white:fontsize=h/20:x=w-tw-20:y=h-th-20"
 
-            if is_split_stream:
-                command.extend(["-map", "0:v:0", "-map", "1:a:0"])
+            if config.audio != "":
+                command.extend(["-t", str(duration), "-vf", vf_filter])
             else:
-                command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
+                af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
+                command.extend(["-t", str(duration), "-vf", vf_filter, "-af", af_filter])
+
+            if config.audio != "":
+                command.extend(["-map", "0:v:0"])
+                command.extend(["-an", "-y", name])
+            else:
+                if is_split_stream:
+                    command.extend(["-map", "0:v:0", "-map", "1:a:0"])
+                else:
+                    command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
+
+                command.extend(
+                    [
+                        "-c:a",
+                        "aac",
+                        "-ar",
+                        "48000",
+                        "-ac",
+                        "2",
+                        "-video_track_timescale",
+                        "90000",
+                        "-y",
+                        name,
+                    ]
+                )
 
             command.extend(["-t", str(duration), "-vf", vf_filter, "-af", af_filter])
 
@@ -621,13 +648,27 @@ class Engine:
             "0",
             "-i",
             list_file,
-            "-c",
-            "copy",
+        ]
+
+        if config.audio != "":
+            command.extend(["-stream_loop", "-1", "-i", config.audio])
+
+            command.extend([
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-shortest"
+            ])
+        else:
+            command.extend(["-c", "copy"])
+
+        command.extend([
             "-video_track_timescale",
             "90000",
             "-y",
             self.file,
-        ]
+        ])
 
         try:
             result = self.run_process(command, self.concat_timeout)
