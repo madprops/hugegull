@@ -371,9 +371,6 @@ class GUI:
         event.widget.tk_focusPrev().focus()
         return "break"
 
-    def clear_text(self, entry: tk.Entry) -> None:
-        entry.delete(0, tk.END)
-
     def select_all(self, event: Any = None) -> str:
         if event is not None:
             if isinstance(event.widget, tk.Entry):
@@ -484,6 +481,18 @@ class GUI:
 
         return help_text
 
+    def get_default_value(self, id_: str) -> str:
+        original_argv = sys.argv.copy()
+        sys.argv = [sys.argv[0]]
+
+        try:
+            temp_config = config_module.Config()
+            val = getattr(temp_config, id_, "")
+        finally:
+            sys.argv = original_argv
+
+        return str(val)
+
     def show_info_msg(self, id_: str) -> None:
         help_text = "No help available for this setting."
 
@@ -552,7 +561,8 @@ class GUI:
         self.entries[id_] = entry
 
         def on_middle_click(event: Any) -> None:
-            self.clear_text(entry)
+            default_val = self.get_default_value(id_)
+            self.update_entry(entry, default_val)
 
         label.bind("<Button-2>", on_middle_click)
         ROW += 1
@@ -603,6 +613,12 @@ class GUI:
 
         dropdown["menu"].config(bg=WIDGET_BG, fg=TEXT_COLOR_2, font=FONT_3)
         dropdown.grid(row=ROW, column=col + 1, pady=5, sticky="ew")
+
+        def on_middle_click(event: Any) -> None:
+            default_val = self.get_default_value(id_)
+            self.string_vars[id_].set(default_val)
+
+        label.bind("<Button-2>", on_middle_click)
         ROW += 1
 
     def checkbox_pack(
