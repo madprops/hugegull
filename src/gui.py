@@ -254,7 +254,7 @@ class GUI:
         self.url_text.bind("<Shift-Tab>", self.focus_prev_widget)
         self.url_text.bind("<ISO_Left_Tab>", self.focus_prev_widget)
         self.url_text.bind("<KeyRelease>", self.update_url_count)
-        self.url_text.bind("<FocusOut>", self.deselect_all) # Add this line
+        self.url_text.bind("<FocusOut>", self.deselect_all)
 
         self.update_url_count()
 
@@ -543,7 +543,7 @@ class GUI:
         entry.xview(tk.END)
         entry.bind("<Control-a>", self.select_all)
         entry.bind("<Control-A>", self.select_all)
-        entry.bind("<FocusOut>", self.deselect_all) # Add this line
+        entry.bind("<FocusOut>", self.deselect_all)
         self.entries[id_] = entry
         ROW += 1
 
