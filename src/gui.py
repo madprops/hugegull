@@ -30,7 +30,6 @@ FONT_1 = ("helvetica", 10, "bold")
 FONT_2 = ("helvetica", 10)
 FONT_3 = ("helvetica", 12)
 FONT_4 = ("monospace", 12)
-
 LOCKS = []
 
 
@@ -65,7 +64,6 @@ def enforce_singleton(app_name: str) -> None:
 
 def main() -> None:
     enforce_singleton(info.name)
-
     utils.set_proc_name(info.name)
     main_window = tk.Tk(className=info.name)
     main_window.minsize(WIDTH, HEIGHT)
