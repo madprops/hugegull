@@ -30,40 +30,9 @@ FONT_1 = ("helvetica", 10, "bold")
 FONT_2 = ("helvetica", 10)
 FONT_3 = ("helvetica", 12)
 FONT_4 = ("monospace", 12)
-LOCKS = []
-
-
-def enforce_singleton(app_name: str) -> None:
-    if os.name == "nt":
-        import ctypes
-
-        mutex_name = f"Global\\{app_name}_mutex"
-        mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)  # type: ignore
-        last_error = ctypes.windll.kernel32.GetLastError()  # type: ignore
-
-        if last_error == 183:
-            print(f"An instance of {app_name} is already running.")
-            sys.exit(1)
-
-        LOCKS.append(mutex)
-    else:
-        import fcntl
-        import tempfile
-
-        lock_path = os.path.join(tempfile.gettempdir(), f"{app_name}.lock")
-        lock_file = open(lock_path, "w")
-
-        try:
-            fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
-            print(f"An instance of {app_name} is already running.")
-            sys.exit(1)
-
-        LOCKS.append(lock_file)
 
 
 def main() -> None:
-    enforce_singleton(info.name)
     utils.set_proc_name(info.name)
     main_window = tk.Tk(className=info.name)
     main_window.minsize(WIDTH, HEIGHT)

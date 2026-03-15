@@ -89,7 +89,7 @@ fade = 0.03
 | **Name** | `--name` | `name` | *Random* | Output filename. (Env: `HUGE_NAME`) |
 | **Config Path** | `--config` | *N/A* | `~/.config/hugegull/config.toml` | Path to a custom TOML config file. |
 | **Output Path** | `--path` | `path` | Script directory | Base directory for the `temp` and `output` folders. |
-| **Open** | `--open` | *N/A* | `False` | Opens the final video file automatically when finished. |
+| **Open** | `--open` | `open` | `False` | Opens the final video file automatically when finished. |
 | **GPU** | `--gpu` | `gpu` | `""` | Hardware acceleration identifier (e.g., "amd"). |
 | **Amount** | `--amount` | `amount` | `1` | Total number of output videos to generate. |
 | **Total Duration** | `--duration` | `duration` | `35` | Total target duration (in seconds) of the output video. |
@@ -99,6 +99,7 @@ fade = 0.03
 | **Clip Duration** | `--clip-duration`| `clip_duration`| `6.0` | Average duration for a single grabbed section. |
 | **Clip Diff** | `--clip-diff`| `clip_diff`| `3.0` | The range around the clip duration, more or less. |
 | **Player** | `--player`| `player`| `mpv` | Name of the video player to open files. |
+| **Multiple** | `--multiple`| `multiple`| `False` | Allow multiple instances to be opened. |
 
 ---
 

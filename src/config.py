@@ -58,6 +58,7 @@ class Config:
         self.gpu = self.resolve("gpu", "gpu", "cpu")
         self.path = self.resolve("path", "path", self.path)
         self.open = self.resolve("open", "open", False)
+        self.multiple = self.resolve("multiple", "multiple", False)
         self.player = self.resolve("player", "player", "mpv")
 
         if self.gpu not in ["cpu", "amd", "nvidia"]:
@@ -92,6 +93,13 @@ class Config:
             action="store_true",
             default=None,
             help="Opens the final video file automatically when finished.",
+        )
+
+        self.parser.add_argument(
+            "--multiple",
+            action="store_true",
+            default=None,
+            help="Allow multiple instances to be opened.",
         )
 
         self.parser.add_argument(
@@ -263,6 +271,9 @@ class Config:
 
         if "open" in data:
             self.open = bool(data["open"])
+
+        if "multiple" in data:
+            self.multiple = bool(data["multiple"])
 
         self.refresh_paths()
 
