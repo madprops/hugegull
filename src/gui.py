@@ -828,6 +828,8 @@ class GUI:
         self.update_entry(self.entries["clip_diff"], config.clip_diff)
         self.update_entry(self.entries["fade"], config.fade)
         self.update_entry(self.entries["amount"], config.amount)
+        self.update_entry(self.entries["audio"], config.audio)
+        self.update_entry(self.entries["watermark"], config.watermark)
         self.string_vars["gpu"].set(config.gpu)
         self.string_vars["aspect_ratio"].set(config.aspect_ratio)
         self.string_vars["resolution"].set(config.resolution)
