@@ -22,7 +22,7 @@ class Engine:
     def __init__(self) -> None:
         self.sources: list[dict[str, Any]] = []
         self.clips: dict[str, float] = {}
-        self.workers = 6
+        self.workers = 3
         self.max_width = 0
         self.max_height = 0
         self.clip_timeout = 120
@@ -216,9 +216,10 @@ class Engine:
             return False
 
         amount = config.amount or 1
-        total_needed_duration = config.duration * amount * 1.3
+        total_needed_duration = config.duration * amount
+        buffer_duration = total_needed_duration * 1.3
         utils.info(f"Generating clip pool for {amount} videos...")
-        self.generate_random_clips(total_needed_duration)
+        self.generate_random_clips(buffer_duration, total_needed_duration)
 
         if len(self.clips) == 0:
             if not data.abort:
@@ -380,7 +381,7 @@ class Engine:
 
         return sections
 
-    def extract_single_clip(
+def extract_single_clip(
         self, i: int, section: dict[str, Any]
     ) -> tuple[str, float] | None:
         if data.abort:
@@ -397,19 +398,57 @@ class Engine:
         if a_url is not None:
             is_split_stream = True
 
-        if config.audio != "" or is_live:
-            duration = base_duration
-        else:
-            duration = self.find_silence_end(
-                v_data=v_data,
-                a_url=a_url,
-                start=start,
-                min_dur=base_duration,
-                max_search=5.0,
-            )
+        use_local_cache = False
+
+        if config.audio == "":
+
+            if not is_live:
+
+                if str(v_data).startswith("http"):
+                    use_local_cache = True
 
         ext = config.format
         name = os.path.join(config.project_dir, f"temp_clip_{i + 1}.{ext}")
+        local_cache_file = os.path.join(config.project_dir, f"local_cache_{i + 1}.mkv")
+
+        if use_local_cache:
+            dl_duration = base_duration + 5.0
+            dl_cmd = ["ffmpeg", "-ss", str(start), "-i", v_data]
+
+            if is_split_stream:
+                dl_cmd.extend(["-ss", str(start), "-i", a_url])
+                dl_cmd.extend(["-map", "0:v:0", "-map", "1:a:0"])
+            else:
+                dl_cmd.extend(["-map", "0:v:0", "-map", "0:a:0?"])
+
+            dl_cmd.extend(["-t", str(dl_duration), "-c", "copy", "-y", local_cache_file])
+
+            res = self.run_process(dl_cmd, self.clip_timeout)
+
+            if res.returncode == 0:
+                # Override network vars to use our fast local file
+                v_data = local_cache_file
+                a_url = None
+                is_split_stream = False
+                start = 0.0
+            else:
+                utils.error(f"Failed to create local cache for clip {i + 1}, falling back to network.")
+                use_local_cache = False
+
+        if config.audio != "":
+            duration = base_duration
+        else:
+            if is_live:
+                duration = base_duration
+            else:
+                duration = self.find_silence_end(
+                    v_data=v_data,
+                    a_url=a_url,
+                    start=start,
+                    min_dur=base_duration,
+                    max_search=5.0,
+                )
+
         modes_to_try = [config.gpu]
 
         if config.gpu in ("amd", "nvidia"):
@@ -468,7 +507,7 @@ class Engine:
                 ratio_h = 9
 
                 if config.aspect_ratio == "original":
-                    if self.max_width > 0 and self.max_height > 0:
+                    if ((self.max_width > 0) and (self.max_height > 0)):
                         ratio_w = self.max_width
                         ratio_h = self.max_height
                 else:
@@ -600,6 +639,14 @@ class Engine:
             if url_lock is not None:
                 url_lock.release()
 
+            if use_local_cache:
+
+                if os.path.exists(local_cache_file):
+                    try:
+                        os.remove(local_cache_file)
+                    except Exception:
+                        pass
+
         return None
 
     def concatenate_clips(self, selected_clips: list[str]) -> bool:
@@ -679,11 +726,15 @@ class Engine:
 
         return True
 
-    def generate_random_clips(self, target_duration: float) -> None:
+    def generate_random_clips(self, target_duration: float, required_duration: float = 0.0) -> None:
         if data.abort:
             return
 
         sections = self.generate_clip_sections(target_duration)
+        accumulated_duration = 0.0
+
+        if required_duration == 0.0:
+            required_duration = target_duration
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.workers
@@ -706,6 +757,12 @@ class Engine:
                 if result is not None:
                     clip_path, duration = result
                     self.clips[clip_path] = duration
+                    accumulated_duration += duration
+
+                    if accumulated_duration >= required_duration:
+                        for f in futures:
+                            f.cancel()
+                        break
 
     def select_clips_for_duration(
         self, target_duration: float, available_clips: list[str]
