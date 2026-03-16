@@ -606,6 +606,7 @@ class GUI:
 
         def increment() -> None:
             change_value(1)
+
         btn_minus = tk.Button(
             entry_frame,
             text="-",
@@ -619,7 +620,7 @@ class GUI:
             relief="flat",
             cursor="hand2",
             padx=6,
-            pady=0
+            pady=0,
         )
 
         btn_minus.pack(side=tk.LEFT)
@@ -657,7 +658,7 @@ class GUI:
             relief="flat",
             cursor="hand2",
             padx=6,
-            pady=0
+            pady=0,
         )
 
         btn_plus.pack(side=tk.LEFT)
