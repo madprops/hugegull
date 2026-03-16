@@ -442,11 +442,16 @@ class Engine:
                     command.extend(["-ss", str(start)])
 
                 if v_data.startswith("http"):
-                    command.extend([
-                        "-reconnect", "1",
-                        "-reconnect_streamed", "1",
-                        "-reconnect_delay_max", "5"
-                    ])
+                    command.extend(
+                        [
+                            "-reconnect",
+                            "1",
+                            "-reconnect_streamed",
+                            "1",
+                            "-reconnect_delay_max",
+                            "5",
+                        ]
+                    )
 
                 command.extend(["-i", v_data])
 
@@ -687,7 +692,9 @@ class Engine:
 
         return True
 
-    def generate_random_clips(self, target_duration: float, required_duration: float = 0.0) -> None:
+    def generate_random_clips(
+        self, target_duration: float, required_duration: float = 0.0
+    ) -> None:
         if data.abort:
             return
 
@@ -721,9 +728,9 @@ class Engine:
                     accumulated_duration += duration
 
                     if accumulated_duration >= required_duration:
-                        # Once we hit the 100% target, drop the remaining tasks
                         for f in futures:
                             f.cancel()
+
                         break
 
     def select_clips_for_duration(
