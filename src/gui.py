@@ -268,8 +268,8 @@ class GUI:
 
         self.text_entry("name", self.settings_frame, "Name", "", c_col)
         self.text_entry("path", self.settings_frame, "Path", config.path, c_col)
-        self.text_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
-        self.text_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
+        self.number_entry("fps", self.settings_frame, "FPS", config.fps, c_col)
+        self.number_entry("crf", self.settings_frame, "CRF", config.crf, c_col)
 
         gpu_choices = []
 
@@ -308,13 +308,13 @@ class GUI:
         ROW = 0
         c_col = 3
 
-        self.text_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
+        self.number_entry("amount", self.settings_frame, "Amount", config.amount, c_col)
 
-        self.text_entry(
+        self.number_entry(
             "duration", self.settings_frame, "Duration", config.duration, c_col
         )
 
-        self.text_entry(
+        self.number_entry(
             "clip_duration",
             self.settings_frame,
             "Clip Duration",
@@ -322,11 +322,11 @@ class GUI:
             c_col,
         )
 
-        self.text_entry(
+        self.number_entry(
             "clip_diff", self.settings_frame, "Clip Diff", config.clip_diff, c_col
         )
 
-        self.text_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
+        self.number_entry("fade", self.settings_frame, "Fade", config.fade, c_col)
 
         res_choices = []
 
@@ -550,6 +550,7 @@ class GUI:
             relief="flat",
             highlightthickness=0,
             font=FONT_4,
+            width=20,
         )
 
         entry.pack(padx=4, pady=4)
@@ -559,6 +560,107 @@ class GUI:
         entry.bind("<Control-A>", self.select_all)
         entry.bind("<FocusOut>", self.deselect_all)
         self.entries[id_] = entry
+
+        def on_middle_click(event: Any) -> None:
+            default_val = self.get_default_value(id_)
+            self.update_entry(entry, default_val)
+
+        label.bind("<Button-2>", on_middle_click)
+        ROW += 1
+
+    def number_entry(
+        self, id_: str, frame: tk.Frame, text: str, value: Any, col: int
+    ) -> None:
+        global ROW
+
+        label = tk.Label(
+            frame,
+            text=text,
+            bg=BG_COLOR,
+            fg=TEXT_COLOR,
+            font=FONT_3,
+        )
+
+        label.grid(row=ROW, column=col, sticky="e", padx=(10, 10), pady=0)
+        self.labels[id_] = label
+        ToolTip(label, self.get_help_text(id_))
+
+        entry_frame = tk.Frame(frame, bg=WIDGET_BG)
+        entry_frame.grid(row=ROW, column=col + 1, pady=5, sticky="w")
+
+        def change_value(amount: int) -> None:
+            current_str = entry.get()
+            try:
+                if "." in current_str:
+                    new_val = round(float(current_str) + amount, 2)
+                else:
+                    new_val = int(current_str) + amount
+
+                entry.delete(0, tk.END)
+                entry.insert(0, str(new_val))
+            except ValueError:
+                pass
+
+        def decrement() -> None:
+            change_value(-1)
+
+        def increment() -> None:
+            change_value(1)
+        btn_minus = tk.Button(
+            entry_frame,
+            text="-",
+            command=decrement,
+            bg=DISABLED_BG,
+            fg=TEXT_COLOR_2,
+            font=BUTTON_FONT,
+            activebackground=TEXT_COLOR,
+            activeforeground=BG_COLOR,
+            highlightthickness=0,
+            relief="flat",
+            cursor="hand2",
+            padx=6,
+            pady=0
+        )
+
+        btn_minus.pack(side=tk.LEFT)
+
+        entry = tk.Entry(
+            entry_frame,
+            bg=WIDGET_BG,
+            fg=TEXT_COLOR_2,
+            insertbackground=TEXT_COLOR,
+            borderwidth=0,
+            relief="flat",
+            highlightthickness=0,
+            font=FONT_4,
+            width=15,
+        )
+
+        entry.pack(side=tk.LEFT, padx=4, pady=4)
+        entry.insert(0, str(value))
+        entry.xview(tk.END)
+        entry.bind("<Control-a>", self.select_all)
+        entry.bind("<Control-A>", self.select_all)
+        entry.bind("<FocusOut>", self.deselect_all)
+        self.entries[id_] = entry
+
+        btn_plus = tk.Button(
+            entry_frame,
+            text="+",
+            command=increment,
+            bg=DISABLED_BG,
+            fg=TEXT_COLOR_2,
+            font=BUTTON_FONT,
+            activebackground=TEXT_COLOR,
+            activeforeground=BG_COLOR,
+            highlightthickness=0,
+            relief="flat",
+            cursor="hand2",
+            padx=6,
+            pady=0
+        )
+
+        btn_plus.pack(side=tk.LEFT)
 
         def on_middle_click(event: Any) -> None:
             default_val = self.get_default_value(id_)
