@@ -211,10 +211,7 @@ class Engine:
         self.prepare_sources()
 
         if len(self.sources) == 0:
-            utils.info(
-                "No valid sources found in the pool. Stream is invalid."
-            )
-
+            utils.info("No valid sources found in the pool. Stream is invalid.")
             self.cleanup()
             return False
 
@@ -530,7 +527,14 @@ class Engine:
                         adjusted_crf = 0
 
                     command.extend(
-                        ["-c:v", "h264_vaapi", "-rc_mode", "CQP", "-qp", str(adjusted_crf)]
+                        [
+                            "-c:v",
+                            "h264_vaapi",
+                            "-rc_mode",
+                            "CQP",
+                            "-qp",
+                            str(adjusted_crf),
+                        ]
                     )
                 elif mode == "nvidia":
                     adjusted_crf = config.crf - 4
@@ -539,15 +543,28 @@ class Engine:
                         adjusted_crf = 0
 
                     command.extend(
-                        ["-c:v", "h264_nvenc", "-cq", str(adjusted_crf), "-preset", "p6"]
+                        [
+                            "-c:v",
+                            "h264_nvenc",
+                            "-cq",
+                            str(adjusted_crf),
+                            "-preset",
+                            "p6",
+                        ]
                     )
                 else:
                     command.extend(
-                        ["-c:v", "libx264", "-preset", "medium", "-crf", str(config.crf)]
+                        [
+                            "-c:v",
+                            "libx264",
+                            "-preset",
+                            "medium",
+                            "-crf",
+                            str(config.crf),
+                        ]
                     )
 
                 command.extend(["-video_track_timescale", "90000", "-y", name])
-
                 gui.update_progress(f"Clip {i + 1}")
 
                 utils.action(
@@ -567,7 +584,9 @@ class Engine:
                         utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
                 except subprocess.TimeoutExpired:
-                    utils.error(f"Timeout expired. Extracting clip {i + 1} using {mode}.")
+                    utils.error(
+                        f"Timeout expired. Extracting clip {i + 1} using {mode}."
+                    )
 
                     if mode != modes_to_try[-1]:
                         utils.info(f"Retrying clip {i + 1} with CPU fallback...")
