@@ -401,9 +401,7 @@ class Engine:
         use_local_cache = False
 
         if config.audio == "":
-
             if not is_live:
-
                 if str(v_data).startswith("http"):
                     use_local_cache = True
 
@@ -421,7 +419,9 @@ class Engine:
             else:
                 dl_cmd.extend(["-map", "0:v:0", "-map", "0:a:0?"])
 
-            dl_cmd.extend(["-t", str(dl_duration), "-c", "copy", "-y", local_cache_file])
+            dl_cmd.extend(
+                ["-t", str(dl_duration), "-c", "copy", "-y", local_cache_file]
+            )
 
             res = self.run_process(dl_cmd, self.clip_timeout)
 
@@ -432,7 +432,10 @@ class Engine:
                 is_split_stream = False
                 start = 0.0
             else:
-                utils.error(f"Failed to create local cache for clip {i + 1}, falling back to network.")
+                utils.error(
+                    f"Failed to create local cache for clip {i + 1}, falling back to network."
+                )
+
                 use_local_cache = False
 
         if config.audio != "":
@@ -507,7 +510,7 @@ class Engine:
                 ratio_h = 9
 
                 if config.aspect_ratio == "original":
-                    if ((self.max_width > 0) and (self.max_height > 0)):
+                    if (self.max_width > 0) and (self.max_height > 0):
                         ratio_w = self.max_width
                         ratio_h = self.max_height
                 else:
@@ -640,7 +643,6 @@ class Engine:
                 url_lock.release()
 
             if use_local_cache:
-
                 if os.path.exists(local_cache_file):
                     try:
                         os.remove(local_cache_file)
@@ -726,7 +728,9 @@ class Engine:
 
         return True
 
-    def generate_random_clips(self, target_duration: float, required_duration: float = 0.0) -> None:
+    def generate_random_clips(
+        self, target_duration: float, required_duration: float = 0.0
+    ) -> None:
         if data.abort:
             return
 
