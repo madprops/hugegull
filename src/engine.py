@@ -22,7 +22,7 @@ class Engine:
     def __init__(self) -> None:
         self.sources: list[dict[str, Any]] = []
         self.clips: dict[str, float] = {}
-        self.workers = 6
+        self.workers = 3
         self.max_width = 0
         self.max_height = 0
         self.clip_timeout = 120
@@ -216,9 +216,10 @@ class Engine:
             return False
 
         amount = config.amount or 1
-        total_needed_duration = config.duration * amount * 1.3
+        total_needed_duration = config.duration * amount
+        buffer_duration = total_needed_duration * 1.3
         utils.info(f"Generating clip pool for {amount} videos...")
-        self.generate_random_clips(total_needed_duration)
+        self.generate_random_clips(buffer_duration, total_needed_duration)
 
         if len(self.clips) == 0:
             if not data.abort:
@@ -439,6 +440,13 @@ class Engine:
 
                 if not is_live:
                     command.extend(["-ss", str(start)])
+
+                if v_data.startswith("http"):
+                    command.extend([
+                        "-reconnect", "1",
+                        "-reconnect_streamed", "1",
+                        "-reconnect_delay_max", "5"
+                    ])
 
                 command.extend(["-i", v_data])
 
@@ -679,11 +687,15 @@ class Engine:
 
         return True
 
-    def generate_random_clips(self, target_duration: float) -> None:
+    def generate_random_clips(self, target_duration: float, required_duration: float = 0.0) -> None:
         if data.abort:
             return
 
         sections = self.generate_clip_sections(target_duration)
+        accumulated_duration = 0.0
+
+        if required_duration == 0.0:
+            required_duration = target_duration
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.workers
@@ -706,6 +718,13 @@ class Engine:
                 if result is not None:
                     clip_path, duration = result
                     self.clips[clip_path] = duration
+                    accumulated_duration += duration
+
+                    if accumulated_duration >= required_duration:
+                        # Once we hit the 100% target, drop the remaining tasks
+                        for f in futures:
+                            f.cancel()
+                        break
 
     def select_clips_for_duration(
         self, target_duration: float, available_clips: list[str]
