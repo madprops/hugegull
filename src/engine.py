@@ -32,8 +32,7 @@ class Engine:
         self.min_clip_duration = 0.5
         self.active_processes: list[subprocess.Popen[str]] = []
         self.files: list[str] = []
-        self.live_locks: dict[str, threading.Lock] = {}
-        self.lock_mutex = threading.Lock()
+        self.extraction_complete = threading.Event()
 
     def kill_all_processes(self) -> None:
         for p in self.active_processes:
@@ -58,12 +57,22 @@ class Engine:
             while True:
                 if data.abort:
                     process.terminate()
-                    process.wait()
+
+                    try:
+                        process.wait(timeout=2.0)
+                    except subprocess.TimeoutExpired:
+                        pass
+
                     return subprocess.CompletedProcess(process.args, 1, "", "Aborted")
 
                 if time.time() > end_time:
                     process.kill()
-                    process.wait()
+
+                    try:
+                        process.wait(timeout=2.0)
+                    except subprocess.TimeoutExpired:
+                        pass
+
                     raise subprocess.TimeoutExpired(process.args, timeout_val)
 
                 try:
@@ -156,9 +165,11 @@ class Engine:
             source["duration"] = duration
             source["width"] = width
             source["height"] = height
+
             return source
         else:
             utils.info(f"Could not determine valid data for {url}, skipping.")
+
             return None
 
     def prepare_sources(self) -> None:
@@ -319,6 +330,7 @@ class Engine:
                 if len(metadata["requested_formats"]) >= 2:
                     v_data = metadata["requested_formats"][0]["url"]
                     a_url = metadata["requested_formats"][1]["url"]
+
                     return {"v_data": v_data, "a_url": a_url, "duration": duration}
                 else:
                     return {
@@ -335,6 +347,7 @@ class Engine:
 
         except Exception as e:
             utils.error(f"Error parsing yt-dlp output: {e}")
+
             return None
 
     def generate_clip_sections(self, target_duration: float) -> list[dict[str, Any]]:
@@ -387,6 +400,9 @@ class Engine:
         if data.abort:
             return None
 
+        if self.extraction_complete.is_set():
+            return None
+
         source = section["source"]
         start = section["start"]
         base_duration = section["duration"]
@@ -418,200 +434,190 @@ class Engine:
         else:
             modes_to_try = ["cpu"]
 
-        url_lock = None
+        for mode in modes_to_try:
+            if self.extraction_complete.is_set():
+                return None
 
-        if is_live:
-            with self.lock_mutex:
-                if v_data not in self.live_locks:
-                    self.live_locks[v_data] = threading.Lock()
+            command = ["ffmpeg"]
 
-                url_lock = self.live_locks[v_data]
+            if mode == "amd":
+                command.extend(["-vaapi_device", "/dev/dri/renderD128"])
+            elif mode == "nvidia":
+                command.extend(["-hwaccel", "cuda"])
 
-            url_lock.acquire()
+            if not is_live:
+                command.extend(["-ss", str(start)])
 
-        try:
-            for mode in modes_to_try:
-                command = ["ffmpeg"]
+            if v_data.startswith("http"):
+                command.extend(
+                    [
+                        "-rw_timeout",
+                        "8000000",
+                        "-reconnect",
+                        "1",
+                        "-reconnect_streamed",
+                        "1",
+                        "-reconnect_delay_max",
+                        "5",
+                    ]
+                )
 
-                if mode == "amd":
-                    command.extend(["-vaapi_device", "/dev/dri/renderD128"])
-                elif mode == "nvidia":
-                    command.extend(["-hwaccel", "cuda"])
+            command.extend(["-i", v_data])
 
+            if is_split_stream:
                 if not is_live:
                     command.extend(["-ss", str(start)])
 
-                if v_data.startswith("http"):
-                    command.extend(
-                        [
-                            "-reconnect",
-                            "1",
-                            "-reconnect_streamed",
-                            "1",
-                            "-reconnect_delay_max",
-                            "5",
-                        ]
-                    )
+                command.extend(["-i", a_url])
 
-                command.extend(["-i", v_data])
+            fade_out_start = duration - config.fade
 
-                if is_split_stream:
-                    if not is_live:
-                        command.extend(["-ss", str(start)])
+            if config.resolution == "720p":
+                baseline = 720
+            elif config.resolution == "1080p":
+                baseline = 1080
+            elif config.resolution == "1440p":
+                baseline = 1440
+            elif config.resolution == "4k":
+                baseline = 2160
+            else:
+                baseline = min(self.max_width, self.max_height)
 
-                    command.extend(["-i", a_url])
+            if baseline == 0:
+                baseline = 720
 
-                fade_out_start = duration - config.fade
+            ratio_w = 16
+            ratio_h = 9
 
-                if config.resolution == "720p":
-                    baseline = 720
-                elif config.resolution == "1080p":
-                    baseline = 1080
-                elif config.resolution == "1440p":
-                    baseline = 1440
-                elif config.resolution == "4k":
-                    baseline = 2160
-                else:
-                    baseline = min(self.max_width, self.max_height)
+            if config.aspect_ratio == "original":
+                if self.max_width > 0 and self.max_height > 0:
+                    ratio_w = self.max_width
+                    ratio_h = self.max_height
+            else:
+                try:
+                    parts = config.aspect_ratio.split(":")
 
-                if baseline == 0:
-                    baseline = 720
+                    if len(parts) == 2:
+                        ratio_w = int(parts[0])
+                        ratio_h = int(parts[1])
+                except (ValueError, AttributeError):
+                    pass
 
-                ratio_w = 16
-                ratio_h = 9
+            if ratio_w >= ratio_h:
+                pad_h = baseline
+                pad_w = int(baseline * ratio_w / ratio_h)
+            else:
+                pad_w = baseline
+                pad_h = int(baseline * ratio_h / ratio_w)
 
-                if config.aspect_ratio == "original":
-                    if self.max_width > 0 and self.max_height > 0:
-                        ratio_w = self.max_width
-                        ratio_h = self.max_height
-                else:
-                    try:
-                        parts = config.aspect_ratio.split(":")
+            if pad_w % 2 != 0:
+                pad_w += 1
 
-                        if len(parts) == 2:
-                            ratio_w = int(parts[0])
-                            ratio_h = int(parts[1])
-                    except (ValueError, AttributeError):
-                        pass
+            if pad_h % 2 != 0:
+                pad_h += 1
 
-                if ratio_w >= ratio_h:
-                    pad_h = baseline
-                    pad_w = int(baseline * ratio_w / ratio_h)
-                else:
-                    pad_w = baseline
-                    pad_h = int(baseline * ratio_h / ratio_w)
+            vf_filter = f"scale={pad_w}:{pad_h}:force_original_aspect_ratio=decrease,pad={pad_w}:{pad_h}:(ow-iw)/2:(oh-ih)/2,fps={config.fps},setsar=1"
 
-                if pad_w % 2 != 0:
-                    pad_w += 1
+            if config.watermark != "":
+                safe_text = config.watermark.replace(":", "\\:").replace("'", "\\'")
+                vf_filter = f"{vf_filter},drawtext=text='{safe_text}':fontcolor=white:fontsize=h/20:x=w-tw-20:y=h-th-20"
 
-                if pad_h % 2 != 0:
-                    pad_h += 1
+            if mode == "amd":
+                vf_filter = f"{vf_filter},format=nv12,hwupload"
 
-                vf_filter = f"scale={pad_w}:{pad_h}:force_original_aspect_ratio=decrease,pad={pad_w}:{pad_h}:(ow-iw)/2:(oh-ih)/2,fps={config.fps},setsar=1"
+            if config.audio != "":
+                command.extend(["-t", str(duration), "-vf", vf_filter])
+                command.extend(["-map", "0:v:0", "-an"])
+            else:
+                af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
 
-                if config.watermark != "":
-                    safe_text = config.watermark.replace(":", "\\:").replace("'", "\\'")
-                    vf_filter = f"{vf_filter},drawtext=text='{safe_text}':fontcolor=white:fontsize=h/20:x=w-tw-20:y=h-th-20"
-
-                if mode == "amd":
-                    vf_filter = f"{vf_filter},format=nv12,hwupload"
-
-                if config.audio != "":
-                    command.extend(["-t", str(duration), "-vf", vf_filter])
-                    command.extend(["-map", "0:v:0", "-an"])
-                else:
-                    af_filter = f"afade=t=in:st=0:d={config.fade},afade=t=out:st={fade_out_start}:d={config.fade}"
-
-                    command.extend(
-                        ["-t", str(duration), "-vf", vf_filter, "-af", af_filter]
-                    )
-
-                    if is_split_stream:
-                        command.extend(["-map", "0:v:0", "-map", "1:a:0"])
-                    else:
-                        command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
-
-                    command.extend(["-c:a", "aac", "-ar", "48000", "-ac", "2"])
-
-                if mode == "amd":
-                    adjusted_crf = config.crf - 4
-
-                    if adjusted_crf < 0:
-                        adjusted_crf = 0
-
-                    command.extend(
-                        [
-                            "-c:v",
-                            "h264_vaapi",
-                            "-rc_mode",
-                            "CQP",
-                            "-qp",
-                            str(adjusted_crf),
-                        ]
-                    )
-                elif mode == "nvidia":
-                    adjusted_crf = config.crf - 4
-
-                    if adjusted_crf < 0:
-                        adjusted_crf = 0
-
-                    command.extend(
-                        [
-                            "-c:v",
-                            "h264_nvenc",
-                            "-cq",
-                            str(adjusted_crf),
-                            "-preset",
-                            "p6",
-                        ]
-                    )
-                else:
-                    command.extend(
-                        [
-                            "-c:v",
-                            "libx264",
-                            "-preset",
-                            "medium",
-                            "-crf",
-                            str(config.crf),
-                        ]
-                    )
-
-                command.extend(["-video_track_timescale", "90000", "-y", name])
-                gui.update_progress(f"Clip {i + 1}")
-
-                utils.action(
-                    f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s) ({mode})"
+                command.extend(
+                    ["-t", str(duration), "-vf", vf_filter, "-af", af_filter]
                 )
 
-                try:
-                    result = self.run_process(command, self.clip_timeout)
+                if is_split_stream:
+                    command.extend(["-map", "0:v:0", "-map", "1:a:0"])
+                else:
+                    command.extend(["-map", "0:v:0", "-map", "0:a:0?"])
 
-                    if result.returncode == 0:
-                        return name, duration
+                command.extend(["-c:a", "aac", "-ar", "48000", "-ac", "2"])
 
-                    utils.error(f"Error extracting clip {i + 1} using {mode}:")
-                    utils.error(result.stderr)
+            if mode == "amd":
+                adjusted_crf = config.crf - 4
 
-                    if mode != modes_to_try[-1]:
-                        utils.info(f"Retrying clip {i + 1} with CPU fallback...")
+                if adjusted_crf < 0:
+                    adjusted_crf = 0
 
-                except subprocess.TimeoutExpired:
-                    utils.error(
-                        f"Timeout expired. Extracting clip {i + 1} using {mode}."
-                    )
+                command.extend(
+                    [
+                        "-c:v",
+                        "h264_vaapi",
+                        "-rc_mode",
+                        "CQP",
+                        "-qp",
+                        str(adjusted_crf),
+                    ]
+                )
+            elif mode == "nvidia":
+                adjusted_crf = config.crf - 4
 
-                    if mode != modes_to_try[-1]:
-                        utils.info(f"Retrying clip {i + 1} with CPU fallback...")
+                if adjusted_crf < 0:
+                    adjusted_crf = 0
 
-                except Exception as e:
-                    utils.error(f"Exception extracting clip {i + 1} using {mode}: {e}")
+                command.extend(
+                    [
+                        "-c:v",
+                        "h264_nvenc",
+                        "-cq",
+                        str(adjusted_crf),
+                        "-preset",
+                        "p6",
+                    ]
+                )
+            else:
+                command.extend(
+                    [
+                        "-c:v",
+                        "libx264",
+                        "-preset",
+                        "medium",
+                        "-crf",
+                        str(config.crf),
+                    ]
+                )
 
-                    if mode != modes_to_try[-1]:
-                        utils.info(f"Retrying clip {i + 1} with CPU fallback...")
-        finally:
-            if url_lock is not None:
-                url_lock.release()
+            command.extend(["-video_track_timescale", "90000", "-y", name])
+            gui.update_progress(f"Clip {i + 1}")
+
+            utils.action(
+                f"Clip {i + 1} starting at {round(start)}s (Duration: {round(duration)}s) ({mode})"
+            )
+
+            try:
+                result = self.run_process(command, self.clip_timeout)
+
+                if result.returncode == 0:
+                    return name, duration
+
+                utils.error(f"Error extracting clip {i + 1} using {mode}:")
+                utils.error(result.stderr)
+
+                if mode != modes_to_try[-1]:
+                    utils.info(f"Retrying clip {i + 1} with CPU fallback...")
+
+            except subprocess.TimeoutExpired:
+                utils.error(
+                    f"Timeout expired. Extracting clip {i + 1} using {mode}."
+                )
+
+                if mode != modes_to_try[-1]:
+                    utils.info(f"Retrying clip {i + 1} with CPU fallback...")
+
+            except Exception as e:
+                utils.error(f"Exception extracting clip {i + 1} using {mode}: {e}")
+
+                if mode != modes_to_try[-1]:
+                    utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
         return None
 
@@ -698,6 +704,7 @@ class Engine:
         if data.abort:
             return
 
+        self.extraction_complete.clear()
         sections = self.generate_clip_sections(target_duration)
         accumulated_duration = 0.0
 
@@ -728,6 +735,8 @@ class Engine:
                     accumulated_duration += duration
 
                     if accumulated_duration >= required_duration:
+                        self.extraction_complete.set()
+
                         for f in futures:
                             f.cancel()
 
@@ -889,6 +898,5 @@ class Engine:
             pass
 
         return min_dur
-
 
 engine = Engine()
