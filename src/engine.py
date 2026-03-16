@@ -468,7 +468,6 @@ class Engine:
 
         if is_live:
             with self.lock_mutex:
-
                 if v_data not in self.live_locks:
                     self.live_locks[v_data] = threading.Lock()
 
@@ -488,7 +487,7 @@ class Engine:
         ratio_h = 9
 
         if config.aspect_ratio == "original":
-            if ((self.max_width > 0) and (self.max_height > 0)):
+            if (self.max_width > 0) and (self.max_height > 0):
                 ratio_w = self.max_width
                 ratio_h = self.max_height
         else:
@@ -535,7 +534,6 @@ class Engine:
                 command.extend(["-i", v_data])
 
                 if is_split_stream:
-
                     if not is_live:
                         command.extend(ss_args)
 
@@ -627,7 +625,6 @@ class Engine:
                 url_lock.release()
 
             if use_local_cache:
-
                 if os.path.exists(local_cache_file):
                     try:
                         os.remove(local_cache_file)
