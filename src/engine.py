@@ -606,9 +606,7 @@ class Engine:
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
 
             except subprocess.TimeoutExpired:
-                utils.error(
-                    f"Timeout expired. Extracting clip {i + 1} using {mode}."
-                )
+                utils.error(f"Timeout expired. Extracting clip {i + 1} using {mode}.")
 
                 if mode != modes_to_try[-1]:
                     utils.info(f"Retrying clip {i + 1} with CPU fallback...")
@@ -898,5 +896,6 @@ class Engine:
             pass
 
         return min_dur
+
 
 engine = Engine()
