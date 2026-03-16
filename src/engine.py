@@ -381,7 +381,7 @@ class Engine:
 
         return sections
 
-def extract_single_clip(
+    def extract_single_clip(
         self, i: int, section: dict[str, Any]
     ) -> tuple[str, float] | None:
         if data.abort:
