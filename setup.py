@@ -1,5 +1,6 @@
 import shutil
 import platform
+import sys
 from pathlib import Path
 from setuptools import setup
 from src.info import info
@@ -7,8 +8,14 @@ from src.info import info
 requirements = []
 
 def _copy_icon_file():
-    source = Path(f"{info.name}/src/icon.png").expanduser().resolve()
+    # Adjusted this path to what is likely correct.
+    # If info.name is actually the root folder name, change it back.
+    source = Path("src/icon.png").expanduser().resolve()
     destination = Path(f"~/.local/share/icons/{info.name}.png").expanduser().resolve()
+
+    # Ensure the icons folder exists
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
     shutil.copy2(source, destination)
 
 def _create_desktop_file():
@@ -24,6 +31,9 @@ Categories=Utility;
 
     file_path = Path(f"~/.local/share/applications/{info.name}.desktop").expanduser().resolve()
 
+    # Ensure the applications folder exists
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
     with open(file_path, "w") as f:
         f.write(content)
 
@@ -35,7 +45,8 @@ def _post_install():
             _copy_icon_file()
             _create_desktop_file()
         except Exception as e:
-            print(f"Error during post install: {e}")
+            # Writing to stderr forces the error to show up in the console
+            print(f"Error during post install: {e}", file=sys.stderr)
 
 with open("requirements.txt") as f:
     for line in f:
