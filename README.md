@@ -113,3 +113,9 @@ hgg
 There is a graphical user interface that can be spawned with `--gui`.
 
 ![](gui.png)
+
+The GUI has some tricks like clicking "URL List" to paste urls.
+
+Middle clicking to restore defaults.
+
+Middle clicking the `-` and `+` buttons to dec or inc `0.5` instead of `1`.
