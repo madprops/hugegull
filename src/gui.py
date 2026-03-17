@@ -605,16 +605,15 @@ class GUI:
                 else:
                     new_val = int(current_str) + amount
 
-                entry.delete(0, tk.END)
-                entry.insert(0, str(new_val))
+                self.insert_number(entry, new_val)
             except ValueError:
                 pass
 
-        def decrement() -> None:
-            change_value(-1)
+        def decrement(n = -1) -> None:
+            change_value(n)
 
-        def increment() -> None:
-            change_value(1)
+        def increment(n = 1) -> None:
+            change_value(n)
 
         btn_minus = tk.Button(
             entry_frame,
@@ -648,7 +647,7 @@ class GUI:
         )
 
         entry.pack(side=tk.LEFT, padx=4, pady=4)
-        entry.insert(0, str(value))
+        self.insert_number(entry, value)
         entry.xview(tk.END)
         entry.bind("<Control-a>", self.select_all)
         entry.bind("<Control-A>", self.select_all)
@@ -672,13 +671,27 @@ class GUI:
         )
 
         btn_plus.pack(side=tk.LEFT)
+        btn_minus.bind("<Button-2>", lambda e: decrement(0.5))
+        btn_plus.bind("<Button-2>", lambda e: increment(0.5))
 
         def on_middle_click(event: Any) -> None:
             default_val = self.get_default_value(id_)
-            self.update_entry(entry, default_val)
+            self.insert_number(entry, float(default_val))
 
         label.bind("<Button-2>", on_middle_click)
         ROW += 1
+
+    def insert_number(self, entry, number):
+        entry.delete(0, tk.END)
+        entry.insert(0, self.format_number(number))
+
+    def format_number(self, num):
+        rounded_val = round(num, 2)
+
+        if rounded_val.is_integer():
+            return int(rounded_val)
+
+        return rounded_val
 
     def combo_entry(
         self,
