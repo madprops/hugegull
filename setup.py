@@ -1,45 +1,7 @@
-import shutil
 from setuptools import setup
 from src.info import info
-import platform
 
 requirements = []
-
-
-def _copy_icon_file():
-    source = Path(f"{info.name}/src/icon.png").expanduser().resolve()
-    destination = Path(f"~/.local/share/icons/{info.name}.png").expanduser().resolve()
-    shutil.copy2(source, destination)
-
-
-def _create_desktop_file():
-    content = f"""[Desktop Entry]
-Version={info.version}
-Name={info.full_name}
-Exec={Path(f"~/.local/bin/{info.name}").expanduser().resolve()} --gui
-Icon={Path(f"~/.local/share/icons/{info.name}.png").expanduser().resolve()}
-Terminal=false
-Type=Application
-Categories=Utility;
-"""
-
-    file_path = (
-        Path(f"~/.local/share/applications/{info.name}.desktop").expanduser().resolve()
-    )
-
-    with open(file_path, "w") as f:
-        f.write(content)
-
-
-def _post_install():
-    system = platform.system()
-
-    if system == "Linux":
-        try:
-            _copy_icon_file()
-            _create_desktop_file()
-        except Exception as e:
-            print(f"Error during post install: {e}")
 
 with open("requirements.txt") as f:
     for line in f:
@@ -58,8 +20,7 @@ setup(
     entry_points={
         "console_scripts": [
             f"{info.name} = main:main",
+            f"{info.name}-install-gui = install_gui:install_desktop_integration",
         ],
     },
 )
-
-_post_install()
