@@ -444,16 +444,22 @@ class GUI:
         if not clipboard_content:
             return
 
-        if not utils.is_path(clipboard_content):
-            return
+        lines = clipboard_content.split("\n")
 
-        current_text = self.url_text.get("1.0", "end-1c")
+        for line in lines:
+            text_line = line.strip()
 
-        if current_text != "":
-            if not current_text.endswith("\n"):
-                self.url_text.insert(tk.END, "\n")
+            if not utils.is_path(text_line):
+                continue
 
-        self.url_text.insert(tk.END, clipboard_content.strip())
+            current_text = self.url_text.get("1.0", "end-1c")
+
+            if current_text != "":
+                if not current_text.endswith("\n"):
+                    self.url_text.insert(tk.END, "\n")
+
+            self.url_text.insert(tk.END, text_line)
+
         self.clean_urls()
 
     def update_url_count(self, event: Any = None) -> None:
