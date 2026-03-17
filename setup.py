@@ -8,7 +8,7 @@ requirements = []
 
 def _copy_icon_file():
     source = Path(f"{info.name}/src/icon.png").expanduser().resolve()
-    destination = Path(f"~/.local/share/icons/{program}.png").expanduser().resolve()
+    destination = Path(f"~/.local/share/icons/{info.name}.png").expanduser().resolve()
     shutil.copy2(source, destination)
 
 
@@ -24,7 +24,7 @@ Categories=Utility;
 """
 
     file_path = (
-        Path(f"~/.local/share/applications/{program}.desktop").expanduser().resolve()
+        Path(f"~/.local/share/applications/{info.name}.desktop").expanduser().resolve()
     )
 
     with open(file_path, "w") as f:
