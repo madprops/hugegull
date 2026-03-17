@@ -597,7 +597,7 @@ class GUI:
         entry_frame = tk.Frame(frame, bg=WIDGET_BG)
         entry_frame.grid(row=ROW, column=col + 1, pady=5, sticky="w")
 
-        def change_value(amount: int) -> None:
+        def change_value(amount: int | float) -> None:
             current_str = entry.get()
             try:
                 if "." in current_str:
@@ -609,10 +609,10 @@ class GUI:
             except ValueError:
                 pass
 
-        def decrement(n = -1) -> None:
+        def decrement(n: int | float = -1) -> None:
             change_value(n)
 
-        def increment(n = 1) -> None:
+        def increment(n: int | float = 1) -> None:
             change_value(n)
 
         btn_minus = tk.Button(
@@ -681,11 +681,11 @@ class GUI:
         label.bind("<Button-2>", on_middle_click)
         ROW += 1
 
-    def insert_number(self, entry, number):
+    def insert_number(self, entry: tk.Entry, number: int | float) -> None:
         entry.delete(0, tk.END)
-        entry.insert(0, self.format_number(number))
+        entry.insert(0, str(self.format_number(number)))
 
-    def format_number(self, num):
+    def format_number(self, num: int | float) -> int | float:
         rounded_val = round(num, 2)
 
         if rounded_val.is_integer():
