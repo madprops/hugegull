@@ -28,6 +28,8 @@ TEXT_COLOR_2 = "#ffffff"
 ACCENT_COLOR = "#05d9e8"
 DISABLED_BG = "#333333"
 DISABLED_FG = "#777777"
+SMALL_BUTTON_BG = "#6e838b"
+SMALL_BUTTON_FG = "#ffffff"
 BUTTON_FONT = ("monospace", 11, "bold")
 FONT_1 = ("helvetica", 10, "bold")
 FONT_2 = ("helvetica", 10)
@@ -557,6 +559,7 @@ class GUI:
             highlightthickness=0,
             font=FONT_4,
             width=20,
+            justify="center",
         )
 
         entry.pack(padx=4, pady=4)
@@ -617,8 +620,8 @@ class GUI:
             entry_frame,
             text="-",
             command=decrement,
-            bg=DISABLED_BG,
-            fg=TEXT_COLOR_2,
+            bg=SMALL_BUTTON_BG,
+            fg=SMALL_BUTTON_FG,
             font=BUTTON_FONT,
             activebackground=TEXT_COLOR,
             activeforeground=BG_COLOR,
@@ -641,6 +644,7 @@ class GUI:
             highlightthickness=0,
             font=FONT_4,
             width=15,
+            justify="center",
         )
 
         entry.pack(side=tk.LEFT, padx=4, pady=4)
@@ -655,8 +659,8 @@ class GUI:
             entry_frame,
             text="+",
             command=increment,
-            bg=DISABLED_BG,
-            fg=TEXT_COLOR_2,
+            bg=SMALL_BUTTON_BG,
+            fg=SMALL_BUTTON_FG,
             font=BUTTON_FONT,
             activebackground=TEXT_COLOR,
             activeforeground=BG_COLOR,
@@ -716,7 +720,7 @@ class GUI:
             relief="flat",
             highlightthickness=0,
             font=FONT_3,
-            anchor="w",
+            anchor="center",
             padx=8,
         )
 
