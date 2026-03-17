@@ -114,7 +114,7 @@ There is a graphical user interface that can be spawned with `--gui`.
 
 ![](gui.png)
 
-The GUI has some tricks like clicking "URL List" to paste urls.
+The GUI has some tricks, like clicking `URL List` to paste urls.
 
 Middle clicking to restore defaults.
 
