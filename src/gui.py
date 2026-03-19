@@ -1098,6 +1098,7 @@ class GUI:
                 port = (
                     50000 + int(hashlib.md5(info.name.encode()).hexdigest(), 16) % 10000
                 )
+
                 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
                 try:
