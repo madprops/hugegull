@@ -67,6 +67,8 @@
               ps.tkinter
             ]))
             rubyEnv
+            pkgs.ruff
+            pkgs.mypy
           ];
         };
       }
