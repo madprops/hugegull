@@ -25,7 +25,7 @@
           pyproject = true;
 
           build-system = [
-            python3Packages.setuptools
+            pythonPackages.setuptools
           ];
 
           propagatedBuildInputs=with pythonPackages; [
