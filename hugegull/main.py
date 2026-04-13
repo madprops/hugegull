@@ -11,11 +11,11 @@ import os
 import sys
 import time
 
-import gui
-from info import info
-from config import config
-from utils import utils
-from engine import engine
+from hugegull import gui
+from hugegull.info import info
+from hugegull.config import config
+from hugegull.utils import utils
+from hugegull.engine import engine
 
 LOCKS = []
 

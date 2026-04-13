@@ -8,7 +8,7 @@ import ctypes.util
 import subprocess
 from pathlib import Path
 
-from info import info
+from hugegull.info import info
 
 
 class Utils:

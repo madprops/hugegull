@@ -10,10 +10,10 @@ import threading
 import concurrent.futures
 from typing import Any
 
-from config import config
-from utils import utils
-from data import data
-import gui
+from hugegull.config import config
+from hugegull.utils import utils
+from hugegull.data import data
+from hugegull import gui
 
 import webrtcvad  # type: ignore
 

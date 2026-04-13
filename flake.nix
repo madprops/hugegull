@@ -41,12 +41,10 @@
           ];
 
           postPatch=''
-            sed -i '/_post_install()/d' setup.py
-
-            # Aggressively replace the dependency string in all source and config files
+            # Replace the dependency string specifically in requirements.txt
             # to prevent the wheel from baking it into the final metadata.
-            find . -type f \( -name "*.py" -o -name "*.toml" -o -name "*.txt" -o -name "*.cfg" \) -exec sed -i 's/webrtcvad-wheels/webrtcvad/g' {} +
-            find . -type f \( -name "*.py" -o -name "*.toml" -o -name "*.txt" -o -name "*.cfg" \) -exec sed -i 's/webrtcvad_wheels/webrtcvad/g' {} +
+            sed -i 's/webrtcvad-wheels/webrtcvad/g' requirements.txt
+            sed -i 's/webrtcvad_wheels/webrtcvad/g' requirements.txt
           '';
 
           postInstall=''

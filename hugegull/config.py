@@ -6,8 +6,8 @@ import time
 import tomllib
 from typing import Any
 
-from utils import utils
-from info import info
+from hugegull.utils import utils
+from hugegull.info import info
 
 
 class Config:

@@ -10,10 +10,10 @@ from typing import cast
 from typing import Any, Callable
 from tkinter import simpledialog, filedialog, messagebox, ttk
 
-from info import info
-from utils import utils
-import config as config_module
-from data import data
+from hugegull.info import info
+from hugegull.utils import utils
+import hugegull.config as config_module
+from hugegull.data import data
 
 config = config_module.config
 
@@ -978,7 +978,7 @@ class GUI:
         self.bool_vars["open"].set(bool(config.open))
 
     def make_video(self) -> None:
-        import main
+        import hugegull.main
 
         if self.is_running:
             self.make_button.config(
@@ -1054,7 +1054,7 @@ class GUI:
         threading.Thread(target=thread_target, daemon=True).start()
 
     def on_closing(self) -> None:
-        from engine import engine
+        from hugegull.engine import engine
 
         if self.is_running:
             data.abort = True
