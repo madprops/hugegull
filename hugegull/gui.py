@@ -978,7 +978,7 @@ class GUI:
         self.bool_vars["open"].set(bool(config.open))
 
     def make_video(self) -> None:
-        import hugegull.main
+        from hugegull.main import run as Run
 
         if self.is_running:
             self.make_button.config(
@@ -1033,7 +1033,7 @@ class GUI:
 
         def thread_target() -> None:
             try:
-                main.run()
+                Run()
             finally:
                 self.is_running = False
 

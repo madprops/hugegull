@@ -20,7 +20,7 @@
 
         app=pythonPackages.buildPythonApplication {
           pname="hugegull";
-          version="38.2.2";
+          version="39.0.0";
           src=./.;
           pyproject = true;
 
