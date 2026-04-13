@@ -18,7 +18,7 @@ from data import data
 config = config_module.config
 
 WIDTH = 624
-HEIGHT = 588
+HEIGHT = 620
 ROW: int = 0
 INSTANCE = None
 BG_COLOR = "#121212"

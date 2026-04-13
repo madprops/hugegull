@@ -1,4 +1,4 @@
-{description="Flake for the Python application";
+{description="Flake for Huge Gull";
 
   inputs={
     nixpkgs.url="github:NixOS/nixpkgs/nixos-unstable";
@@ -9,20 +9,24 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs=nixpkgs.legacyPackages.${system};
-        pythonPackages=pkgs.python3Packages;
+
+        # Standard python3 now supports tkinter natively via pythonPackages
+        python=pkgs.python3;
+        pythonPackages=python.pkgs;
 
         rubyEnv=pkgs.ruby.withPackages (ps: [
           ps.git
         ]);
 
         app=pythonPackages.buildPythonApplication {
-          pname="your-app-name";
-          version="1.0.0";
+          pname="hugegull";
+          version="38.2.0";
           src=./.;
 
           propagatedBuildInputs=with pythonPackages; [
             setuptools
             webrtcvad
+            tkinter
           ] ++ [
             rubyEnv
           ];
@@ -37,14 +41,14 @@
 
           postInstall=''
             mkdir -p $out/share/icons/hicolor/256x256/apps
-            cp src/icon.png $out/share/icons/hicolor/256x256/apps/your-app-name.png
+            cp src/icon.png $out/share/icons/hicolor/256x256/apps/hugegull.png
           '';
 
           desktopItems=[
             (pkgs.makeDesktopItem {
-              name="your-app-name";
-              exec="your-app-name --gui";
-              icon="your-app-name";
+              name="hugegull";
+              exec="hugegull --gui";
+              icon="hugegull";
               desktopName="Your App Name";
               categories=["Utility"];
               terminal=false;
@@ -57,9 +61,10 @@
 
         devShells.default=pkgs.mkShell {
           packages=[
-            (pkgs.python3.withPackages (ps: [
+            (python.withPackages (ps: [
               ps.setuptools
               ps.webrtcvad
+              ps.tkinter
             ]))
             rubyEnv
           ];
