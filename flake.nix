@@ -57,7 +57,7 @@
               name="hugegull";
               exec="hugegull --gui";
               icon="hugegull";
-              desktopName="Your App Name";
+              desktopName="Huge Gull";
               categories=["Utility"];
               terminal=false;
             })
