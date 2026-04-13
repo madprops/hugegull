@@ -51,7 +51,7 @@
 
           postInstall=''
             mkdir -p $out/share/icons/hicolor/256x256/apps
-            cp src/icon.png $out/share/icons/hicolor/256x256/apps/hugegull.png
+            cp hugegull/icon.png $out/share/icons/hicolor/256x256/apps/hugegull.png
           '';
 
           desktopItems=[

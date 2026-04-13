@@ -64,7 +64,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            f"{info.name} = main:main",
+            f"{info.name} = hugegull.main:main",
         ],
     },
 )
