@@ -42,6 +42,7 @@
 
           postPatch=''
             sed -i '/_post_install()/d' setup.py
+            sed -i 's/webrtcvad-wheels/webrtcvad/g' setup.py
           '';
 
           postInstall=''
