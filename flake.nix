@@ -41,6 +41,7 @@
           ];
 
           nativeBuildInputs=[
+            pythonPackages.pythonRelaxDepsHook
             pkgs.copyDesktopItems
           ];
 
